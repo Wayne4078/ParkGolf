@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0}</style></head><body>
+<title>오늘의 파크골프</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;800&display=swap">
+<style>
+/* Layout: one-screen portrait app. HUD strip, course canvas fills the middle, one message line below. */
+:root{
+  --bg:#f3f1ea; --fg:#1d2419; --muted:#4a5243; --panel:#ffffff; --line:#d6d2c6; --paper:#fffdf5; --rule:#b9b3a3;
+  --accent:#2f6b3a; --accent-fg:#ffffff; --warn:#b4452c; --good:#1f6fb2;
+  --font:"Noto Sans KR","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#171a15; --fg:#f1f0e8; --muted:#c3c6b8; --panel:#232820; --line:#3a4034; --paper:#2a2e25; --rule:#5a6052;
+  --accent:#6fb57b; --accent-fg:#10180f; --warn:#f08a6c; --good:#7fb6ea; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#171a15; --fg:#f1f0e8; --muted:#c3c6b8; --panel:#232820; --line:#3a4034; --paper:#2a2e25; --rule:#5a6052;
+  --accent:#6fb57b; --accent-fg:#10180f; --warn:#f08a6c; --good:#7fb6ea; color-scheme:dark }
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-weight:500;font-size:18px;word-break:keep-all;-webkit-text-size-adjust:100%;touch-action:none;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;box-sizing:border-box;gap:8px;max-width:520px;margin:0 auto}
+.hud{display:flex;justify-content:space-between;align-items:baseline;font-size:22px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hud small{font-size:17px;font-weight:700;color:var(--muted);margin-left:6px}
+.stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-action:none;background:#4a7f3a}
+.msg{min-height:30px;font-size:20px;font-weight:700;text-align:center}
+.screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px;box-sizing:border-box;overflow-y:auto;z-index:5}
+.screen h1{font-size:34px;font-weight:800;margin:0;text-wrap:balance;text-align:center;letter-spacing:-0.5px}
+.screen h2{font-size:26px;font-weight:800;margin:0;text-align:center}
+.sub{font-size:18px;font-weight:700;color:var(--muted);text-align:center;margin:0}
+.label{font-size:18px;font-weight:800;color:var(--muted);align-self:flex-start;margin-top:4px;max-width:440px;width:100%;margin-left:auto;margin-right:auto}
+.row{display:flex;gap:10px;width:100%;max-width:440px;flex-wrap:wrap}
+.opt{flex:1 1 120px;min-height:56px;border:3px solid var(--line);background:var(--panel);color:var(--fg);border-radius:12px;font:inherit;font-size:20px;font-weight:800;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap}
+.opt span{font-size:15px;font-weight:700;color:var(--muted)}
+.opt.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.opt:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.btn{min-height:56px;width:100%;max-width:440px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-fg);font:inherit;font-size:22px;font-weight:800;cursor:pointer;padding:12px 18px;white-space:nowrap}
+.btn.ghost{background:var(--panel);color:var(--fg);border:3px solid var(--line)}
+.btn:disabled{opacity:.55;cursor:default}
+.today{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:14px 18px;width:100%;max-width:440px;box-sizing:border-box;text-align:center;font-size:20px;font-weight:800}
+.today .sub{margin-top:4px}
+.paper{background:var(--paper);border:2px solid var(--rule);border-radius:6px;padding:12px 10px;width:100%;max-width:440px;box-sizing:border-box;box-shadow:0 2px 0 var(--rule);font-variant-numeric:tabular-nums}
+.paper h3{margin:0 0 8px;font-size:20px;font-weight:800;text-align:center;letter-spacing:2px}
+.paper table{border-collapse:collapse;width:100%;font-size:17px;font-weight:700}
+.paper th,.paper td{border:1.5px solid var(--rule);padding:6px 2px;text-align:center;white-space:nowrap}
+.paper th{font-size:14px;color:var(--muted);font-weight:800}
+.paper td.name{text-align:left;padding-left:6px;font-size:15px;color:var(--muted)}
+.paper td.tot{font-weight:800;font-size:18px}
+.paper td.under{color:var(--good)} .paper td.over{color:var(--warn)} .paper td.best{background:rgba(47,107,58,0.18);font-weight:800}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:16px 18px;width:100%;max-width:440px;box-sizing:border-box;text-align:center}
+.card .big{font-size:30px;font-weight:800;margin:4px 0}
+.ver{font-size:14px;font-weight:700;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div id="app">
+  <div class="hud"><div id="hudL">1번 홀 <small>파 3</small></div><div id="hudR">지금 0타</div></div>
+  <div class="stage"><canvas id="c" width="360" height="600"></canvas></div>
+  <div class="msg" id="msg"></div>
+</div>
+
+<div class="screen" id="start">
+  <h1>오늘의 파크골프</h1>
+  <div class="row" id="courseRow">
+    <button class="opt on" data-course="home">우리 동네<span>하천변 9홀</span></button>
+    <button class="opt" data-course="jamsil">잠실 원정<span>실제 구장 9홀</span></button>
+  </div>
+  <div class="today"><div class="sub" id="courseSub" style="margin-bottom:6px"></div><div id="todayLine">11월 2일 · 맑음</div><div class="sub" id="todayNote">오늘의 라운드는 하루 한 번 기록에 남아요</div></div>
+  <div class="label">오늘의 공</div>
+  <div class="row" id="ballRow">
+    <button class="opt on" data-ball="normal">일반공<span>늘 치던 그 공</span></button>
+    <button class="opt" data-ball="rubber">고무공<span>벽에 맞으면 속도가 붙어요</span></button>
+    <button class="opt" data-ball="cork">코르크공<span>물 위를 건너요 · 바람에 날려요</span></button>
+  </div>
+  <button class="btn" id="goToday">오늘의 라운드</button>
+  <button class="btn ghost" id="goPractice">연습 라운드 (날씨 고르기)</button>
+  <button class="btn ghost" id="showCard">스코어 카드 보기</button>
+  <p class="ver">화면 아무 데나 누르고 뒤로 당겼다 놓으면 칩니다 · 파+3이면 다음 홀</p>
+</div>
+
+<div class="screen" id="practice" hidden>
+  <h2>연습 라운드</h2>
+  <p class="sub">기록에는 안 남아요</p>
+  <div class="label">날씨</div>
+  <div class="row" id="wxRow"></div>
+  <div class="label">핀 위치</div>
+  <div class="row" id="pinRow">
+    <button class="opt on" data-pin="0">오늘 자리</button><button class="opt" data-pin="1">두 번째</button><button class="opt" data-pin="2">세 번째</button>
+  </div>
+  <div class="label">시작 홀</div>
+  <div class="row" id="holeRow"></div>
+  <button class="btn" id="goP">연습 시작</button>
+  <button class="btn ghost" id="backP">돌아가기</button>
+</div>
+
+<div class="screen" id="holeDone" hidden>
+  <div class="card"><div id="hdTitle" class="sub">1번 홀</div><div class="big" id="hdScore">2타 (파 3)</div><div id="hdNote" class="sub"></div></div>
+  <button class="btn" id="next">다음 홀</button>
+</div>
+
+<div class="screen" id="end" hidden style="justify-content:flex-start">
+  <div class="paper"><h3 id="paperTitle">스코어 카드</h3><p class="sub" id="endSub"></p><table id="sc"></table></div>
+  <div class="card" id="survey" hidden style="text-align:left;display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:20px;font-weight:800">한 바퀴 쳐 주셔서 고마워요</div>
+    <p class="sub" style="text-align:left">짧게 여섯 가지만 알려 주세요.</p>
+    <label class="label" style="margin:0">이름이나 별명<input id="svName" type="text" autocomplete="nickname" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:48px;font:inherit;font-size:18px;font-weight:700;padding:8px 12px;border:2px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg)"></label>
+    <div class="label" style="margin:0">지금 기분은</div><div class="row sv" data-q="mood"><button class="opt" style="flex:1 1 80px;min-height:48px">재밌다</button><button class="opt" style="flex:1 1 80px;min-height:48px">편안하다</button><button class="opt" style="flex:1 1 80px;min-height:48px">답답하다</button><button class="opt" style="flex:1 1 80px;min-height:48px">지루하다</button><button class="opt" style="flex:1 1 80px;min-height:48px">어렵다</button></div>
+    <div class="label" style="margin:0">제일 헤맨 홀은</div><div class="row sv" data-q="hardest" id="svHoles"></div>
+    <div class="label" style="margin:0">공 세 개, 차이가 느껴졌나요</div><div class="row sv" data-q="balls"><button class="opt" style="flex:1 1 90px;min-height:48px">확실히</button><button class="opt" style="flex:1 1 90px;min-height:48px">조금</button><button class="opt" style="flex:1 1 90px;min-height:48px">모르겠다</button><button class="opt" style="flex:1 1 90px;min-height:48px">일반공만 쳤다</button></div>
+    <div class="label" style="margin:0">내일 또 치실 것 같나요</div><div class="row sv" data-q="again"><button class="opt" style="flex:1 1 90px;min-height:48px">내일도</button><button class="opt" style="flex:1 1 90px;min-height:48px">가끔</button><button class="opt" style="flex:1 1 90px;min-height:48px">안 칠 것 같다</button></div>
+    <div class="label" style="margin:0">친구에게 권한다면 (1 아니다 ~ 5 꼭)</div><div class="row sv" data-q="recommend"><button class="opt" style="flex:1 1 44px;min-height:48px">1</button><button class="opt" style="flex:1 1 44px;min-height:48px">2</button><button class="opt" style="flex:1 1 44px;min-height:48px">3</button><button class="opt" style="flex:1 1 44px;min-height:48px">4</button><button class="opt" style="flex:1 1 44px;min-height:48px">5</button></div>
+    <label class="label" style="margin:0">하고 싶은 말 (어색한 말, 불편한 곳 무엇이든)<textarea id="svNote" rows="3" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;font:inherit;font-size:17px;font-weight:600;padding:8px 12px;border:2px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg)"></textarea></label>
+    <button class="btn" id="svSend">보내기</button>
+    <p class="sub" id="svMsg" style="text-align:left"></p>
+  </div>
+  <button class="btn" id="again">다시 치기</button>
+  <button class="btn ghost" id="home">처음으로</button>
+</div>
+
+<script>
+/* playtest-kit.js v1 (아린 플레이 공용) + plain #name tester tag */
+(function(){
+  var C = null, Q = [], timer = null, sess = Math.random().toString(36).slice(2, 10), t0 = Date.now();
+  var pulsesShown = 0, lastPulse = -1e9, asked = {}, lastKey = "", lastData = null, bubble = null, hideT = null;
+  function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
+  function tester(){
+    var m = /[?&#]t=([^&#]+)/.exec(location.search + location.hash), t;
+    if(m){ t = decodeURIComponent(m[1]).slice(0, 30); ls("pt_tester", t); }
+    var hm = /^#([A-Za-z0-9-]{1,30})$/.exec(location.hash); if(!t && hm && hm[1] !== "dev"){ t = hm[1]; ls("pt_tester", t); }
+    t = t || ls("pt_tester");
+    if(!t){ t = "anon-" + Math.random().toString(36).slice(2, 7); ls("pt_tester", t); }
+    if(/[?&#]dev\b/.test(location.search + location.hash) || document.documentElement.classList.contains("dev")) t = "dev:" + t;
+    return t;
+  }
+  function row(kind, key, data){
+    return {game:C.game, build:C.build, lang:C.lang, tester:C.tester, session:sess, kind:kind,
+            key:(key || "").slice(0, 60), t_ms:Date.now() - t0, data:data || null};
+  }
+  function push(r){ Q.push(r); if(!timer) timer = setTimeout(flush, 8000); }
+  function send(rows, beacon){
+    if(!C || !C.endpoint || !rows.length) return Promise.resolve(true);
+    var url = C.endpoint + "/rest/v1/playtest_log", body = JSON.stringify(rows);
+    try{
+      return fetch(url, {method:"POST", keepalive:!!beacon && body.length < 60000,
+        headers:{"apikey":C.key, "Authorization":"Bearer " + C.key, "Content-Type":"application/json", "Prefer":"return=minimal"},
+        body:body}).then(function(r){ return r.ok; }, function(){ return false; });
+    }catch(e){ return Promise.resolve(false); }
+  }
+  function stash(rows){ try{ var o = JSON.parse(ls("pt_outbox") || "[]"); ls("pt_outbox", JSON.stringify(o.concat(rows).slice(-300))); }catch(e){} }
+  function flush(beacon){
+    clearTimeout(timer); timer = null;
+    var rows = Q.splice(0);
+    try{ var o = JSON.parse(ls("pt_outbox") || "[]"); if(o.length){ rows = o.concat(rows); ls("pt_outbox", "[]"); } }catch(e){}
+    if(!rows.length) return Promise.resolve(true);
+    return send(rows, beacon).then(function(ok){ if(!ok) stash(rows); return ok; });
+  }
+  function css(){
+    if(document.getElementById("pt-css")) return;
+    var s = document.createElement("style"); s.id = "pt-css";
+    s.textContent = ".pt-bub{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));translate:-50% 12px;width:min(92vw,400px);box-sizing:border-box;z-index:9000;"
+      + "background:var(--pt-bg,#F3ECDD);color:var(--pt-ink,#2A241C);border-radius:18px;padding:14px 16px 12px;box-shadow:0 10px 34px rgba(0,0,0,.45);opacity:0;transition:opacity .45s ease,translate .45s ease;font:inherit}"
+      + ".pt-bub.on{opacity:1;translate:-50% 0}.pt-q{margin:0 26px 10px 0;font-size:18px;font-weight:800;line-height:1.4}"
+      + ".pt-x{position:absolute;right:8px;top:6px;width:40px;height:40px;border:0;background:none;color:inherit;opacity:.6;font-size:20px;cursor:pointer}"
+      + ".pt-opts{display:flex;flex-wrap:wrap;gap:7px}.pt-o{border:2px solid rgba(42,36,28,.35);background:transparent;color:inherit;border-radius:999px;padding:9px 14px;font:inherit;font-size:16px;font-weight:700;cursor:pointer;min-height:44px}"
+      + ".pt-o:active{background:rgba(42,36,28,.12)}.pt-thx{margin:0;font-size:16px;font-weight:700;opacity:.85}"
+      + "@media (prefers-reduced-motion:reduce){.pt-bub{transition:none}}";
+    document.head.appendChild(s);
+  }
+  function close(){ if(!bubble) return; var b = bubble; bubble = null; clearTimeout(hideT); b.classList.remove("on"); setTimeout(function(){ b.remove(); }, 500); }
+  var PT = {
+    init:function(o){
+      C = {game:o.game, build:o.build || "", lang:o.lang || document.documentElement.lang || "", endpoint:o.endpoint, key:o.key,
+           maxPulses:o.maxPulses || 3, gapMs:o.gapMs === undefined ? 180000 : o.gapMs, linger:o.linger || 14000,
+           S:Object.assign({skip:"×", thanks:"고마워요."}, o.strings || {})};
+      C.tester = tester();
+      push(row("start", "start", {ua:navigator.userAgent.slice(0, 120), w:innerWidth, h:innerHeight, ref:document.referrer.slice(0, 80)}));
+      flush();
+      var leave = function(){ Q.push(row("exit", lastKey, {last:lastData, visible_s:Math.round((Date.now() - t0) / 1000)})); flush(true); };
+      document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "hidden") leave(); });
+      addEventListener("pagehide", leave);
+      return C.tester;
+    },
+    event:function(key, data){ if(!C) return; lastKey = key; lastData = data || null; push(row("event", key, data)); },
+    pulse:function(key, o){
+      if(!C || asked[key] || pulsesShown >= C.maxPulses || Date.now() - lastPulse < C.gapMs) return false;
+      asked[key] = 1;
+      setTimeout(function(){
+        if(bubble || document.visibilityState === "hidden") return;
+        css(); pulsesShown++; lastPulse = Date.now();
+        var b = document.createElement("div"); b.className = "pt-bub"; b.setAttribute("role", "dialog"); b.setAttribute("aria-live", "polite");
+        var q = document.createElement("p"); q.className = "pt-q"; q.textContent = o.q; b.appendChild(q);
+        var x = document.createElement("button"); x.type = "button"; x.className = "pt-x"; x.textContent = C.S.skip; x.setAttribute("aria-label", "skip");
+        x.onclick = function(){ push(row("pulse", key, {skipped:1, ctx:o.ctx || null})); close(); }; b.appendChild(x);
+        var w = document.createElement("div"); w.className = "pt-opts";
+        o.opts.forEach(function(t, i){
+          var btn = document.createElement("button"); btn.type = "button"; btn.className = "pt-o"; btn.textContent = t;
+          btn.onclick = function(ev){
+            ev.stopPropagation();
+            push(row("pulse", key, {a:t, i:i, ms:Date.now() - lastPulse, ctx:o.ctx || null})); flush();
+            b.innerHTML = ""; var th = document.createElement("p"); th.className = "pt-thx"; th.textContent = C.S.thanks; b.appendChild(th);
+            clearTimeout(hideT); hideT = setTimeout(close, 900);
+          };
+          w.appendChild(btn);
+        });
+        b.appendChild(w); document.body.appendChild(b); bubble = b;
+        requestAnimationFrame(function(){ b.classList.add("on"); });
+        hideT = setTimeout(function(){ push(row("pulse", key, {ignored:1, ctx:o.ctx || null})); close(); }, C.linger);
+      }, o.delay || 0);
+      return true;
+    },
+    survey:function(key, answers){ if(!C) return Promise.resolve(false); Q.push(row("survey", key, answers)); return flush(); },
+    flush:flush,
+    tester:function(){ return C && C.tester; },
+    closeBubble:close
+  };
+  window.PT = PT;
+})();
+</script>
+<script>
+(() => {
+const W=360, H=600, R=4.5, CUP_R=14, ZOOM=1.6, M_PER_PX=0.15, TILT=0.70;
+const BALLS={
+  normal:{name:'일반공', e:0.30, wind:1.0, color:'#f4f4ee', floats:false, leaves:false},
+  rubber:{name:'고무공', e:1.22, wind:1.0, color:'#d9382b', floats:false, leaves:true},
+  cork:  {name:'코르크공', e:0.35, wind:3.0, color:'#c99a5b', floats:true, leaves:false},
+};
+const WX={
+  clear:{name:'맑음',    line:'평소 코스예요', fr:1.0,  wind:0,  puddles:false, leaves:false, frost:false},
+  rain: {name:'비 온 뒤', line:'잔디가 젖어 덜 굴러요. 물웅덩이 조심', fr:1.35, wind:0,  puddles:true,  leaves:false, frost:false},
+  wind: {name:'바람',    line:'깃발 쪽으로 공이 밀려요', fr:1.0,  wind:38, puddles:false, leaves:false, frost:false},
+  leaf: {name:'낙엽',    line:'낙엽 더미에 들어가면 멈춰요', fr:1.0, wind:0, puddles:false, leaves:true, frost:false},
+  frost:{name:'서리',    line:'얼어서 더 미끄러워요', fr:0.72, wind:0, puddles:false, leaves:false, frost:true},
+};
+const WX_KEYS=Object.keys(WX);
+const FRICTION=115, MAXV=330, MAXDRAG=140, GREEN_FR=0.8;
+
+// ================= THEME =================
+const THEME={
+  name:'동네 하천변 · 늦가을',
+  rough:'#4a7f3a', fairway:'#5f9d49', fairwayStripe:'rgba(255,255,255,0.06)', green:'#79b25c', greenStripe:'rgba(255,255,255,0.09)',
+  fairwayWet:'#4d8a3e', fairwayFrost:'#93b58c', greenFrost:'#aacb9f',
+  wall:'#9b968a', wallTop:'#ddd8ca', wallBase:'#6f6a5e',
+  water:'#3b7fb8', waterDeep:'#2e6a9c', waterLine:'rgba(255,255,255,0.35)', stone:'#a9a79e',
+  bridge:'#9c7a4a', bridgeSlat:'#6d5230', rail:'#5c4326', sand:'#e2cf98', sandDot:'rgba(120,90,40,0.25)',
+  treeDark:'#2e6b2a', treeLight:'#3f8a37', trunk:'#5a3e22', autumn:'#c9742a', autumnLight:'#e0a04a',
+  bench:'#8b6a3e', benchDark:'#5d4527', sign:'#3a3a3a', signPost:'#5a4a3a', bin:'#4b6f5a',
+  flag:'#e23b2e', cupRim:'#eef0e4', cup:'#1b2a16', pinMark:'rgba(255,255,255,0.85)', tee:'#2d3a2a', puddle:'rgba(70,120,170,0.75)', leaf1:'#c9742a', leaf2:'#a8431f',
+};
+
+// ================= HOLE DATA. poly = fairway (walls on every edge). green = ellipse (faster grass). trees = inside, physics. deco = outside, no physics. =================
+const HOME_HOLES=[
+ { n:1, par:3, name:'연습 홀', poly:[[104,540],[94,480],[92,420],[96,360],[94,300],[98,240],[94,180],[98,120],[112,76],[150,60],[210,60],[248,76],[262,120],[266,180],[262,240],[266,300],[262,360],[266,420],[264,480],[256,540]],
+   tee:[180,500], pins:[[180,112],[140,132],[222,120]], green:{cx:180,cy:120,rx:62,ry:50},
+   deco:[[48,200,20,false],[318,380,22,true],[40,470,16,true]], props:[['bench',58,540],['sign',300,566],['bin',320,520]], puddles:[[180,300,16]], leaves:[[150,380,18]] },
+ { n:2, par:4, name:'꺾임 홀', poly:[[204,540],[316,540],[322,480],[320,400],[322,300],[318,200],[322,120],[310,70],[270,58],[200,56],[120,58],[60,66],[42,100],[40,140],[46,176],[90,186],[150,184],[196,186],[200,260],[198,340],[202,420],[198,480]],
+   tee:[260,500], pins:[[90,118],[130,100],[70,150]], green:{cx:92,cy:120,rx:50,ry:42},
+   deco:[[60,260,20,false],[140,330,24,true],[90,440,18,false],[150,250,14,false]], props:[['bench',60,520],['sign',140,566]], puddles:[[260,330,16]], leaves:[[150,120,18]] },
+ { n:3, par:3, name:'개울 홀', poly:[[128,560],[106,520],[96,470],[98,420],[106,372],[112,340],[114,300],[112,262],[104,222],[92,186],[86,150],[92,112],[110,82],[142,64],[186,56],[226,62],[254,84],[266,118],[262,160],[250,196],[240,232],[236,268],[238,300],[244,336],[252,376],[256,420],[254,470],[242,520],[220,560]],
+   tee:[176,528], pins:[[160,122],[200,104],[128,154]], green:{cx:168,cy:126,rx:62,ry:52},
+   water:[[[80,286],[112,276],[146,282],[180,274],[214,280],[250,272],[290,278],[290,330],[250,338],[214,332],[180,340],[146,334],[112,342],[80,334]]], bridge:[[200,268],[252,268],[252,344],[200,344]],
+   stones:[[118,281,4],[160,279,3],[196,278,4],[262,276,3],[124,337,3],[176,338,4],[232,339,3],[270,334,4],[100,290,3]],
+   deco:[[54,230,22,false],[300,180,26,true],[310,440,20,false],[46,400,18,true]], props:[['bench',296,500],['sign',300,566],['bin',338,508]], puddles:[[160,420,16]], leaves:[[200,200,18]] },
+ { n:4, par:4, name:'내리막 홀', poly:[[118,740],[108,680],[112,600],[108,520],[114,440],[108,360],[112,280],[108,200],[114,120],[128,74],[180,58],[232,74],[246,120],[252,200],[248,280],[252,360],[246,440],[252,520],[248,600],[252,680],[242,740]],
+   tee:[180,700], pins:[[180,110],[148,132],[214,122]], green:{cx:180,cy:118,rx:52,ry:44},
+   slopes:[{poly:[[100,60],[260,60],[260,740],[100,740]], g:[0,-40]}], deco:[[60,300,20,false],[300,500,24,true],[70,600,18,false],[300,200,18,false]], props:[['bench',60,690],['sign',300,760]], puddles:[[180,400,16]], leaves:[[200,560,18]] },
+ { n:5, par:5, name:'긴 홀', poly:[[96,900],[82,840],[84,760],[80,680],[86,600],[82,520],[90,440],[84,360],[88,280],[82,200],[88,120],[104,72],[150,58],[210,58],[256,72],[272,120],[278,200],[272,280],[276,360],[270,440],[278,520],[274,600],[280,680],[276,760],[278,840],[264,900]],
+   tee:[180,860], pins:[[180,110],[112,132],[248,132]], green:{cx:180,cy:124,rx:72,ry:52},
+   trees:[[130,420,22],[235,620,22],[180,250,18]], deco:[[40,200,20,false],[320,350,22,true],[40,700,18,true],[322,800,20,false]], props:[['bench',320,880],['sign',44,890]], puddles:[[120,700,16],[240,300,16]], leaves:[[200,480,20]] },
+ { n:6, par:3, name:'통로 홀', poly:[[124,540],[236,540],[240,480],[238,400],[240,332],[212,330],[212,280],[212,230],[240,230],[238,160],[240,100],[228,66],[180,58],[132,66],[120,100],[122,160],[120,230],[148,230],[148,280],[148,330],[120,332],[122,400],[120,480]],
+   tee:[180,500], pins:[[180,112],[150,100],[210,135]], green:{cx:180,cy:118,rx:48,ry:40},
+   deco:[[80,280,20,false],[282,280,22,true],[300,480,18,false],[60,120,20,true]], props:[['bench',300,540],['sign',60,560]], puddles:[[180,400,14]], leaves:[[180,150,16]] },
+ { n:7, par:4, name:'모래 홀', poly:[[102,600],[90,540],[94,470],[88,400],[94,330],[88,260],[94,190],[90,120],[106,72],[150,58],[210,58],[256,72],[270,120],[266,190],[272,260],[266,330],[272,400],[266,470],[270,540],[258,600]],
+   tee:[180,560], pins:[[180,100],[232,110],[132,104]], green:{cx:180,cy:104,rx:60,ry:44},
+   sand:[[[128,148],[200,142],[276,150],[278,236],[200,244],[128,238]]], deco:[[40,300,20,false],[320,200,24,true],[320,520,18,false]], props:[['bench',320,590],['sign',62,600]], puddles:[[180,380,16]], leaves:[[120,300,18]] },
+ { n:8, par:4, name:'연못 홀', poly:[[72,600],[58,540],[62,460],[56,380],[62,300],[56,220],[62,140],[70,80],[110,60],[180,56],[250,60],[296,78],[304,140],[298,220],[304,300],[298,380],[304,460],[298,540],[288,600]],
+   tee:[240,560], pins:[[230,135],[160,120],[262,160]], green:{cx:212,cy:140,rx:66,ry:46},
+   water:[[[156,248],[200,242],[250,246],[300,252],[302,330],[298,398],[250,404],[200,398],[160,392],[150,330]], [[180,60],[300,60],[300,96],[260,102],[220,100],[182,94]]],
+   stones:[[160,262,4],[300,300,3],[170,380,4],[240,250,3],[262,400,3],[200,98,3],[262,100,4]], trees:[[100,470,20]],
+   deco:[[30,200,20,true],[330,480,22,false],[330,300,16,true]], props:[['bench',30,560],['sign',300,596]], puddles:[[110,300,16]], leaves:[[220,470,18]] },
+ { n:9, par:5, name:'마지막 홀', poly:[[204,900],[336,900],[342,800],[338,700],[342,600],[338,500],[342,400],[340,300],[338,214],[280,210],[220,212],[164,210],[160,150],[162,100],[150,64],[100,58],[50,62],[22,80],[18,150],[20,250],[18,330],[80,332],[140,330],[198,332],[200,400],[198,500],[202,600],[198,700],[202,800]],
+   tee:[270,860], pins:[[90,120],[50,100],[130,160]], green:{cx:92,cy:126,rx:62,ry:50},
+   water:[[[196,598],[240,594],[290,600],[344,596],[344,652],[290,656],[240,650],[196,654]]], bridge:[[300,596],[344,596],[344,654],[300,654]], stones:[[215,600,3],[260,598,4],[220,650,4],[270,652,3]],
+   slopes:[{poly:[[20,210],[340,210],[340,330],[20,330]], g:[-34,0]}], trees:[[100,300,16]],
+   deco:[[260,120,22,true],[300,70,18,false],[80,500,22,false],[120,700,20,true],[60,850,18,false],[130,420,16,true]], props:[['bench',100,860],['sign',60,890],['bin',140,870]], puddles:[[270,740,16]], leaves:[[260,450,18]] },
+];
+// 원정 1호: 잠실종합운동장 파크골프장. 홀별 파·거리는 서울시 체육시설관리사업소 현장 안내판(합계 파33·513m), 홀 모양은 공식 조감도를 따름.
+const JAMSIL_HOLES=[{"n":1,"par":3,"name":"한 번에 노리는 홀","poly":[[235,268],[231,251],[234,234],[236,212],[237,187],[233,162],[227,141],[231,123],[248,104],[180,54],[112,116],[132,136],[143,156],[144,173],[143,187],[140,200],[136,216],[132,238],[125,259],[180,304]],"tee":[180,258],"pins":[[180,98],[154,110],[204,92]],"green":{"cx":180,"cy":104,"rx":58,"ry":44},"sand":[[[233,125],[227,135],[211,139],[196,135],[189,125],[196,115],[211,111],[227,115]]],"deco":[[76,84,20,false],[298,114,23,false],[68,154,23,false],[290,184,26,true],[81,224,26,false],[303,254,20,false],[62,294,20,false],[284,324,23,false]],"props":[["sign",70,288],["bench",270,274]],"puddles":[[190,187,14]],"leaves":[[171,148,16]],"m":24},{"n":2,"par":5,"name":"느티나무 길","poly":[[238,762],[235,736],[230,710],[218,685],[212,661],[207,637],[204,614],[204,591],[206,570],[210,550],[216,530],[223,508],[229,485],[233,460],[236,434],[237,406],[236,378],[234,351],[232,326],[231,301],[232,276],[234,252],[235,227],[240,203],[245,179],[249,155],[252,132],[253,109],[180,54],[107,111],[109,136],[113,162],[120,187],[128,211],[137,235],[143,259],[148,282],[152,306],[154,329],[154,353],[152,375],[147,395],[140,415],[133,437],[126,461],[120,486],[117,513],[116,541],[118,570],[122,596],[126,622],[129,647],[131,672],[131,696],[125,720],[123,742],[122,765],[180,803]],"tee":[180,757],"pins":[[180,98],[154,110],[204,92]],"green":{"cx":180,"cy":104,"rx":58,"ry":44},"sand":[[[244,404],[237,414],[222,418],[206,414],[200,404],[206,394],[222,390],[237,394]],[[175,184],[168,194],[153,198],[137,194],[131,184],[137,175],[153,170],[168,175]]],"deco":[[76,84,20,false],[298,114,23,false],[63,154,23,false],[285,184,26,true],[82,224,26,false],[304,254,20,false],[73,294,20,false],[295,324,23,false],[90,364,23,false],[312,394,26,false],[68,434,26,false],[290,464,20,true],[66,504,20,false],[288,534,23,false],[44,574,23,false],[266,604,26,false],[64,644,26,false],[286,674,20,false],[59,714,20,false],[281,744,23,true],[76,784,23,false],[298,814,26,false]],"props":[["sign",70,787],["bench",270,773]],"puddles":[[171,497,14]],"leaves":[[179,328,16]],"m":98},{"n":3,"par":3,"name":"짧은 대각선","poly":[[202,343],[196,322],[199,304],[204,284],[212,263],[221,240],[231,217],[241,193],[250,167],[268,141],[285,115],[210,54],[135,105],[149,125],[157,144],[153,164],[147,186],[139,209],[131,232],[122,257],[114,283],[107,310],[98,335],[150,379]],"tee":[150,333],"pins":[[210,98],[184,110],[234,92]],"green":{"cx":210,"cy":104,"rx":58,"ry":44},"sand":[[[156,261],[150,271],[134,275],[119,271],[112,261],[119,251],[134,247],[150,251]]],"deco":[[106,84,20,false],[328,114,23,false],[86,154,23,false],[308,184,26,true],[76,224,26,false],[298,254,20,false],[38,294,20,false],[260,324,23,false],[46,364,23,false],[268,394,26,false]],"props":[["sign",260,363],["bench",60,349]],"puddles":[[171,248,14]],"leaves":[[183,179,16]],"m":38},{"n":4,"par":4,"name":"S자 홀","poly":[[227,546],[229,527],[231,508],[245,485],[260,459],[272,425],[272,384],[259,347],[240,318],[219,293],[200,272],[186,255],[178,243],[176,234],[180,220],[192,201],[214,180],[237,152],[253,123],[180,54],[107,97],[115,115],[118,135],[114,162],[103,190],[93,224],[94,262],[105,298],[122,328],[141,355],[157,377],[170,395],[176,406],[179,413],[177,426],[169,447],[157,472],[139,500],[133,529],[180,578]],"tee":[180,532],"pins":[[180,98],[154,110],[204,92]],"green":{"cx":180,"cy":104,"rx":58,"ry":44},"sand":[[[226,305],[219,315],[204,319],[188,315],[182,305],[188,295],[204,291],[219,295]]],"deco":[[76,84,20,false],[298,114,23,false],[49,154,23,false],[271,184,26,true],[32,224,26,false],[254,254,20,false],[39,294,20,false],[261,324,23,false],[106,364,23,false],[328,394,26,false],[104,434,26,false],[326,464,20,true],[84,504,20,false],[306,534,23,false],[62,574,23,false],[284,604,26,false]],"props":[["sign",70,562],["bench",270,548]],"puddles":[[199,348,14]],"leaves":[[122,253,16]],"m":67},{"n":5,"par":3,"name":"나무섬 홀","poly":[[209,355],[205,332],[209,311],[214,289],[221,266],[227,243],[234,218],[239,192],[243,166],[256,139],[270,113],[200,54],[130,107],[142,129],[149,151],[144,173],[138,196],[133,220],[127,245],[123,270],[120,297],[117,324],[111,350],[160,392]],"tee":[160,346],"pins":[[200,98],[174,110],[224,92]],"green":{"cx":200,"cy":104,"rx":58,"ry":44},"trees":[[204,207,17]],"deco":[[96,84,20,false],[318,114,23,false],[79,154,23,false],[301,184,26,true],[78,224,26,false],[300,254,20,false],[48,294,20,false],[270,324,23,false],[56,364,23,false],[278,394,26,false]],"props":[["sign",270,376],["bench",70,362]],"puddles":[[174,255,14]],"leaves":[[177,183,16]],"m":40},{"n":6,"par":4,"name":"꺾이는 남쪽 홀","poly":[[291,567],[293,543],[289,519],[291,495],[291,471],[290,447],[288,423],[286,399],[283,375],[282,351],[281,325],[278,291],[263,255],[241,224],[219,197],[199,174],[189,154],[191,143],[198,132],[203,110],[130,54],[57,110],[62,136],[72,174],[97,211],[124,239],[149,263],[173,284],[190,302],[198,314],[199,328],[198,351],[197,375],[194,399],[192,423],[190,447],[189,471],[189,495],[191,519],[187,543],[189,567],[240,607]],"tee":[240,561],"pins":[[130,98],[104,110],[154,92]],"green":{"cx":130,"cy":104,"rx":58,"ry":44},"sand":[[[161,226],[154,236],[139,240],[123,236],[117,226],[123,216],[139,212],[154,216]]],"deco":[[26,84,20,false],[248,114,23,false],[13,154,23,false],[235,184,26,true],[74,224,26,false],[296,254,20,false],[117,294,20,false],[339,324,23,false],[136,364,23,false],[122,434,26,false],[344,464,20,true],[136,504,20,false],[122,574,23,false],[344,604,26,false]],"props":[["sign",130,591],["bench",330,577]],"puddles":[[240,375,14]],"leaves":[[193,254,16]],"m":75},{"n":7,"par":4,"name":"서쪽 담장 홀","poly":[[235,509],[236,484],[229,459],[226,435],[221,411],[217,388],[212,365],[209,343],[207,321],[208,299],[210,277],[214,255],[219,232],[223,209],[227,185],[238,161],[246,136],[253,112],[180,54],[107,108],[113,131],[119,153],[125,176],[124,199],[123,223],[123,247],[124,272],[125,297],[125,323],[126,348],[126,373],[126,397],[126,421],[126,444],[127,467],[123,489],[125,511],[180,550]],"tee":[180,504],"pins":[[180,98],[154,110],[204,92]],"green":{"cx":180,"cy":104,"rx":58,"ry":44},"sand":[[[230,159],[224,169],[208,173],[192,169],[186,159],[192,149],[208,145],[224,149]]],"deco":[[76,84,20,false],[298,114,23,false],[60,154,23,false],[282,184,26,true],[68,224,26,false],[290,254,20,false],[48,294,20,false],[270,324,23,false],[65,364,23,false],[287,394,26,false],[57,434,26,false],[279,464,20,true],[76,504,20,false],[298,534,23,false]],"props":[["sign",70,534],["bench",270,520]],"puddles":[[167,345,14]],"leaves":[[157,228,16]],"m":60},{"n":8,"par":3,"name":"숲 그늘 홀","poly":[[236,400],[230,378],[231,356],[233,333],[235,308],[237,281],[238,254],[237,226],[235,200],[233,175],[233,151],[244,128],[256,106],[180,54],[104,114],[118,139],[135,165],[143,189],[148,212],[152,233],[154,254],[152,274],[148,295],[143,318],[137,343],[132,369],[124,394],[180,437]],"tee":[180,391],"pins":[[180,98],[154,110],[204,92]],"green":{"cx":180,"cy":104,"rx":58,"ry":44},"trees":[[166,182,14],[214,212,12]],"deco":[[76,84,20,false],[298,114,23,false],[66,154,23,false],[288,184,26,true],[90,224,26,false],[312,254,20,false],[75,294,20,false],[297,324,23,false],[78,364,23,false],[300,394,26,false],[62,434,26,false],[284,464,20,true]],"props":[["sign",70,421],["bench",270,407]],"puddles":[[195,278,14]],"leaves":[[178,206,16]],"m":45},{"n":9,"par":4,"name":"안내센터 마지막 홀","poly":[[274,517],[271,492],[260,466],[255,440],[250,415],[245,389],[240,364],[236,339],[232,314],[227,289],[221,265],[215,242],[208,219],[201,197],[195,175],[198,152],[203,131],[211,108],[144,54],[77,112],[86,138],[96,164],[106,189],[109,215],[112,241],[117,267],[123,292],[130,316],[139,339],[148,362],[156,385],[164,408],[169,431],[173,453],[174,476],[168,498],[166,521],[220,559]],"tee":[220,513],"pins":[[144,98],[118,110],[168,92]],"green":{"cx":144,"cy":104,"rx":58,"ry":44},"water":[[[180,309],[175,318],[163,324],[148,324],[136,318],[132,309],[136,299],[148,294],[163,294],[175,299]]],"sand":[[[178,335],[172,344],[156,349],[141,344],[134,335],[141,325],[156,321],[172,325]]],"deco":[[40,84,20,false],[262,114,23,false],[28,154,23,false],[250,184,26,true],[54,224,26,false],[276,254,20,false],[58,294,20,false],[280,324,23,false],[92,364,23,false],[314,394,26,false],[94,434,26,false],[316,464,20,true],[116,504,20,false],[338,534,23,false]],"props":[["sign",110,543],["bench",310,529]],"puddles":[[192,351,14]],"leaves":[[146,230,16]],"m":66}];
+const COURSES={
+  home:{key:'home', name:'우리 동네 코스', sub:'연습하기 좋은 하천변 9홀', holes:HOME_HOLES, store:'opg_rounds', onboard:true},
+  jamsil:{key:'jamsil', name:'잠실 원정', sub:'잠실종합운동장 체육공원 · 9홀 513m · 현장 안내판 거리 그대로', holes:JAMSIL_HOLES, store:'opg_rounds_jamsil', onboard:false} };
+let COURSE=COURSES.home, HOLES=COURSE.holes;
+let PAR=HOLES.reduce((a,h)=>a+h.par,0);
+
+// ---------- date & seed ----------
+const now=new Date(); const pad=n=>String(n).padStart(2,'0');
+const TODAY=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+const YDAY=(()=>{const d=new Date(now); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());})();
+function hash(s){ let h=2166136261; for(const ch of s){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619)>>>0; } return h; }
+function dailyWeather(date){ const m=now.getMonth()+1; const h=hash(date+'wx');
+  const pool=['clear','clear','rain','wind','wind', (m>=10&&m<=11)?'leaf':'clear', (m===12||m<=2)?'frost':'clear']; return pool[h%pool.length]; }
+function dailyPins(date){ return HOLES.map(h=>hash(date+'pin'+h.n)%3); }
+function dailyWindDir(date){ return hash(date+'wd')%2===0 ? -1 : 1; }
+function loadRounds(){ try{ return JSON.parse(localStorage.getItem(COURSE.store)||'{}'); }catch(e){ return {}; } }
+function saveRound(date,rec){ try{ const r=loadRounds(); r[date]=rec; localStorage.setItem(COURSE.store,JSON.stringify(r)); }catch(e){} }
+
+// ---------- state ----------
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+const dpr=Math.min(window.devicePixelRatio||1,3); cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+function fitCanvas(){ const st=cv.parentElement.getBoundingClientRect(); const s=Math.min(st.width/W, st.height/H); cv.style.width=(W*s)+'px'; cv.style.height=(H*s)+'px'; }
+window.addEventListener('resize',fitCanvas); fitCanvas();
+const S={ mode:'today', wx:'clear', windDir:-1, ball:'normal', pins:dailyPins(TODAY), pinChoice:0, startHole:0, hi:0, strokes:[], pos:{x:0,y:0}, vel:{x:0,y:0}, moving:false,
+  lastSafe:{x:0,y:0}, drag:null, holeOver:false, cam:{x:0,y:0,s:1,ts:1,a:0,ta:0,tilt:TILT,ttilt:TILT}, putt:false, fx:[], lastHit:0, t:0, intro:null };
+const $=id=>document.getElementById(id); const msg=t=>{ $('msg').textContent=t; };
+const H_=()=>HOLES[S.hi];
+const cup=()=>H_().pins[S.pins[S.hi]];
+const windVec=()=>({x:WX[S.wx].wind*S.windDir, y:0});
+const dist=()=>H_().m || Math.round(Math.hypot(cup()[0]-H_().tee[0], cup()[1]-H_().tee[1])*M_PER_PX); // 실제 구장은 안내판 거리
+
+// ---------- geometry ----------
+function inPoly(p,poly){ let c=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const a=poly[i],b=poly[j]; if(((a[1]>p.y)!==(b[1]>p.y)) && (p.x < (b[0]-a[0])*(p.y-a[1])/(b[1]-a[1])+a[0])) c=!c; } return c; }
+function edges(poly){ const e=[]; for(let i=0;i<poly.length;i++) e.push([poly[i], poly[(i+1)%poly.length]]); return e; }
+// 벽은 그려지는 곡선 그대로 충돌한다 (모서리를 둥글게 깎은 선을 촘촘히 샘플링). 벽 두께의 절반만큼 공을 더 띄운다.
+const WALL=3.5;
+function smoothPts(P){ const n=P.length, out=[]; const mid=i=>[(P[i%n][0]+P[(i+1)%n][0])/2,(P[i%n][1]+P[(i+1)%n][1])/2];
+  for(let i=1;i<=n;i++){ const a=mid(i-1), c=P[i%n], b=mid(i); for(let k=0;k<6;k++){ const t=k/6, u=1-t; out.push([u*u*a[0]+2*u*t*c[0]+t*t*b[0], u*u*a[1]+2*u*t*c[1]+t*t*b[1]]); } } return out; }
+function wallEdges(h){ if(!h._we) h._we=edges(smoothPts(h.poly)); return h._we; }
+function inWater(h,p){ if(!h.water) return false; if(h.bridge && inPoly(p,h.bridge)) return false; return h.water.some(w=>inPoly(p,w)); }
+function inSand(h,p){ return !!(h.sand && h.sand.some(w=>inPoly(p,w))); }
+function inGreen(h,p){ const g=h.green; const dx=(p.x-g.cx)/g.rx, dy=(p.y-g.cy)/g.ry; return dx*dx+dy*dy<=1; }
+function slopeAt(h,p){ if(!h.slopes) return null; for(const s of h.slopes){ if(inPoly(p,s.poly)) return s.g; } return null; }
+
+// ---------- camera: no rotation, bottom-to-top always; ground tilted ----------
+const BALL_SY=H*0.72;
+function camTarget(){ const c=cup(); const dx=Math.abs(c[0]-S.pos.x), dy=c[1]-S.pos.y;
+  // 홀 전체를 담지 않는다. 공 주변을 크게 보여주고, 화면 밖 핀은 위쪽 표시로 알린다.
+  S.cam.ts = ZOOM; }
+function camTargetX(){ if(S.putt) return S.pos.x; const h=H_(); const xs=h.poly.map(p=>p[0]); const x0=Math.min(...xs)-10, x1=Math.max(...xs)+10; const s=S.cam.s;
+  if((x1-x0)*s<=W) return (x0+x1)/2; return Math.max(x0+W/2/s, Math.min(x1-W/2/s, S.pos.x)); }
+function camSnap(){ S.putt=false; S.cam.a=0; S.cam.ta=0; S.cam.tilt=TILT; S.cam.ttilt=TILT; camTarget(); S.cam.s=S.cam.ts; S.cam.y=S.pos.y; S.cam.x=camTargetX(); }
+// Putting camera: the one rotation. When the ball stops on the green, turn so the cup is straight up, zoom in, flatten the tilt a little.
+function puttCheck(){ const h=H_(); const c=cup(); const dx=c[0]-S.pos.x, dy=c[1]-S.pos.y;
+  const gr=h.green; const ex=(S.pos.x-gr.cx)/(gr.rx*1.7), ey=(S.pos.y-gr.cy)/(gr.ry*1.7); const near = (ex*ex+ey*ey<=1) || Math.hypot(dx,dy)<110; // 그린 근처(그린의 1.7배 범위 또는 컵 13m 안)
+  if(near && !S.holeOver){ const want=-Math.PI/2-Math.atan2(dy,dx); let diff=want-S.cam.ta; diff=Math.atan2(Math.sin(diff),Math.cos(diff));
+    if(!S.putt || Math.abs(diff)>Math.PI/2){ S.cam.ta=want; } S.putt=true; S.cam.ts=2.1; S.cam.ttilt=0.82; }
+  else { S.putt=false; S.cam.ta=0; S.cam.ttilt=TILT; camTarget(); } }
+function camUpdate(dt){ const k=1-Math.pow(S.moving?0.08:0.02,dt); S.cam.x+=(camTargetX()-S.cam.x)*k; S.cam.y+=(S.pos.y-S.cam.y)*k;
+  if(!S.moving){ const ka=1-Math.pow(0.30,dt); let da=S.cam.ta-S.cam.a; da=Math.atan2(Math.sin(da),Math.cos(da)); S.cam.a+=da*ka; S.cam.s+=(S.cam.ts-S.cam.s)*k; S.cam.tilt+=(S.cam.ttilt-S.cam.tilt)*k; } }
+// flyover: cup → tee, low angle rising to TILT
+let INTRO_DUR=2.8; const ease=k=>k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+function startIntro(){ const h=H_(), c=cup(); INTRO_DUR=Math.min(5.5, 2.2+Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])/260); S.intro={t:0}; }
+function endIntro(){ S.intro=null; msg(S.hi===S.startHole ? '오늘은 '+WX[S.wx].name+' · '+BALLS[S.ball].name : ''); }
+function introCam(){ const k=Math.min(1,S.intro.t/INTRO_DUR); const e=ease(k); const c=cup();
+  return { x: c[0]+(S.cam.x-c[0])*e, y: (c[1]+40)+(S.pos.y-(c[1]+40))*e, s: (S.cam.ts+0.6)-0.6*e, tilt: 0.42+(TILT-0.42)*e, sy: BALL_SY*0.5+(BALL_SY-BALL_SY*0.5)*e }; }
+function G(){ return S.intro ? Object.assign(introCam(),{a:0}) : {x:S.cam.x, y:S.cam.y, s:S.cam.s, tilt:S.cam.tilt, sy:BALL_SY, a:S.cam.a}; }
+function scr(p,g){ g=g||G(); const dx=p[0]-g.x, dy=p[1]-g.y; const ca=Math.cos(g.a), sa=Math.sin(g.a); const rx=dx*ca-dy*sa, ry=dx*sa+dy*ca; return { x: W/2 + g.s*rx, y: g.sy + g.s*g.tilt*ry }; }
+
+// ---------- sound ----------
+let AC=null, rollGain=null;
+function audioInit(){ if(AC) return; try{ AC=new (window.AudioContext||window.webkitAudioContext)(); const buf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1); const src=AC.createBufferSource(); src.buffer=buf; src.loop=true; const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=600; rollGain=AC.createGain(); rollGain.gain.value=0; src.connect(f); f.connect(rollGain); rollGain.connect(AC.destination); src.start(); }catch(e){ AC=null; } }
+function tone(freq,dur,type,vol){ if(!AC) return; const o=AC.createOscillator(), g=AC.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(freq,AC.currentTime); g.gain.setValueAtTime(vol||0.2,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+dur); }
+const sndHit=()=>tone(900,0.06,'square',0.12), sndCurb=b=>tone(b?420:300,0.09,'triangle',b?0.25:0.15), sndWater=()=>tone(220,0.3,'sine',0.2), sndStop=()=>tone(180,0.08,'sine',0.1);
+function sndCup(){ tone(660,0.08,'sine',0.2); setTimeout(()=>tone(440,0.25,'sine',0.25),70); setTimeout(()=>{ for(let i=0;i<6;i++) setTimeout(()=>tone(200+(i*37)%120,0.05,'square',0.05), i*60); },400); }
+function rollUpdate(){ if(!rollGain) return; rollGain.gain.value=Math.min(0.12, Math.hypot(S.vel.x,S.vel.y)/MAXV*0.12); }
+
+// ---------- physics (fixed step, no randomness) ----------
+const DT=1/120;
+function step(h){
+  const b=BALLS[S.ball], wx=WX[S.wx], wv=windVec(); const p=S.pos, v=S.vel;
+  let sp=Math.hypot(v.x,v.y); if(sp<=0) return; S.t+=DT;
+  v.x+=wv.x*b.wind*DT; v.y+=wv.y*b.wind*DT;
+  const g=slopeAt(h,p); if(g){ v.x+=g[0]*DT; v.y+=g[1]*DT; }
+  sp=Math.hypot(v.x,v.y);
+  let fr=FRICTION*wx.fr; if(inSand(h,p)) fr*=3.2; else if(inGreen(h,p)) fr*=GREEN_FR;
+  const dec=(sp<45?fr*2.2:fr)*DT; if(sp<=dec){ v.x=0; v.y=0; return; }
+  v.x-=v.x/sp*dec; v.y-=v.y/sp*dec; p.x+=v.x*DT; p.y+=v.y*DT;
+  for(const [a,c] of wallEdges(h)){ const ex=c[0]-a[0], ey=c[1]-a[1], L2=ex*ex+ey*ey; let t=((p.x-a[0])*ex+(p.y-a[1])*ey)/L2; t=Math.max(0,Math.min(1,t));
+    const qx=a[0]+ex*t, qy=a[1]+ey*t; const dx=p.x-qx, dy=p.y-qy; const d=Math.hypot(dx,dy); if(d<R+WALL && d>0) bounce(p,v,dx/d,dy/d,qx,qy,b); }
+  if(h.trees) for(const [tx,ty,tr] of h.trees){ const dx=p.x-tx, dy=p.y-ty; const d=Math.hypot(dx,dy); if(d<tr+R && d>0){ const nx=dx/d, ny=dy/d; p.x=tx+nx*(tr+R); p.y=ty+ny*(tr+R);
+      const vn=v.x*nx+v.y*ny; if(vn<0){ const e=Math.min(b.e,0.6); v.x-=(1+e)*vn*nx; v.y-=(1+e)*vn*ny; S.fx.push({x:p.x,y:p.y,t:S.t,big:false}); sndCurb(false); } } }
+  if(wx.puddles && h.puddles) for(const [px,py,pr] of h.puddles){ if(Math.hypot(p.x-px,p.y-py)<pr){ v.x=0;v.y=0; sndStop(); msg('물웅덩이에 섰어요'); return; } }
+  if(wx.leaves && h.leaves && !b.leaves) for(const [lx,ly,lr] of h.leaves){ if(Math.hypot(p.x-lx,p.y-ly)<lr){ v.x=0;v.y=0; sndStop(); msg('낙엽 더미에 섰어요'); return; } }
+  if(!b.floats && inWater(h,p)){ v.x=0; v.y=0; S.pos={...S.lastSafe}; S.moving=false; camTarget(); sndWater(); if(S.strokes[S.hi]>=h.par+3) holeOut(true); else msg('물에 빠졌어요. 제자리에서 다시 칩니다'); return; }
+  const c=cup(); if(Math.hypot(p.x-c[0],p.y-c[1])<CUP_R-2 && Math.hypot(v.x,v.y)<240){ v.x=0; v.y=0; S.pos={x:c[0],y:c[1]}; holeOut(false); }
+}
+function bounce(p,v,nx,ny,qx,qy,b){ p.x=qx+nx*(R+WALL); p.y=qy+ny*(R+WALL); const vn=v.x*nx+v.y*ny;
+  if(vn<0){ v.x-=(1+b.e)*vn*nx; v.y-=(1+b.e)*vn*ny; v.x*=0.97; v.y*=0.97; const s2=Math.hypot(v.x,v.y), cap=MAXV*1.15; if(s2>cap){ v.x*=cap/s2; v.y*=cap/s2; }
+    if(-vn>40 && S.t-S.lastHit>0.12){ S.lastHit=S.t; S.fx.push({x:p.x,y:p.y,t:S.t,big:S.ball==='rubber'}); sndCurb(S.ball==='rubber'); } } }
+function shoot(sdx,sdy){ const len=Math.min(Math.hypot(sdx,sdy),MAXDRAG); if(len<16) return false; const k=len/MAXDRAG*MAXV; const gx=sdx, gy=sdy/S.cam.tilt; const ca=Math.cos(S.cam.a), sa=Math.sin(S.cam.a); const wx=gx*ca+gy*sa, wy=-gx*sa+gy*ca; const l=Math.hypot(wx,wy);
+  S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); sndHit(); return true; }
+function holeOut(capped){ if(S.holeOver) return; S.holeOver=true; S.moving=false; const h=H_(), s=S.strokes[S.hi], diff=s-h.par; if(!capped) sndCup();
+  PT.event('hole_end',{c:COURSE.key,mode:S.mode,n:h.n,par:h.par,s:s,capped:!!capped,ball:S.ball,wx:S.wx});
+  const played=S.hi-S.startHole; const ctx={c:COURSE.key,n:h.n,s:s,par:h.par};
+  if(played===0) PT.pulse('howto',{q:'공 치는 법, 바로 알았나요?',opts:['바로 알았다','조금 헤맸다','잘 모르겠다'],delay:1300,ctx});
+  else if(played===3) PT.pulse('difficulty',{q:'지금까지 홀들, 쉬웠나요 어려웠나요?',opts:['너무 쉽다','딱 좋다','조금 어렵다','너무 어렵다'],delay:1300,ctx});
+  else if(played===6) PT.pulse('continue',{q:'여기까지 치고, 계속 치고 싶나요?',opts:['더 치고 싶다','그저 그렇다','그만하고 싶다'],delay:1300,ctx});
+  $('hdTitle').textContent=h.n+'번 홀 · '+h.name; $('hdScore').textContent=s+'타 (파 '+h.par+')';
+  $('hdNote').textContent= capped?'오늘은 여기까지. 다음 홀로 갑니다' : s===1?'홀인원!' : diff<0?'버디! 파보다 '+(-diff)+'타 적게' : diff===0?'파' : '파보다 '+diff+'타 많이';
+  $('next').textContent = S.hi===HOLES.length-1 ? '스코어 카드 보기' : '다음 홀'; setTimeout(()=>{ $('holeDone').hidden=false; }, 600); }
+
+// ---------- flow ----------
+// Onboarding: until 3 days of rounds are on the card, every day is clear with the center pin (A).
+function playedDays(){ if(!COURSE.onboard) return 99; return Object.keys(loadRounds()).filter(d=>d!==TODAY).length; }
+function todayWeather(){ return playedDays()<3 ? 'clear' : dailyWeather(TODAY); }
+function todayPins(){ return playedDays()<3 ? HOLES.map(()=>0) : dailyPins(TODAY); }
+function setupToday(){ $('courseSub').textContent=COURSE.sub; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins();
+  const rounds=loadRounds(); const played=rounds[TODAY]; $('todayLine').textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일 · '+WX[S.wx].name;
+  if(played){ $('todayNote').textContent='오늘 라운드는 쳤어요 · '+played.strokes.reduce((a,b)=>a+b,0)+'타 ('+BALLS[played.ball].name+')'; $('goToday').disabled=true; $('goToday').textContent='오늘의 라운드 (완료)'; }
+  else { $('todayNote').textContent=WX[S.wx].line; $('goToday').disabled=false; $('goToday').textContent='오늘의 라운드'; }
+  $('showCard').hidden=Object.keys(rounds).length===0; }
+function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0);
+  if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); }
+  else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
+  S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; loadHole(); }
+function loadHole(){ const h=H_(); S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
+  msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
+// 남은 거리: 공에서 핀까지. 실제 구장은 티에서 안내판 거리와 같아지도록 맞춘다.
+function remain(){ const h=H_(), c=cup(); const tee=Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])*M_PER_PX; const k= h.m ? h.m/Math.max(tee,1) : 1; return Math.max(0,Math.round(Math.hypot(c[0]-S.pos.x,c[1]-S.pos.y)*M_PER_PX*k)); }
+function updateHud(){ const h=H_(); $('hudL').innerHTML=h.n+'번 홀 <small>파 '+h.par+' · 핀까지 '+remain()+'m</small>'; $('hudR').textContent='지금 '+S.strokes[S.hi]+'타'; }
+function drawRemain(){ if(S.moving||S.drag||S.holeOver||S.intro) return; const p=scr([S.pos.x,S.pos.y]); const t='핀까지 '+remain()+'m';
+  ctx.font='800 18px "Noto Sans KR", sans-serif'; ctx.textAlign='center'; const w=ctx.measureText(t).width+20; const y=p.y+R+30;
+  ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(p.x-w/2,y-20,w,28,8) : ctx.rect(p.x-w/2,y-20,w,28); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(t,p.x,y); }
+$('next').onclick=()=>{ PT.closeBubble(); if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else finishRound(); };
+function finishRound(){ $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); if(S.mode==='today') saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx});
+  showCard(S.mode==='today'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
+function showCard(practice){
+  const rounds=loadRounds(); const today=rounds[TODAY], yday=rounds[YDAY]; const dates=Object.keys(rounds).sort();
+  const best=HOLES.map((h,i)=> dates.length? Math.min(...dates.map(d=>rounds[d].strokes[i])) : null);
+  const bestTot = dates.length ? Math.min(...dates.map(d=>rounds[d].strokes.reduce((a,b)=>a+b,0))) : null;
+  const cls=(s,par)=> s==null?'':(s<par?'under':s>par?'over':'');
+  const row=(name,arr,from)=>'<tr><td class="name">'+name+'</td>'+HOLES.map((h,i)=>{const s=arr&&(!from||i>=from)?arr[i]:null; return '<td class="'+cls(s,h.par)+'">'+(s==null?'·':s)+'</td>';}).join('')+
+    '<td class="tot '+(arr&&!from?cls(arr.reduce((a,b)=>a+b,0),PAR):'')+'">'+(arr?arr.reduce((a,b)=>a+b,0):'·')+'</td></tr>';
+  let html='<tr><th>홀</th>'+HOLES.map(h=>'<th>'+h.n+'</th>').join('')+'<th>합계</th></tr>';
+  html+='<tr><td class="name">파</td>'+HOLES.map(h=>'<td>'+h.par+'</td>').join('')+'<td class="tot">'+PAR+'</td></tr>';
+  if(practice) html+=row('연습', practice.strokes, practice.from);
+  html+=row('오늘', today?today.strokes:null); html+=row('어제', yday?yday.strokes:null);
+  html+='<tr><td class="name">홀별 베스트</td>'+HOLES.map((h,i)=>'<td class="'+(best[i]!=null?'best':'')+'">'+(best[i]==null?'·':best[i])+'</td>').join('')+'<td class="tot">'+(best[0]==null?'·':best.reduce((a,b)=>a+b,0))+'</td></tr>';
+  $('sc').innerHTML=html; $('paperTitle').textContent=COURSE.name+' · 스코어 카드';
+  $('endSub').textContent = practice ? '연습 · '+WX[practice.wx].name+' · '+BALLS[practice.ball].name+' (기록 안 남음)' :
+    today ? (now.getMonth()+1)+'월 '+now.getDate()+'일 · '+WX[today.wx].name+' · '+BALLS[today.ball].name+(bestTot!=null?' · 내 최고 '+bestTot+'타':'') : '아직 기록이 없어요';
+  $('again').textContent = (S.mode==='today' && today && !practice) ? '연습으로 한 번 더' : '다시 치기'; $('end').hidden=false; }
+$('again').onclick=()=>{ if(S.mode==='today'){ S.mode='practice'; S.startHole=0; } startRound(S.mode); };
+$('home').onclick=()=>{ $('end').hidden=true; setupToday(); $('start').hidden=false; };
+$('goToday').onclick=()=>startRound('today');
+$('goPractice').onclick=()=>{ $('start').hidden=true; $('practice').hidden=false; };
+$('backP').onclick=()=>{ $('practice').hidden=true; $('start').hidden=false; };
+$('goP').onclick=()=>startRound('practice');
+$('showCard').onclick=()=>{ S.mode='today'; $('start').hidden=true; showCard(null); };
+$('wxRow').innerHTML=WX_KEYS.map((k,i)=>'<button class="opt'+(i===0?' on':'')+'" data-wx="'+k+'">'+WX[k].name+'<span>'+WX[k].line+'</span></button>').join('');
+const pick=(sel,attr,fn)=>{ for(const b of document.querySelectorAll(sel)) b.onclick=()=>{ document.querySelectorAll(sel).forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset[attr]); }; };
+function buildHoleRow(){ $('holeRow').innerHTML=HOLES.map((h,i)=>'<button class="opt'+(i===0?' on':'')+'" data-hole="'+i+'" style="flex:1 1 60px;min-height:48px">'+h.n+'번</button>').join(''); S.startHole=0; pick('#holeRow .opt','hole',v=>S.startHole=+v); }
+function setCourse(k){ COURSE=COURSES[k]; HOLES=COURSE.holes; PAR=HOLES.reduce((a,h)=>a+h.par,0); buildHoleRow(); setupToday(); S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; }
+buildHoleRow();
+pick('#wxRow .opt','wx',v=>S.wx=v); pick('#pinRow .opt','pin',v=>S.pinChoice=+v); pick('#ballRow .opt','ball',v=>S.ball=v); pick('#courseRow .opt','course',v=>setCourse(v));
+
+// ---------- input ----------
+function pt(ev){ const r=cv.getBoundingClientRect(); return {x:(ev.clientX-r.left)*W/r.width, y:(ev.clientY-r.top)*H/r.height}; }
+cv.addEventListener('pointerdown',ev=>{ audioInit(); if(S.intro){ endIntro(); return; } if(S.moving||S.holeOver) return; cv.setPointerCapture(ev.pointerId); const p=pt(ev); S.drag={sx:p.x,sy:p.y,x:p.x,y:p.y}; });
+cv.addEventListener('pointermove',ev=>{ if(!S.drag) return; const p=pt(ev); S.drag.x=p.x; S.drag.y=p.y; });
+cv.addEventListener('pointerup',ev=>{ if(!S.drag) return; const d=S.drag; S.drag=null; if(!shoot(d.x-d.sx,d.y-d.sy)) msg('짧게 놓아서 취소됐어요'); });
+cv.addEventListener('pointercancel',()=>{ S.drag=null; });
+
+// ---------- render: 3/4 view. Ground squashed by tilt; objects stand upright in screen space. ----------
+function groundBegin(g){ ctx.save(); ctx.translate(W/2,g.sy); ctx.scale(g.s, g.s*g.tilt); ctx.rotate(g.a); ctx.translate(-g.x,-g.y); }
+function path(poly){ ctx.beginPath(); poly.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath(); }
+function smooth(poly){ ctx.beginPath(); const n=poly.length; for(let i=0;i<n;i++){ const a=poly[i], b=poly[(i+1)%n]; const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2; if(i===0) ctx.moveTo(mx,my); else ctx.quadraticCurveTo(a[0],a[1],mx,my); }
+  const a=poly[0], b=poly[1]; ctx.quadraticCurveTo(a[0],a[1],(a[0]+b[0])/2,(a[1]+b[1])/2); ctx.closePath(); }
+let roughPattern=null;
+function makeRough(){ const pc=document.createElement('canvas'); pc.width=64; pc.height=64; const g=pc.getContext('2d'); g.fillStyle=THEME.rough; g.fillRect(0,0,64,64);
+  let seed=11; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
+  for(let i=0;i<140;i++){ g.strokeStyle= i%3? 'rgba(0,0,0,0.12)':'rgba(255,255,255,0.08)'; g.lineWidth=1.2; const x=rnd()*64, y=rnd()*64; g.beginPath(); g.moveTo(x,y); g.lineTo(x+(rnd()-0.5)*4, y-3-rnd()*4); g.stroke(); }
+  roughPattern=ctx.createPattern(pc,'repeat'); }
+function bbox(poly){ const xs=poly.map(p=>p[0]), ys=poly.map(p=>p[1]); return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]; }
+function drawGround(h,g){
+  const wx=WX[S.wx]; groundBegin(g);
+  if(!roughPattern) makeRough(); ctx.fillStyle=roughPattern; ctx.fillRect(-W,-H,3*W,4*H);
+  ctx.save(); smooth(h.poly); ctx.clip();
+  ctx.fillStyle= wx.frost?THEME.fairwayFrost : wx.puddles?THEME.fairwayWet : THEME.fairway; ctx.fillRect(-W,-H,3*W,4*H);
+  ctx.fillStyle=THEME.fairwayStripe; for(let y=-H;y<3*H;y+=26) ctx.fillRect(-W,y,3*W,13);
+  if(h.slopes) for(const s of h.slopes){ ctx.save(); path(s.poly); ctx.clip(); ctx.strokeStyle='rgba(255,255,255,0.28)'; ctx.lineWidth=3; ctx.lineCap='round';
+    const L=Math.hypot(s.g[0],s.g[1]); const ux=s.g[0]/L, uy=s.g[1]/L; const px=-uy, py=ux; const [x0,y0,x1,y1]=bbox(s.poly);
+    for(let y=y0+20;y<y1;y+=44) for(let x=x0+20;x<x1;x+=44){ ctx.beginPath(); ctx.moveTo(x-px*7-ux*5,y-py*7-uy*5); ctx.lineTo(x+ux*6,y+uy*6); ctx.lineTo(x+px*7-ux*5,y+py*7-uy*5); ctx.stroke(); } ctx.restore(); }
+  const gr=h.green; ctx.beginPath(); ctx.ellipse(gr.cx,gr.cy,gr.rx,gr.ry,0,0,Math.PI*2); ctx.fillStyle= wx.frost?THEME.greenFrost:THEME.green; ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.ellipse(gr.cx,gr.cy,gr.rx,gr.ry,0,0,Math.PI*2); ctx.clip(); ctx.fillStyle=THEME.greenStripe; for(let x=gr.cx-gr.rx;x<gr.cx+gr.rx;x+=14) ctx.fillRect(x,gr.cy-gr.ry,7,gr.ry*2); ctx.restore();
+  ctx.beginPath(); ctx.ellipse(gr.cx,gr.cy,gr.rx,gr.ry,0,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=2; ctx.stroke();
+  if(h.sand) for(const sd of h.sand){ smooth(sd); ctx.fillStyle=THEME.sand; ctx.fill(); ctx.fillStyle=THEME.sandDot; const [x0,y0,x1,y1]=bbox(sd); for(let y=y0+8;y<y1;y+=16) for(let x=x0+8;x<x1;x+=18){ ctx.beginPath(); ctx.arc(x+((y/16)%2)*6,y,1.6,0,Math.PI*2); ctx.fill(); } }
+  if(wx.puddles && h.puddles) for(const [x,y,r] of h.puddles){ ctx.beginPath(); ctx.ellipse(x,y,r+4,r,0,0,Math.PI*2); ctx.fillStyle=THEME.puddle; ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=1.5; ctx.stroke(); }
+  if(wx.leaves && h.leaves) for(const [x,y,r] of h.leaves){ for(let i=0;i<9;i++){ const a=i*0.7, rr=r*0.7*((i%3)+1)/3; ctx.beginPath(); ctx.ellipse(x+Math.cos(a)*rr, y+Math.sin(a)*rr, 5, 3, a, 0, Math.PI*2); ctx.fillStyle= i%2?THEME.leaf1:THEME.leaf2; ctx.fill(); } }
+  ctx.restore();
+  if(h.water){ for(const w of h.water){ smooth(w); ctx.fillStyle=THEME.waterDeep; ctx.fill(); ctx.save(); smooth(w); ctx.clip(); const [x0,y0,x1,y1]=bbox(w); ctx.fillStyle=THEME.water; ctx.fillRect(x0,y0+(y1-y0)*0.3,x1-x0,(y1-y0)*0.4);
+      ctx.strokeStyle=THEME.waterLine; ctx.lineWidth=2; for(let y=y0+12;y<y1-6;y+=14){ ctx.beginPath(); ctx.moveTo(x0+8,y); for(let x=x0+8;x<x1-8;x+=14) ctx.quadraticCurveTo(x+7,y-5,x+14,y); ctx.stroke(); } ctx.restore(); }
+    if(h.stones) for(const [x,y,r] of h.stones){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle=THEME.stone; ctx.fill(); }
+    if(h.bridge){ const b=h.bridge; path(b); ctx.fillStyle=THEME.bridge; ctx.fill(); ctx.strokeStyle=THEME.bridgeSlat; ctx.lineWidth=2; for(let y=b[0][1]+6;y<b[2][1];y+=8){ ctx.beginPath(); ctx.moveTo(b[0][0]+3,y); ctx.lineTo(b[1][0]-3,y); ctx.stroke(); } } }
+  ctx.fillStyle='rgba(0,0,0,0.22)';
+  for(const [x,y,r] of (h.trees||[])){ ctx.beginPath(); ctx.ellipse(x+r*0.5,y+r*0.35,r*1.1,r*0.6,0,0,Math.PI*2); ctx.fill(); }
+  for(const [x,y,r] of (h.deco||[])){ ctx.beginPath(); ctx.ellipse(x+r*0.5,y+r*0.35,r*1.1,r*0.6,0,0,Math.PI*2); ctx.fill(); }
+  const [tx,ty]=h.tee; ctx.fillStyle=THEME.tee; ctx.fillRect(tx-22,ty-12,44,24); ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1.5; ctx.strokeRect(tx-22,ty-12,44,24); ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fillRect(tx-14,ty-1,28,2);
+  h.pins.forEach(([x,y],i)=>{ if(i===S.pins[S.hi]) return; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fillStyle=THEME.pinMark; ctx.fill(); });
+  const [cx,cy]=cup(); ctx.beginPath(); ctx.arc(cx,cy,CUP_R,0,Math.PI*2); ctx.fillStyle=THEME.cup; ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle=THEME.cupRim; ctx.stroke();
+  const p=S.pos; ctx.beginPath(); ctx.ellipse(p.x+2,p.y+3,R,R*0.8,0,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fill();
+  ctx.restore();
+  // wall
+  const hWall=5*g.s, wWall=7*g.s; ctx.lineJoin='round'; ctx.lineCap='round';
+  for(let i=hWall;i>=0;i-=1){ ctx.save(); ctx.translate(0,-i); groundBegin(g); smooth(h.poly); ctx.restore(); ctx.restore(); ctx.lineWidth=wWall; ctx.strokeStyle= i>hWall-1.5 ? THEME.wallTop : (i<2 ? THEME.wallBase : THEME.wall); ctx.stroke(); }
+  ctx.save(); ctx.translate(0,-hWall); groundBegin(g); smooth(h.poly); ctx.restore(); ctx.restore(); ctx.lineWidth=wWall*0.45; ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.stroke();
+}
+function drawTreeUp(x,y,r,autumn,g){ const p=scr([x,y],g), s=g.s; const d= autumn?THEME.autumn:THEME.treeDark, l= autumn?THEME.autumnLight:THEME.treeLight;
+  ctx.fillStyle=THEME.trunk; ctx.fillRect(p.x-3*s, p.y-r*1.2*s, 6*s, r*1.2*s); const cy=p.y-r*1.5*s;
+  for(const [ox,oy,rr] of [[0,0,1],[-0.5,-0.2,0.72],[0.5,-0.15,0.72],[0,-0.55,0.68],[-0.3,-0.75,0.5],[0.35,-0.7,0.5]]){ ctx.beginPath(); ctx.arc(p.x+ox*r*s, cy+oy*r*s, rr*r*s,0,Math.PI*2); ctx.fillStyle=d; ctx.fill(); }
+  for(const [ox,oy,rr] of [[-0.25,-0.45,0.45],[0.3,-0.6,0.4]]){ ctx.beginPath(); ctx.arc(p.x+ox*r*s, cy+oy*r*s, rr*r*s,0,Math.PI*2); ctx.fillStyle=l; ctx.fill(); } }
+function drawRailsUp(b,g){ const s=g.s, hh=12*s; for(const x of [b[0][0]+2, b[1][0]-2]){ const a=scr([x,b[0][1]],g), c=scr([x,b[2][1]],g);
+  ctx.strokeStyle=THEME.rail; ctx.lineWidth=2.5*s; ctx.beginPath(); ctx.moveTo(a.x,a.y-hh); ctx.lineTo(c.x,c.y-hh); ctx.stroke(); ctx.lineWidth=1.5*s; ctx.beginPath(); ctx.moveTo(a.x,a.y-hh*0.5); ctx.lineTo(c.x,c.y-hh*0.5); ctx.stroke();
+  for(let y=b[0][1]+2;y<=b[2][1]-2;y+=14){ const q=scr([x,y],g); ctx.lineWidth=2.5*s; ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(q.x,q.y-hh); ctx.stroke(); } } }
+function drawFlagUp(h,g){ const c=cup(); const p=scr(c,g), s=g.s, hh=52*s; ctx.strokeStyle='#f4f4ee'; ctx.lineWidth=3*s; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x,p.y-hh); ctx.stroke();
+  ctx.fillStyle=THEME.flag; ctx.beginPath(); ctx.moveTo(p.x,p.y-hh); ctx.lineTo(p.x+24*s,p.y-hh+9*s); ctx.lineTo(p.x,p.y-hh+18*s); ctx.closePath(); ctx.fill();
+  ctx.font='800 '+Math.round(11*s)+'px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.fillText(String(h.n), p.x+5*s, p.y-hh+13*s); }
+function drawProp(h,[t,x,y],g){ const p=scr([x,y],g), s=g.s;
+  if(t==='bench'){ ctx.fillStyle=THEME.benchDark; ctx.fillRect(p.x-18*s,p.y-14*s,4*s,14*s); ctx.fillRect(p.x+14*s,p.y-14*s,4*s,14*s); ctx.fillStyle=THEME.bench; ctx.fillRect(p.x-20*s,p.y-8*s,40*s,5*s); ctx.fillRect(p.x-20*s,p.y-22*s,40*s,5*s); ctx.fillStyle=THEME.benchDark; ctx.fillRect(p.x-20*s,p.y-16*s,40*s,3*s); }
+  else if(t==='bin'){ ctx.fillStyle=THEME.bin; ctx.fillRect(p.x-6*s,p.y-18*s,12*s,18*s); ctx.fillStyle='#3a5a47'; ctx.fillRect(p.x-7*s,p.y-21*s,14*s,4*s); ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.fillRect(p.x-6*s,p.y-18*s,3*s,18*s); }
+  else if(t==='sign'){ ctx.fillStyle=THEME.signPost; ctx.fillRect(p.x-2*s,p.y-30*s,4*s,30*s); ctx.fillStyle=THEME.sign; ctx.fillRect(p.x-36*s,p.y-50*s,72*s,22*s);
+    ctx.font='800 '+Math.round(14*s)+'px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(h.n+'번 · 파'+h.par+' · '+dist()+'m', p.x, p.y-34*s); } }
+function drawBallUp(g){ const b=BALLS[S.ball], p=scr([S.pos.x,S.pos.y],g), s=g.s, r=R*s;
+  ctx.beginPath(); ctx.arc(p.x,p.y-r*0.6,r,0,Math.PI*2); ctx.fillStyle=b.color; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.stroke();
+  if(S.ball==='rubber'){ ctx.beginPath(); ctx.arc(p.x-2.5*s,p.y-r*0.6-2.5*s,2.2*s,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.fill(); }
+  if(S.ball==='cork'){ ctx.fillStyle='rgba(90,60,20,0.35)'; for(const [ox,oy] of [[-3,-2],[2,-3],[0,3],[-3,3],[3,1]]){ ctx.beginPath(); ctx.arc(p.x+ox*s,p.y-r*0.6+oy*s,1*s,0,Math.PI*2); ctx.fill(); } } }
+function drawStanding(h,g){ const items=[];
+  (h.trees||[]).forEach(([x,y,r])=>items.push({y, f:()=>drawTreeUp(x,y,r,false,g)}));
+  (h.deco||[]).forEach(([x,y,r,au])=>items.push({y, f:()=>drawTreeUp(x,y,r,au,g)}));
+  if(h.bridge) items.push({y:h.bridge[2][1], f:()=>drawRailsUp(h.bridge,g)});
+  items.push({y:cup()[1], f:()=>drawFlagUp(h,g)});
+  (h.props||[]).forEach(pr=>items.push({y:pr[2], f:()=>drawProp(h,pr,g)}));
+  items.push({y:S.pos.y+0.1, f:()=>drawBallUp(g)});
+  items.sort((a,b)=>a.y-b.y); items.forEach(i=>i.f()); }
+function drawWind(){ const w=windVec(); const x=W-44, y=30; ctx.strokeStyle='#f4f4ee'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+44); ctx.stroke(); ctx.fillStyle='#f7c948';
+  if(w.x===0){ ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+8,y+10); ctx.lineTo(x,y+18); ctx.closePath(); ctx.fill(); return; }
+  const a=S.cam.a; const vx=w.x*Math.cos(a), vy=w.x*Math.sin(a); const L=Math.hypot(vx,vy); const ux=vx/L, uy=vy/L;
+  ctx.beginPath(); ctx.moveTo(x,y+2); ctx.lineTo(x+ux*30, y+10+uy*30); ctx.lineTo(x,y+18); ctx.closePath(); ctx.fill();
+  ctx.font='800 18px "Noto Sans KR", sans-serif'; ctx.fillStyle='#ffffff'; ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=4; ctx.textAlign='right'; ctx.strokeText('바람', x-18, y+16); ctx.fillText('바람', x-18, y+16); }
+function drawFx(){ S.fx=S.fx.filter(f=>S.t-f.t<0.6); for(const f of S.fx){ const k=(S.t-f.t)/0.6; const sp=scr([f.x,f.y]); const r=(f.big?14:8)+k*(f.big?44:18);
+  ctx.beginPath(); ctx.ellipse(sp.x,sp.y,r,r*S.cam.tilt,0,0,Math.PI*2); ctx.lineWidth=f.big?5:3; ctx.strokeStyle=(f.big?'rgba(255,230,90,':'rgba(255,255,255,')+(1-k)*0.9+')'; ctx.stroke();
+  if(f.big && k<0.5){ ctx.font='800 26px "Noto Sans KR", sans-serif'; ctx.textAlign='center'; ctx.lineWidth=5; ctx.strokeStyle='rgba(0,0,0,0.7)'; ctx.fillStyle='#ffe55a'; ctx.strokeText('통!', sp.x, sp.y-28-k*30); ctx.fillText('통!', sp.x, sp.y-28-k*30); } } }
+function drawAim(){ if(!S.drag) return; const d=S.drag; const dx=d.x-d.sx, dy=d.y-d.sy; const len=Math.hypot(dx,dy); if(len<4) return;
+  const L=Math.min(len,MAXDRAG); const nx=-dx/len, ny=-dy/len; const p=scr([S.pos.x,S.pos.y]);
+  ctx.setLineDash([6,8]); ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.moveTo(p.x+nx*(R+4),p.y+ny*(R+4)); ctx.lineTo(p.x+nx*(R+4+L*0.6),p.y+ny*(R+4+L*0.6)); ctx.stroke(); ctx.setLineDash([]);
+  const bx=p.x-30, by=p.y+R+16; ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(bx,by,60,10); ctx.fillStyle= L<MAXDRAG*0.98 ? '#f7c948' : '#e23b2e'; ctx.fillRect(bx,by,60*(L/MAXDRAG),10);
+  ctx.font='800 16px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=4; ctx.textAlign='center';
+  const label= len<16 ? '취소' : '이 세기 '+Math.round(Math.pow(L/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX)+'m · 남은 '+remain()+'m'; ctx.strokeText(label, p.x, by+30); ctx.fillText(label, p.x, by+30); }
+function drawPinMarker(g){ if(S.intro) return; const p=scr(cup(),g); if(p.y>46 && p.x>20 && p.x<W-20) return;
+  const x=Math.max(40,Math.min(W-40,p.x)), y=26; const t='핀 '+remain()+'m';
+  ctx.font='800 17px "Noto Sans KR", sans-serif'; ctx.textAlign='center'; const w=ctx.measureText(t).width+34;
+  ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x-w/2,y-14,w,30,15) : ctx.rect(x-w/2,y-14,w,30); ctx.fill();
+  ctx.fillStyle='#e23b2e'; ctx.beginPath(); ctx.moveTo(x-w/2+12,y+6); ctx.lineTo(x-w/2+18,y-6); ctx.lineTo(x-w/2+24,y+6); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.fillText(t,x+6,y+7); }
+function render(){ const h=H_(), g=G(); ctx.fillStyle=THEME.rough; ctx.fillRect(0,0,W,H);
+  drawGround(h,g); drawStanding(h,g); drawPinMarker(g);
+  if(WX[S.wx].frost){ ctx.fillStyle='rgba(220,235,255,0.10)'; ctx.fillRect(0,0,W,H); }
+  if(S.intro){ ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,H-46,W,46); ctx.font='800 17px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText('화면을 누르면 바로 시작', W/2, H-17); }
+  else { drawFx(); drawWind(); drawAim(); drawRemain(); } }
+
+// ---------- loop ----------
+let last=performance.now(), acc=0;
+function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt; const h=H_();
+  while(acc>=DT){ acc-=DT; if(S.moving && !S.holeOver){ step(h); if(S.vel.x===0 && S.vel.y===0 && S.moving){ S.moving=false; if(!S.holeOver && S.strokes[S.hi]>=h.par+3) holeOut(true); puttCheck(); updateHud(); } } }
+  if(S.intro){ S.intro.t+=dt; if(S.intro.t>=INTRO_DUR+0.4) endIntro(); }
+  rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
+// ---------- playtest ----------
+PT.init({game:'parkgolf', build:'v15', lang:'ko', endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+const SV={}; let svDone=false;
+function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
+  document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.textContent; }); });
+  $('survey').hidden=false; }
+$('svSend').onclick=()=>{ const ans=Object.assign({name:$('svName').value.trim().slice(0,30), note:$('svNote').value.trim().slice(0,1500), course:COURSE.key}, SV);
+  $('svSend').disabled=true; $('svMsg').textContent='보내는 중…';
+  PT.survey('end',ans).then(ok=>{ if(ok){ svDone=true; $('survey').hidden=true; $('svMsg').textContent=''; msg('고마워요. 잘 받았습니다.'); $('endSub').textContent='설문 잘 받았습니다. 고마워요.'; }
+    else { $('svSend').disabled=false; const txt='[오늘의 파크골프 설문] '+Object.entries(ans).map(([k,v])=>k+': '+v).join(' / ');
+      $('svMsg').innerHTML='전송이 안 됐어요. 아래 버튼으로 카톡·라인에 보내 주세요.<br><a class="btn ghost" style="display:block;text-align:center;text-decoration:none;margin-top:8px;line-height:32px" target="_blank" rel="noopener" href="https://line.me/R/share?text='+encodeURIComponent(txt)+'">라인으로 보내기</a>'; } }); };
+S.strokes=HOLES.map(()=>0); setupToday(); loadHole(); S.intro=null; requestAnimationFrame(loop);
+})();
+</script>
+
+</body></html>
