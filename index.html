@@ -120,6 +120,196 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
 </div>
 
 <script>
+/* i18n: Thai overlay. Korean stays the source; when LANG==='th' every Korean text node and canvas label is translated on the fly. */
+(function(){
+  var q = location.search + location.hash;
+  var forced = /[?&#]lang=(ko|th)\b/.exec(q);
+  var LANG = forced ? forced[1] : (/^th\b/i.test(navigator.language || '') ? 'th' : 'ko');
+  window.LANG = LANG;
+  window.tr = function(s){ return s; };
+  if(LANG !== 'th') return;
+  document.documentElement.lang = 'th';
+  var L = {
+    '잠실종합운동장 체육공원 · 9홀 513m · 현장 안내판 거리 그대로':'สวนกีฬาสนามกีฬารวมจัมชิล (โซล) · 9 หลุม 513 ม. · ระยะตามป้ายในสนามจริง',
+    '화면 아무 데나 누르고 뒤로 당겼다 놓으면 칩니다 · 파+3이면 다음 홀':'แตะตรงไหนก็ได้ ลากถอยหลังแล้วปล่อยเพื่อตี · ครบพาร์+3 ไปหลุมต่อไปเอง',
+    '전송이 안 됐어요. 아래 버튼으로 카톡·라인에 보내 주세요.':'ส่งไม่สำเร็จ กดปุ่มด้านล่างเพื่อส่งทาง LINE',
+    '하고 싶은 말 (어색한 말, 불편한 곳 무엇이든)':'อยากบอกอะไรไหม (คำแปลก ๆ จุดที่ใช้ยาก อะไรก็ได้)',
+    '친구에게 권한다면 (1 아니다 ~ 5 꼭)':'จะแนะนำให้เพื่อนไหม (1 ไม่เลย ~ 5 แน่นอน)',
+    '오늘의 라운드는 하루 한 번 기록에 남아요':'รอบของวันนี้บันทึกสถิติได้วันละครั้ง',
+    '잔디가 젖어 덜 굴러요. 물웅덩이 조심':'หญ้าเปียก ลูกกลิ้งน้อยลง ระวังแอ่งน้ำ',
+    '물에 빠졌어요. 제자리에서 다시 칩니다':'ลูกตกน้ำ ตีใหม่จากจุดเดิม',
+    '지금까지 홀들, 쉬웠나요 어려웠나요?':'หลุมที่ผ่านมา ง่ายหรือยาก?',
+    '여기까지 치고, 계속 치고 싶나요?':'เล่นมาถึงตรงนี้ อยากเล่นต่อไหม?',
+    '오늘은 여기까지. 다음 홀로 갑니다':'หลุมนี้พอแค่นี้ ไปหลุมต่อไป',
+    '낙엽 더미에 들어가면 멈춰요':'ถ้าเข้ากองใบไม้ ลูกจะหยุด',
+    '연습하기 좋은 하천변 9홀':'9 หลุมริมคลอง เหมาะกับการฝึก',
+    '물 위를 건너요 · 바람에 날려요':'ลอยข้ามน้ำได้ · ปลิวตามลม',
+    '설문 잘 받았습니다. 고마워요.':'ได้รับแบบสอบถามแล้ว ขอบคุณมาก',
+    '고마워요. 잘 받았습니다.':'ขอบคุณ ได้รับแล้ว',
+    '한 바퀴 쳐 주셔서 고마워요':'ขอบคุณที่เล่นจนจบรอบ',
+    '짧게 여섯 가지만 알려 주세요.':'ช่วยตอบสั้น ๆ แค่ 6 ข้อ',
+    '공 세 개, 차이가 느껴졌나요':'ลูก 3 แบบ รู้สึกต่างกันไหม',
+    '공 치는 법, 바로 알았나요?':'เข้าใจวิธีตีทันทีไหม?',
+    '벽에 맞으면 속도가 붙어요':'ชนขอบแล้วเด้งแรงขึ้น',
+    '깃발 쪽으로 공이 밀려요':'ลมพัดลูกไปทางธงลม',
+    '짧게 놓아서 취소됐어요':'ลากสั้นไป ยกเลิกการตี',
+    '연습 라운드 (날씨 고르기)':'รอบฝึก (เลือกสภาพอากาศ)',
+    '동네 하천변 · 늦가을':'ริมคลองข้างบ้าน · ปลายฤดูใบไม้ร่วง',
+    '안내센터 마지막 홀':'หลุมสุดท้ายหน้าศูนย์บริการ',
+    '화면을 누르면 바로 시작':'แตะหน้าจอเพื่อเริ่มเลย',
+    '내일 또 치실 것 같나요':'พรุ่งนี้จะเล่นอีกไหม',
+    '오늘의 라운드 (완료)':'รอบของวันนี้ (เล่นแล้ว)',
+    '오늘 라운드는 쳤어요':'วันนี้เล่นรอบแล้ว',
+    '얼어서 더 미끄러워요':'พื้นแข็ง ลูกไหลไกลขึ้น',
+    '[오늘의 파크골프 설문]':'[แบบสอบถาม พาร์คกอล์ฟวันนี้]',
+    '아직 기록이 없어요':'ยังไม่มีสถิติ',
+    '물웅덩이에 섰어요':'ลูกหยุดในแอ่งน้ำ',
+    '낙엽 더미에 섰어요':'ลูกหยุดในกองใบไม้',
+    '한 번에 노리는 홀':'หลุมลุ้นโฮลอินวัน',
+    '꺾이는 남쪽 홀':'หลุมหักมุมทิศใต้',
+    '연습으로 한 번 더':'ฝึกอีกรอบ',
+    '오늘의 파크골프':'พาร์คกอล์ฟวันนี้',
+    '라인으로 보내기':'ส่งทาง LINE',
+    '바로 알았다':'เข้าใจทันที',
+    '조금 헤맸다':'งงนิดหน่อย',
+    '잘 모르겠다':'ยังไม่ค่อยเข้าใจ',
+    '조금 어렵다':'ยากนิดหน่อย',
+    '너무 어렵다':'ยากเกินไป',
+    '더 치고 싶다':'อยากเล่นต่อ',
+    '그만하고 싶다':'อยากพอแล้ว',
+    '일반공만 쳤다':'ตีแต่ลูกธรรมดา',
+    '안 칠 것 같다':'คงไม่เล่น',
+    '서쪽 담장 홀':'หลุมกำแพงทิศตะวันตก',
+    '우리 동네 코스':'สนามข้างบ้าน',
+    '늘 치던 그 공':'ลูกที่ตีประจำ',
+    '기록 안 남음':'ไม่บันทึก',
+    '기록에는 안 남아요':'ไม่บันทึกสถิติ',
+    '스코어 카드 보기':'ดูสกอร์การ์ด',
+    '이름이나 별명':'ชื่อหรือชื่อเล่น',
+    '제일 헤맨 홀은':'หลุมที่ยากที่สุด',
+    '실제 구장 9홀':'สนามจริง 9 หลุม',
+    '평소 코스예요':'สนามตามปกติ',
+    '그저 그렇다':'เฉย ๆ',
+    '느티나무 길':'ทางต้นไม้ใหญ่',
+    '짧은 대각선':'ทแยงสั้น',
+    '나무섬 홀':'หลุมเกาะต้นไม้',
+    '숲 그늘 홀':'หลุมร่มไม้',
+    '홀별 베스트':'ดีที่สุดรายหลุม',
+    '스코어 카드':'สกอร์การ์ด',
+    '오늘의 라운드':'รอบของวันนี้',
+    '연습 라운드':'รอบฝึก',
+    '하천변 9홀':'9 หลุมริมคลอง',
+    '마지막 홀':'หลุมสุดท้าย',
+    '지금 기분은':'ตอนนี้รู้สึกอย่างไร',
+    '보내는 중…':'กำลังส่ง…',
+    '오늘의 공':'ลูกของวันนี้',
+    '너무 쉽다':'ง่ายเกินไป',
+    '딱 좋다':'กำลังดี',
+    '잠실 원정':'เยือนสนามจัมชิล',
+    '우리 동네':'สนามข้างบ้าน',
+    '연습 시작':'เริ่มฝึก',
+    '다시 치기':'เล่นอีกครั้ง',
+    '돌아가기':'กลับ',
+    '처음으로':'หน้าแรก',
+    '다음 홀':'หลุมต่อไป',
+    '시작 홀':'หลุมเริ่มต้น',
+    '핀 위치':'ตำแหน่งธง',
+    '오늘 자리':'ตำแหน่งวันนี้',
+    '두 번째':'ตำแหน่งที่ 2',
+    '세 번째':'ตำแหน่งที่ 3',
+    '연습 홀':'หลุมฝึก',
+    '꺾임 홀':'หลุมหักมุม',
+    '개울 홀':'หลุมลำธาร',
+    '내리막 홀':'หลุมลงเนิน',
+    '통로 홀':'หลุมช่องแคบ',
+    '모래 홀':'หลุมทราย',
+    '연못 홀':'หลุมบ่อน้ำ',
+    'S자 홀':'หลุมรูปตัว S',
+    '긴 홀':'หลุมยาว',
+    '코르크공':'ลูกไม้ก๊อก',
+    '일반공':'ลูกธรรมดา',
+    '고무공':'ลูกยาง',
+    '비 온 뒤':'หลังฝนตก',
+    '홀인원!':'โฮลอินวัน!',
+    '편안하다':'ผ่อนคลาย',
+    '답답하다':'หงุดหงิด',
+    '지루하다':'น่าเบื่อ',
+    '재밌다':'สนุก',
+    '어렵다':'ยาก',
+    '확실히':'ชัดเจน',
+    '모르겠다':'ไม่แน่ใจ',
+    '내일도':'เล่นแน่',
+    '보내기':'ส่ง',
+    '고마워요.':'ขอบคุณ',
+    '맑음':'แดดดี',
+    '바람':'มีลม',
+    '낙엽':'ใบไม้ร่วง',
+    '서리':'น้ำค้างแข็ง',
+    '날씨':'สภาพอากาศ',
+    '가끔':'บางครั้ง',
+    '조금':'นิดหน่อย',
+    '없음':'ไม่มี',
+    '취소':'ยกเลิก',
+    '합계':'รวม',
+    '통!':'ป๊อก!'
+  };
+  var keys = Object.keys(L).sort(function(a,b){ return b.length - a.length; });
+  var RX = [
+    [/버디! 파보다 (\d+)타 적게/g, 'เบอร์ดี้! ต่ำกว่าพาร์ $1'],
+    [/파보다 (\d+)타 많이/g, 'เกินพาร์ $1'],
+    [/이 세기 (\d+)m · 남은 (\d+)m/g, 'แรงนี้ $1 ม. · เหลือ $2 ม.'],
+    [/핀까지 (\d+)m/g, 'ถึงธง $1 ม.'],
+    [/핀 (\d+)m/g, 'ธง $1 ม.'],
+    [/지금 (\d+)타/g, 'ตีไป $1 ครั้ง'],
+    [/내 최고 (\d+)타/g, 'ดีที่สุด $1 ครั้ง'],
+    [/(\d+)타/g, '$1 ครั้ง'],
+    [/(\d+)번 홀/g, 'หลุม $1'],
+    [/(\d+)번/g, 'หลุม $1'],
+    [/파 ?(\d+)/g, 'พาร์ $1'],
+    [/(\d+)m\b/g, '$1 ม.'],
+    [/(\d+)월 (\d+)일/g, '$2/$1'],
+    [/오늘은 /g, 'วันนี้ '],
+    [/^홀$/, 'หลุม'], [/^파$/, 'พาร์'], [/^연습$/, 'ฝึก'], [/^오늘$/, 'วันนี้'], [/^어제$/, 'เมื่อวาน'],
+    [/연습 · /g, 'ฝึก · ']
+  ];
+  var HAN = /[가-힣]/;
+  function tr(s){
+    if(!s || !HAN.test(s)) return s;
+    if(L[s]) return L[s];
+    for(var i=0;i<keys.length;i++){ if(s.indexOf(keys[i]) >= 0) s = s.split(keys[i]).join(L[keys[i]]); }
+    for(var j=0;j<RX.length;j++) s = s.replace(RX[j][0], RX[j][1]);
+    return s;
+  }
+  window.tr = tr;
+  function fix(n){
+    if(n.nodeType === 3){
+      var v = n.nodeValue, t = tr(v);
+      if(t !== v){ var p = n.parentNode; if(p && p.dataset && !p.dataset.ko) p.dataset.ko = v.trim(); n.nodeValue = t; }
+      return;
+    }
+    if(n.nodeType !== 1 || n.tagName === 'SCRIPT' || n.tagName === 'STYLE') return;
+    for(var c = n.firstChild; c; c = c.nextSibling) fix(c);
+  }
+  new MutationObserver(function(ms){
+    ms.forEach(function(m){
+      if(m.type === 'characterData') fix(m.target);
+      else m.addedNodes.forEach(fix);
+    });
+  }).observe(document.documentElement, {subtree:true, childList:true, characterData:true});
+  fix(document.documentElement);
+  document.title = tr(document.title);
+  var P = CanvasRenderingContext2D.prototype, f = P.fillText, s = P.strokeText;
+  P.fillText = function(t, x, y, w){ return w === undefined ? f.call(this, tr(String(t)), x, y) : f.call(this, tr(String(t)), x, y, w); };
+  P.strokeText = function(t, x, y, w){ return w === undefined ? s.call(this, tr(String(t)), x, y) : s.call(this, tr(String(t)), x, y, w); };
+  var st = document.createElement('style');
+  st.textContent = ':root{--font:"Noto Sans Thai","Noto Sans KR",sans-serif}body{word-break:normal;line-break:auto}';
+  document.head.appendChild(st);
+  var lk = document.createElement('link'); lk.rel = 'stylesheet';
+  lk.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@500;700;800&display=swap';
+  document.head.appendChild(lk);
+})();
+</script>
+<script>
 /* playtest-kit.js v1 (아린 플레이 공용) + plain #name tester tag */
 (function(){
   var C = null, Q = [], timer = null, sess = Math.random().toString(36).slice(2, 10), t0 = Date.now();
@@ -565,10 +755,10 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   if(S.intro){ S.intro.t+=dt; if(S.intro.t>=INTRO_DUR+0.4) endIntro(); }
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v15', lang:'ko', endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v16', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
-  document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.textContent; }); });
+  document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
   $('survey').hidden=false; }
 $('svSend').onclick=()=>{ const ans=Object.assign({name:$('svName').value.trim().slice(0,30), note:$('svNote').value.trim().slice(0,1500), course:COURSE.key}, SV);
   $('svSend').disabled=true; $('svMsg').textContent='보내는 중…';
