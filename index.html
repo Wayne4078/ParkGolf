@@ -52,6 +52,28 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
 .card{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:16px 18px;width:100%;max-width:440px;box-sizing:border-box;text-align:center}
 .card .big{font-size:30px;font-weight:800;margin:4px 0}
 .ver{font-size:14px;font-weight:700;color:var(--muted);text-align:center}
+.screen{overflow-y:auto;justify-content:safe center}
+#start{gap:14px}
+#start h1{font-size:32px;margin-bottom:2px}
+.seg{display:flex;width:100%;max-width:440px;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:4px;box-sizing:border-box;gap:4px}
+.seg .opt{flex:1;min-height:48px;border:0;border-radius:10px;font-size:19px;box-shadow:none;background:transparent}
+.seg .opt.on{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+.today{padding:12px 16px}
+.today #todayLine{font-size:22px}
+.course-sub{font-size:15px;font-weight:700;color:var(--muted);margin-top:6px;white-space:normal}
+.course-sub:empty{display:none}
+.balls{display:flex;gap:8px;width:100%;max-width:440px}
+.balls .opt{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:6px;min-height:68px;font-size:18px;padding:8px 4px;white-space:nowrap}
+.dot{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.35);flex:none}
+.ball-note{font-size:17px;font-weight:700;color:var(--muted);text-align:center;margin-top:-4px;min-height:24px}
+.two{display:flex;gap:10px;width:100%;max-width:440px}
+.two .btn{flex:1;min-width:0;font-size:20px}
+.link{background:none;border:0;font:inherit;font-size:17px;font-weight:800;color:var(--accent);text-decoration:underline;text-underline-offset:4px;min-height:44px;padding:4px 12px;cursor:pointer}
+.tips{text-align:left}
+.tips h2{text-align:left;font-size:24px;margin-bottom:8px}
+.tips h3{font-size:20px;font-weight:800;margin:16px 0 6px}
+.tips p{font-size:18px;line-height:1.55;margin:0 0 8px}
+.tips .credit{font-size:14px;color:var(--muted);margin-top:14px}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 
@@ -63,22 +85,42 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
 
 <div class="screen" id="start">
   <h1>오늘의 파크골프</h1>
-  <div class="row" id="courseRow">
-    <button class="opt on" data-course="home">우리 동네<span>하천변 9홀</span></button>
-    <button class="opt" data-course="jamsil">잠실 원정<span>실제 구장 9홀</span></button>
+  <div class="seg" id="courseRow">
+    <button class="opt on" data-course="home">우리 동네</button>
+    <button class="opt" data-course="jamsil">잠실 원정</button>
   </div>
-  <div class="today"><div class="sub" id="courseSub" style="margin-bottom:6px"></div><div id="todayLine">11월 2일 · 맑음</div><div class="sub" id="todayNote">오늘의 라운드는 하루 한 번 기록에 남아요</div></div>
-  <div class="label">오늘의 공</div>
-  <div class="row" id="ballRow">
-    <button class="opt on" data-ball="normal">일반공<span>늘 치던 그 공</span></button>
-    <button class="opt" data-ball="rubber">고무공<span>벽에 맞으면 속도가 붙어요</span></button>
-    <button class="opt" data-ball="cork">코르크공<span>물 위를 건너요 · 바람에 날려요</span></button>
+  <div class="today">
+    <div id="todayLine">11월 4일 · 맑음</div>
+    <div class="sub" id="todayNote">평소 코스예요</div>
+    <div class="course-sub" id="courseSub"></div>
   </div>
+  <div class="balls" id="ballRow">
+    <button class="opt on" data-ball="normal" data-note="늘 치던 그 공"><i class="dot" style="background:#f4f4ee"></i>일반공</button>
+    <button class="opt" data-ball="rubber" data-note="벽에 맞으면 속도가 붙어요"><i class="dot" style="background:#d9382b"></i>고무공</button>
+    <button class="opt" data-ball="cork" data-note="물 위를 건너요 · 바람에 날려요"><i class="dot" style="background:#c99a5b"></i>코르크공</button>
+  </div>
+  <div class="ball-note" id="ballNote">늘 치던 그 공</div>
   <button class="btn" id="goToday">오늘의 라운드</button>
-  <button class="btn ghost" id="goPractice">연습 라운드 (날씨 고르기)</button>
-  <button class="btn ghost" id="showCard">스코어 카드 보기</button>
-  <p class="ver">화면 아무 데나 누르고 뒤로 당겼다 놓으면 칩니다 · 파+3이면 다음 홀</p>
-  <p class="ver" style="font-size:12px;opacity:.6;margin-top:4px">컵 소리: AGFX, freesound.org (CC BY 4.0)</p>
+  <div class="two">
+    <button class="btn ghost" id="goPractice">연습</button>
+    <button class="btn ghost" id="showCard">스코어 카드</button>
+  </div>
+  <button class="link" id="howBtn">치는 법 · 공 이야기</button>
+</div>
+
+<div class="screen" id="how" hidden>
+  <div class="card tips">
+    <h2 data-th="วิธีตี">치는 법</h2>
+    <p data-th="&lt;b&gt;แตะตรงไหนก็ได้&lt;/b&gt; แล้ว&lt;b&gt;ลากไปทางตรงข้าม&lt;/b&gt;กับทิศที่อยากตี แล้วปล่อย ยิ่งลากมาก ลูกยิ่งไปไกล"><b>화면 아무 데나</b> 누르고, 치고 싶은 쪽의 <b>반대로 당겼다 놓으세요.</b> 많이 당길수록 멀리 갑니다.</p>
+    <p data-th="ตัวเลขใต้ลูกคือ&lt;b&gt;ระยะที่เหลือถึงธง&lt;/b&gt; ระหว่างลากจะแสดงระยะที่ลูกจะไปด้วย">공 아래 숫자는 <b>핀까지 남은 거리</b>입니다. 당기는 동안 이번에 갈 거리도 보여 줘요.</p>
+    <p data-th="ถ้าตี&lt;b&gt;เกินพาร์ 3 ครั้ง&lt;/b&gt;ในหลุมเดียว จะไปหลุมต่อไปเอง">한 홀에서 <b>파보다 3타 많아지면</b> 다음 홀로 넘어갑니다.</p>
+    <h3 data-th="เรื่องของลูก">공 이야기</h3>
+    <p data-th="&lt;b&gt;ลูกธรรมดา&lt;/b&gt; ลูกที่ตีประจำ"><b>일반공</b> 늘 치던 그 공.</p>
+    <p data-th="&lt;b&gt;ลูกยาง&lt;/b&gt; ชนขอบแล้วกลับเร็วขึ้น ใช้ขอบช่วยตีหลุมที่หักมุม"><b>고무공</b> 벽에 맞으면 오히려 빨라져요. 벽을 이용해 꺾인 홀을 노려 보세요.</p>
+    <p data-th="&lt;b&gt;ลูกไม้ก๊อก&lt;/b&gt; ลอยน้ำได้และโค้งตามลม วันที่ลมแรงให้ดูธงแล้วเล็งเยื้อง ลูกจะโค้งเข้าหลุม"><b>코르크공</b> 물에 뜨고, 바람을 타고 휘어요. 바람 부는 날 깃발을 보고 비껴 치면 휘어 들어갑니다.</p>
+    <p class="credit" data-th="เสียงหลุม: AGFX, freesound.org (CC BY 4.0)">컵 소리: AGFX, freesound.org (CC BY 4.0)</p>
+  </div>
+  <button class="btn" id="howClose">알겠어요</button>
 </div>
 
 <div class="screen" id="practice" hidden>
@@ -254,6 +296,8 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
     '합계':'รวม',
     '통!':'ป๊อก!'
   };
+  L['치는 법 · 공 이야기']='วิธีตี · เรื่องของลูก'; L['알겠어요']='เข้าใจแล้ว';
+  document.querySelectorAll('[data-th]').forEach(function(e){ e.innerHTML = e.getAttribute('data-th'); });
   var keys = Object.keys(L).sort(function(a,b){ return b.length - a.length; });
   var RX = [
     [/버디! 파보다 (\d+)타 적게/g, 'เบอร์ดี้! ต่ำกว่าพาร์ $1'],
@@ -672,6 +716,9 @@ $('goToday').onclick=()=>startRound('today');
 $('goPractice').onclick=()=>{ $('start').hidden=true; $('practice').hidden=false; };
 $('backP').onclick=()=>{ $('practice').hidden=true; $('start').hidden=false; };
 $('goP').onclick=()=>startRound('practice');
+$('howBtn').onclick=()=>{ $('start').hidden=true; $('how').hidden=false; };
+$('howClose').onclick=()=>{ $('how').hidden=true; $('start').hidden=false; };
+document.querySelectorAll('#ballRow .opt').forEach(b=>b.addEventListener('click',()=>{ $('ballNote').textContent=b.dataset.note; }));
 $('showCard').onclick=()=>{ S.mode='today'; $('start').hidden=true; showCard(null); };
 $('wxRow').innerHTML=WX_KEYS.map((k,i)=>'<button class="opt'+(i===0?' on':'')+'" data-wx="'+k+'">'+WX[k].name+'<span>'+WX[k].line+'</span></button>').join('');
 const pick=(sel,attr,fn)=>{ for(const b of document.querySelectorAll(sel)) b.onclick=()=>{ document.querySelectorAll(sel).forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset[attr]); }; };
@@ -793,7 +840,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v18', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v19', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
