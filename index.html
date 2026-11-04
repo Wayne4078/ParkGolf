@@ -3,7 +3,7 @@
 <style>html,body{margin:0;padding:0}</style></head><body>
 <title>오늘의 파크골프</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;800&family=Noto+Serif+KR:wght@700;900&display=swap">
 <style>
 /* Layout: one-screen portrait app. HUD strip, course canvas fills the middle, one message line below. */
 :root{
@@ -74,6 +74,26 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
 .tips h3{font-size:20px;font-weight:800;margin:16px 0 6px}
 .tips p{font-size:18px;line-height:1.55;margin:0 0 8px}
 .tips .credit{font-size:14px;color:var(--muted);margin-top:14px}
+body.attract #app .hud,body.attract #app .msg{visibility:hidden}
+body.attract canvas{position:fixed;inset:0;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none;max-height:none;object-fit:cover;border-radius:0}
+html[lang=th] .t-big{font-size:clamp(40px,12.5vw,58px);letter-spacing:0}
+html[lang=th] .t-small{letter-spacing:2px}
+#title{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;color:#fff;cursor:pointer;
+  padding:calc(env(safe-area-inset-top,0px) + 48px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);box-sizing:border-box;
+  background:linear-gradient(180deg,rgba(8,18,8,.72) 0%,rgba(8,18,8,.25) 34%,rgba(8,18,8,0) 52%,rgba(8,18,8,0) 62%,rgba(8,18,8,.6) 100%)}
+.t-top{display:flex;flex-direction:column;align-items:center;gap:6px;animation:tUp 1.4s .3s both ease-out}
+.t-emblem{width:58px;height:58px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));margin-bottom:4px}
+.t-logo{font-family:"Noto Serif KR","Noto Serif Thai",serif;display:flex;flex-direction:column;align-items:center;line-height:1.05;text-shadow:0 3px 18px rgba(0,0,0,.55),0 1px 2px rgba(0,0,0,.6)}
+.t-small{font-size:26px;font-weight:700;letter-spacing:8px;opacity:.95;margin-left:8px}
+.t-big{font-size:clamp(52px,16vw,72px);font-weight:900;letter-spacing:2px}
+.t-rule{width:120px;height:2px;background:linear-gradient(90deg,transparent,#fff,transparent);margin:10px 0 4px;opacity:.85}
+.t-tag{font-size:19px;font-weight:700;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.t-bottom{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:14px;animation:tUp 1s 1.4s both ease-out}
+.t-date{font-size:18px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.7)}
+.t-go{font-size:24px;min-height:64px;border-radius:32px;box-shadow:0 8px 24px rgba(0,0,0,.35);animation:tBreath 2.6s 2.4s ease-in-out infinite}
+@keyframes tUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes tBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@media (prefers-reduced-motion: reduce){.t-top,.t-bottom,.t-go{animation:none}}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 
@@ -83,7 +103,20 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
   <div class="msg" id="msg"></div>
 </div>
 
-<div class="screen" id="start">
+<div id="title" hidden>
+  <div class="t-top">
+    <svg class="t-emblem" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#fff" stroke-width="2.5"/><ellipse cx="30" cy="47" rx="11" ry="3.6" fill="#fff" opacity=".9"/><ellipse cx="30" cy="47" rx="6" ry="2" fill="#1b2a16"/><path d="M30 47V14" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M31 14l15 5.5L31 25z" fill="#e23b2e"/></svg>
+    <div class="t-logo" data-th="&lt;span class=&quot;t-small&quot;&gt;วันนี้&lt;/span&gt;&lt;span class=&quot;t-big&quot;&gt;พาร์คกอล์ฟ&lt;/span&gt;"><span class="t-small">오늘의</span><span class="t-big">파크골프</span></div>
+    <div class="t-rule"></div>
+    <div class="t-tag">하루 한 번, 아홉 홀</div>
+  </div>
+  <div class="t-bottom">
+    <div class="t-date" id="tDate"></div>
+    <button class="btn t-go" id="tGo">시작하기</button>
+  </div>
+</div>
+
+<div class="screen" id="start" hidden>
   <h1>오늘의 파크골프</h1>
   <div class="seg" id="courseRow">
     <button class="opt on" data-course="home">우리 동네</button>
@@ -296,7 +329,7 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
     '합계':'รวม',
     '통!':'ป๊อก!'
   };
-  L['치는 법 · 공 이야기']='วิธีตี · เรื่องของลูก'; L['알겠어요']='เข้าใจแล้ว';
+  L['치는 법 · 공 이야기']='วิธีตี · เรื่องของลูก'; L['알겠어요']='เข้าใจแล้ว'; L['하루 한 번, 아홉 홀']='วันละรอบ เก้าหลุม'; L['시작하기']='เริ่มเลย';
   document.querySelectorAll('[data-th]').forEach(function(e){ e.innerHTML = e.getAttribute('data-th'); });
   var keys = Object.keys(L).sort(function(a,b){ return b.length - a.length; });
   var RX = [
@@ -350,7 +383,7 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
   st.textContent = ':root{--font:"Noto Sans Thai","Noto Sans KR",sans-serif}body{word-break:normal;line-break:auto}';
   document.head.appendChild(st);
   var lk = document.createElement('link'); lk.rel = 'stylesheet';
-  lk.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@500;700;800&display=swap';
+  lk.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@500;700;800&family=Noto+Serif+Thai:wght@700;900&display=swap';
   document.head.appendChild(lk);
 })();
 </script>
@@ -684,7 +717,7 @@ function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0);
   else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; loadHole(); }
 function loadHole(){ const h=H_(); S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
-  msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
+  msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); if(!S.attract) PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
 // 남은 거리: 공에서 핀까지. 실제 구장은 티에서 안내판 거리와 같아지도록 맞춘다.
 function remain(){ const h=H_(), c=cup(); const tee=Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])*M_PER_PX; const k= h.m ? h.m/Math.max(tee,1) : 1; return Math.max(0,Math.round(Math.hypot(c[0]-S.pos.x,c[1]-S.pos.y)*M_PER_PX*k)); }
 function updateHud(){ const h=H_(); $('hudL').innerHTML=h.n+'번 홀 <small>파 '+h.par+' · 핀까지 '+remain()+'m</small>'; $('hudR').textContent='지금 '+S.strokes[S.hi]+'타'; }
@@ -829,18 +862,19 @@ function drawPinMarker(g){ if(S.intro) return; const p=scr(cup(),g); if(p.y>46 &
 function render(){ const h=H_(), g=G(); ctx.fillStyle=THEME.rough; ctx.fillRect(0,0,W,H);
   drawGround(h,g); drawStanding(h,g); drawPinMarker(g);
   if(WX[S.wx].frost){ ctx.fillStyle='rgba(220,235,255,0.10)'; ctx.fillRect(0,0,W,H); }
-  if(S.intro){ ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,H-46,W,46); ctx.font='800 17px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText('화면을 누르면 바로 시작', W/2, H-17); }
+  if(S.intro && !S.attract){ ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,H-46,W,46); ctx.font='800 17px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText('화면을 누르면 바로 시작', W/2, H-17); }
   else { drawFx(); drawPop(g); drawWind(); drawAim(); drawRemain(); } }
 
 // ---------- loop ----------
 let last=performance.now(), acc=0;
 function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt; const h=H_();
   while(acc>=DT){ acc-=DT; if(S.moving && !S.holeOver){ step(h); if(S.vel.x===0 && S.vel.y===0 && S.moving){ S.moving=false; if(!S.holeOver && S.strokes[S.hi]>=h.par+3) holeOut(true); puttCheck(); updateHud(); } } }
-  if(S.intro){ S.intro.t+=dt; if(S.intro.t>=INTRO_DUR+0.4) endIntro(); }
+  if(S.attract){ if(!S.intro) startIntro(); S.intro.t+=dt*0.42; if(S.intro.t>=INTRO_DUR+0.6){ S.attractN=(S.attractN+1)%ATTRACT.length; S.hi=ATTRACT[S.attractN]; loadHole(); startIntro(); } }
+  else if(S.intro){ S.intro.t+=dt; if(S.intro.t>=INTRO_DUR+0.4) endIntro(); }
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v19', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v20', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
@@ -850,7 +884,12 @@ $('svSend').onclick=()=>{ const ans=Object.assign({name:$('svName').value.trim()
   PT.survey('end',ans).then(ok=>{ if(ok){ svDone=true; $('survey').hidden=true; $('svMsg').textContent=''; msg('고마워요. 잘 받았습니다.'); $('endSub').textContent='설문 잘 받았습니다. 고마워요.'; }
     else { $('svSend').disabled=false; const txt='[오늘의 파크골프 설문] '+Object.entries(ans).map(([k,v])=>k+': '+v).join(' / ');
       $('svMsg').innerHTML='전송이 안 됐어요. 아래 버튼으로 카톡·라인에 보내 주세요.<br><a class="btn ghost" style="display:block;text-align:center;text-decoration:none;margin-top:8px;line-height:32px" target="_blank" rel="noopener" href="https://line.me/R/share?text='+encodeURIComponent(txt)+'">라인으로 보내기</a>'; } }); };
-S.strokes=HOLES.map(()=>0); setupToday(); loadHole(); S.intro=null; requestAnimationFrame(loop);
+const ATTRACT=[2,7,8];
+function showTitle(){ S.attract=true; S.attractN=0; document.body.classList.add('attract'); S.hi=ATTRACT[0]; S.strokes=HOLES.map(()=>0); loadHole(); startIntro();
+  $('tDate').textContent=$('todayLine').textContent+' · '+COURSE.name; $('title').hidden=false; $('start').hidden=true; }
+function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; document.body.classList.remove('attract'); $('title').hidden=true; S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; $('start').hidden=false; PT.event('title_go',{}); }
+$('title').addEventListener('click',leaveTitle);
+S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loop);
 if(/[?&]sim\b/.test(location.search)) window.__pg={S,step,H_,cup,loadHole,setCourse,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
 })();
 </script>
