@@ -615,15 +615,19 @@ const BALL_SY=H*0.72;
 function camTarget(){ const c=cup(); const dx=Math.abs(c[0]-S.pos.x), dy=c[1]-S.pos.y;
   // 홀 전체를 담지 않는다. 공 주변을 크게 보여주고, 화면 밖 핀은 위쪽 표시로 알린다.
   S.cam.ts = ZOOM; }
-function camTargetX(){ if(S.putt) return S.pos.x; const h=H_(); const xs=h.poly.map(p=>p[0]); const x0=Math.min(...xs)-10, x1=Math.max(...xs)+10; const s=S.cam.s;
+function camTargetX(){ if(S.putt||S.turned) return S.pos.x; const h=H_(); const xs=h.poly.map(p=>p[0]); const x0=Math.min(...xs)-10, x1=Math.max(...xs)+10; const s=S.cam.s;
   if((x1-x0)*s<=W) return (x0+x1)/2; return Math.max(x0+W/2/s, Math.min(x1-W/2/s, S.pos.x)); }
-function camSnap(){ if(DIORAMA && THEME.block){ S.putt=false; S.cam.a=S.cam.ta=DIO_A; S.cam.tilt=S.cam.ttilt=DIO_TILT; return; } S.putt=false; S.cam.a=0; S.cam.ta=0; S.cam.tilt=TILT; S.cam.ttilt=TILT; camTarget(); S.cam.s=S.cam.ts; S.cam.y=S.pos.y; S.cam.x=camTargetX(); }
+function camSnap(){ S.turned=false; if(DIORAMA && THEME.block){ S.putt=false; S.cam.a=S.cam.ta=DIO_A; S.cam.tilt=S.cam.ttilt=DIO_TILT; return; } S.putt=false; S.cam.a=0; S.cam.ta=0; S.cam.tilt=TILT; S.cam.ttilt=TILT; camTarget(); S.cam.s=S.cam.ts; S.cam.y=S.pos.y; S.cam.x=camTargetX(); }
 // Putting camera: the one rotation. When the ball stops on the green, turn so the cup is straight up, zoom in, flatten the tilt a little.
 function puttCheck(){ if(DIORAMA && THEME.block) return; const h=H_(); const c=cup(); const dx=c[0]-S.pos.x, dy=c[1]-S.pos.y;
   const gr=h.green; const ex=(S.pos.x-gr.cx)/(gr.rx*1.7), ey=(S.pos.y-gr.cy)/(gr.ry*1.7); const near = (ex*ex+ey*ey<=1) || Math.hypot(dx,dy)<110; // 그린 근처(그린의 1.7배 범위 또는 컵 13m 안)
   if(near && !S.holeOver){ const want=-Math.PI/2-Math.atan2(dy,dx); let diff=want-S.cam.ta; diff=Math.atan2(Math.sin(diff),Math.cos(diff));
     if(!S.putt || Math.abs(diff)>Math.PI/2){ S.cam.ta=want; } S.putt=true; S.cam.ts=2.1; S.cam.ttilt=0.82; }
-  else { S.putt=false; S.cam.ta=0; S.cam.ttilt=TILT; camTarget(); } }
+  else { S.putt=false;
+    // 꺾인 홀: 컵이 앞이 아니라 옆(또는 뒤)에 있으면, 그린에서 멀어도 컵 쪽으로 화면을 돌려 준다
+    const off=Math.abs(Math.atan2(dx,-dy)), turn = S.turned ? off>0.45 : off>0.9;
+    if(turn && !S.holeOver){ S.turned=true; const w=-Math.PI/2-Math.atan2(dy,dx); S.cam.ta=Math.atan2(Math.sin(w),Math.cos(w)); S.cam.ttilt=TILT; camTarget(); }
+    else { S.turned=false; S.cam.ta=0; S.cam.ttilt=TILT; camTarget(); } } }
 function camUpdate(dt){ if(DIORAMA && THEME.block) return; const k=1-Math.pow(S.moving?0.08:0.02,dt); S.cam.x+=(camTargetX()-S.cam.x)*k; S.cam.y+=(S.pos.y-S.cam.y)*k;
   if(!S.moving){ const ka=1-Math.pow(0.30,dt); let da=S.cam.ta-S.cam.a; da=Math.atan2(Math.sin(da),Math.cos(da)); S.cam.a+=da*ka; S.cam.s+=(S.cam.ts-S.cam.s)*k; S.cam.tilt+=(S.cam.ttilt-S.cam.tilt)*k; } }
 // flyover: cup → tee, low angle rising to TILT
@@ -923,7 +927,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v23', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v24', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
