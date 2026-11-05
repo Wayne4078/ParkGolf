@@ -22,6 +22,11 @@ html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-weight:500;font-size:18px;word-break:keep-all;-webkit-text-size-adjust:100%;touch-action:none;overflow:hidden}
 #app{height:100%;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;box-sizing:border-box;gap:8px;max-width:520px;margin:0 auto}
 .hud{display:flex;justify-content:space-between;align-items:baseline;font-size:22px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hudBtn{flex:0 0 auto;min-height:48px;min-width:64px;padding:0 12px;margin-right:10px;border:3px solid var(--line);border-radius:12px;background:var(--panel);color:var(--fg);font:inherit;font-size:18px;font-weight:800;cursor:pointer;align-self:center}
+.hudBtn:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hud #hudL{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+#pause{background:rgba(12,20,10,.62);z-index:8}
+#pause .pauseCard{display:flex;flex-direction:column;gap:6px}
 .hud small{font-size:17px;font-weight:700;color:var(--muted);margin-left:6px}
 .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
 canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-action:none;background:#4a7f3a}
@@ -110,7 +115,7 @@ html[lang=th] .t-small{letter-spacing:2px}
 </style>
 
 <div id="app">
-  <div class="hud"><div id="hudL">1번 홀 <small>파 3</small></div><div id="hudR">지금 0타</div></div>
+  <div class="hud"><button class="hudBtn" id="menuBtn" type="button" aria-label="메뉴 열기">메뉴</button><div id="hudL">1번 홀 <small>파 3</small></div><div id="hudR">지금 0타</div></div>
   <div class="stage"><canvas id="c" width="360" height="600"></canvas></div>
   <div class="msg" id="msg"></div>
   <div class="hint" id="hint" hidden></div>
@@ -189,6 +194,17 @@ html[lang=th] .t-small{letter-spacing:2px}
 <div class="screen" id="holeDone" hidden>
   <div class="card"><div id="hdTitle" class="sub">1번 홀</div><div class="big" id="hdScore">2타 (파 3)</div><div id="hdNote" class="sub"></div></div>
   <button class="btn" id="next">다음 홀</button>
+</div>
+
+<div class="screen" id="pause" hidden>
+  <div class="card pauseCard">
+    <div class="big">잠깐 쉬기</div>
+    <p class="sub" id="pauseSub">1번 홀 · 지금까지 0타</p>
+  </div>
+  <button class="btn" id="pResume" type="button">계속 치기</button>
+  <button class="btn ghost" id="pRetry" type="button">이 홀 처음부터</button>
+  <button class="btn ghost" id="pCourse" type="button">코스 고르기로</button>
+  <button class="btn ghost" id="pTitle" type="button">첫 화면으로</button>
 </div>
 
 <div class="screen" id="end" hidden style="justify-content:flex-start">
@@ -307,6 +323,14 @@ html[lang=th] .t-small{letter-spacing:2px}
     '느티나무 그늘':'ร่มต้นไม้ใหญ่',
     '숲속 작은 홀':'หลุมเล็กในป่า',
     '마지막 숲길':'ทางป่าสุดท้าย',
+    '메뉴':'เมนู',
+    '잠깐 쉬기':'พักสักครู่',
+    '계속 치기':'ตีต่อ',
+    '이 홀 처음부터':'เริ่มหลุมนี้ใหม่',
+    '코스 고르기로':'ไปเลือกคอร์ส',
+    '첫 화면으로':'กลับหน้าแรก',
+    '오늘의 라운드 이어 치기':'ตีรอบวันนี้ต่อ',
+    '이 자리에서 이어 칩니다':'ตีต่อจากจุดเดิม',
     '잠실 원정':'เยือนสนามจัมชิล',
     '우리 동네':'สนามข้างบ้าน',
     '연습 시작':'เริ่มฝึก',
@@ -806,23 +830,50 @@ function setupToday(){ $('courseSub').textContent=COURSE.sub;
   $('ballRow').hidden=false; $('ballNote').hidden=false; $('goPractice').hidden=false; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins();
   const rounds=loadRounds(); const played=rounds[TODAY]; $('todayLine').textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일 · '+WX[S.wx].name;
   if(played){ $('todayNote').textContent='오늘 라운드는 쳤어요 · '+played.strokes.reduce((a,b)=>a+b,0)+'타 ('+BALLS[played.ball].name+')'; $('goToday').disabled=true; $('goToday').textContent='오늘의 라운드 (완료)'; }
-  else { $('todayNote').textContent=WX[S.wx].line; $('goToday').disabled=false; $('goToday').textContent='오늘의 라운드'; }
+  else { const rs=loadResume(); $('todayNote').textContent= rs ? (rs.hi+1)+'번 홀에서 멈추셨어요 · 지금 '+rs.strokes.reduce((a,b)=>a+b,0)+'타' : WX[S.wx].line;
+    if(rs){ $('ballRow').hidden=true; $('ballNote').textContent='처음 고른 '+BALLS[rs.ball].name+'으로 이어 칩니다'; } $('goToday').disabled=false; $('goToday').textContent= rs ? '오늘의 라운드 이어 치기' : '오늘의 라운드'; }
   $('showCard').hidden=Object.keys(rounds).length===0; }
 function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0);
-  if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); }
+  let res=null; if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } }
   else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
-  S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; loadHole(); }
+  S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; guardBack(); loadHole();
+  if(res){ if(res.done){ S.intro=null; holeOut(false,true); } else if(res.pos){ S.pos={...res.pos}; S.lastSafe={...res.pos}; S.intro=null; camSnap(); updateHud(); } msg('하던 자리에서 이어 칩니다'); } }
 function loadHole(){ const h=H_(); if(COURSE.lesson){ S.ball=h.ball; S.wx=h.wx; S.windDir=h.windDir; } showHint(COURSE.lesson&&!S.attract?h.hint:''); S.lastIn=null; S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
-  msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); if(!S.attract) PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
+  msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); saveResume(); if(!S.attract) PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
 // 남은 거리: 공에서 핀까지. 실제 구장은 티에서 안내판 거리와 같아지도록 맞춘다.
 function remain(){ const h=H_(), c=cup(); const tee=Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])*M_PER_PX; const k= h.m ? h.m/Math.max(tee,1) : 1; return Math.max(0,Math.round(Math.hypot(c[0]-S.pos.x,c[1]-S.pos.y)*M_PER_PX*k)); }
-function updateHud(){ const h=H_(); $('hudL').innerHTML=h.n+'번 홀 <small>파 '+h.par+' · 핀까지 '+remain()+'m</small>'; $('hudR').textContent='지금 '+S.strokes[S.hi]+'타'; }
+function updateHud(){ const h=H_(); $('hudL').innerHTML=h.n+'번 홀 <small>파 '+h.par+'</small>'; $('hudR').textContent='지금 '+S.strokes[S.hi]+'타'; }
 function drawRemain(){ if(S.moving||S.drag||S.holeOver||S.intro||S.sink) return; const p=scr([S.pos.x,S.pos.y]); const t='핀까지 '+remain()+'m';
   ctx.font='800 18px "Noto Sans KR", sans-serif'; ctx.textAlign='center'; const w=ctx.measureText(t).width+20; const y=p.y+R+30;
   ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(p.x-w/2,y-20,w,28,8) : ctx.rect(p.x-w/2,y-20,w,28); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(t,p.x,y); }
+// 잠깐 쉬기 · 이어 치기 · 뒤로 가기
+// 오늘의 기록 라운드는 하루 한 번이라, 나갔다 와도 같은 홀·같은 타수·같은 공 자리에서 이어 친다 (나갔다 다시 들어와 기록을 새로 굴리지 못하게)
+function resumeKey(){ return COURSE.store+'_resume'; }
+function loadResume(){ try{ const r=JSON.parse(localStorage.getItem(resumeKey())||'null'); return r && r.date===TODAY ? r : null; }catch(e){ return null; } }
+function saveResume(){ if(S.mode!=='today' || S.attract || COURSE.lesson) return; try{ localStorage.setItem(resumeKey(), JSON.stringify({date:TODAY, hi:S.hi, strokes:S.strokes.slice(), ball:S.ball, pos:S.holeOver?null:{x:S.pos.x,y:S.pos.y}, done:S.holeOver})); }catch(e){} }
+function clearResume(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
+function playing(){ return !S.attract && ['title','start','end','practice','how','pause'].every(id=>!$(id) || $(id).hidden); }
+function openPause(){ if(!playing() && $('holeDone').hidden) return; const h=H_(), tot=S.strokes.reduce((a,b)=>a+b,0);
+  $('pauseSub').textContent = S.mode==='today' ? h.n+'번 홀 · 지금까지 '+tot+'타 · 나갔다 와도 이 자리에서 이어 칩니다' : COURSE.lesson ? h.n+'단계 배우는 중' : h.n+'번 홀 · 연습 (기록 안 남음)';
+  $('pRetry').hidden = S.mode==='today'; saveResume(); $('pause').hidden=false; PT.event('pause',{c:COURSE.key,mode:S.mode,n:h.n}); }
+function leaveRound(){ saveResume(); S.moving=false; S.vel={x:0,y:0}; S.drag=null; sndStop(); showHint(''); $('pause').hidden=true; $('holeDone').hidden=true; }
+$('menuBtn').onclick=openPause;
+$('pResume').onclick=()=>{ $('pause').hidden=true; };
+$('pRetry').onclick=()=>{ $('pause').hidden=true; S.strokes[S.hi]=0; loadHole(); S.intro=null; };
+$('pCourse').onclick=()=>{ leaveRound(); setupToday(); $('start').hidden=false; };
+$('pTitle').onclick=()=>{ leaveRound(); setupToday(); showTitle(); };
+addEventListener('pagehide',saveResume); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') saveResume(); });
+// 폰의 뒤로 가기: 치는 중이면 잠깐 쉬기를 열고, 쉬는 중이면 닫는다. 연습·설명 화면에서는 코스 고르기로 돌아간다.
+function guardBack(){ try{ history.pushState({pg:1},''); }catch(e){} }
+addEventListener('popstate',()=>{
+  if(!$('pause').hidden){ $('pause').hidden=true; guardBack(); return; }
+  if(playing() || !$('holeDone').hidden){ openPause(); guardBack(); return; }
+  if(!$('practice').hidden){ $('practice').hidden=true; $('start').hidden=false; guardBack(); return; }
+  if(!$('how').hidden){ $('how').hidden=true; $('start').hidden=false; guardBack(); return; }
+  if(!$('end').hidden){ $('end').hidden=true; setupToday(); $('start').hidden=false; guardBack(); return; } });
 $('next').onclick=()=>{ if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else { PT.closeBubble(); finishRound(); } };
 function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); document.querySelectorAll('#courseRow .opt').forEach(b=>b.classList.toggle('on',b.dataset.course==='home')); $('start').hidden=false; $('todayNote').textContent='배우기 끝! 이제 우리 동네 코스에서 오늘의 라운드를 쳐 보세요'; return; }
-  $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); if(S.mode==='today') saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx});
+  $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); }
   showCard(S.mode==='today'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
 function showCard(practice){
   const rounds=loadRounds(); const today=rounds[TODAY], yday=rounds[YDAY]; const dates=Object.keys(rounds).sort();
@@ -1032,7 +1083,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v31', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v32', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
