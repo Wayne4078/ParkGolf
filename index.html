@@ -617,18 +617,18 @@ function camTarget(){ const c=cup(); const dx=Math.abs(c[0]-S.pos.x), dy=c[1]-S.
   S.cam.ts = ZOOM; }
 function camTargetX(){ if(S.putt) return S.pos.x; const h=H_(); const xs=h.poly.map(p=>p[0]); const x0=Math.min(...xs)-10, x1=Math.max(...xs)+10; const s=S.cam.s;
   if((x1-x0)*s<=W) return (x0+x1)/2; return Math.max(x0+W/2/s, Math.min(x1-W/2/s, S.pos.x)); }
-function camSnap(){ S.putt=false; S.cam.a=0; S.cam.ta=0; S.cam.tilt=TILT; S.cam.ttilt=TILT; camTarget(); S.cam.s=S.cam.ts; S.cam.y=S.pos.y; S.cam.x=camTargetX(); }
+function camSnap(){ if(DIORAMA && THEME.block){ S.putt=false; S.cam.a=S.cam.ta=DIO_A; S.cam.tilt=S.cam.ttilt=DIO_TILT; return; } S.putt=false; S.cam.a=0; S.cam.ta=0; S.cam.tilt=TILT; S.cam.ttilt=TILT; camTarget(); S.cam.s=S.cam.ts; S.cam.y=S.pos.y; S.cam.x=camTargetX(); }
 // Putting camera: the one rotation. When the ball stops on the green, turn so the cup is straight up, zoom in, flatten the tilt a little.
-function puttCheck(){ const h=H_(); const c=cup(); const dx=c[0]-S.pos.x, dy=c[1]-S.pos.y;
+function puttCheck(){ if(DIORAMA && THEME.block) return; const h=H_(); const c=cup(); const dx=c[0]-S.pos.x, dy=c[1]-S.pos.y;
   const gr=h.green; const ex=(S.pos.x-gr.cx)/(gr.rx*1.7), ey=(S.pos.y-gr.cy)/(gr.ry*1.7); const near = (ex*ex+ey*ey<=1) || Math.hypot(dx,dy)<110; // 그린 근처(그린의 1.7배 범위 또는 컵 13m 안)
   if(near && !S.holeOver){ const want=-Math.PI/2-Math.atan2(dy,dx); let diff=want-S.cam.ta; diff=Math.atan2(Math.sin(diff),Math.cos(diff));
     if(!S.putt || Math.abs(diff)>Math.PI/2){ S.cam.ta=want; } S.putt=true; S.cam.ts=2.1; S.cam.ttilt=0.82; }
   else { S.putt=false; S.cam.ta=0; S.cam.ttilt=TILT; camTarget(); } }
-function camUpdate(dt){ const k=1-Math.pow(S.moving?0.08:0.02,dt); S.cam.x+=(camTargetX()-S.cam.x)*k; S.cam.y+=(S.pos.y-S.cam.y)*k;
+function camUpdate(dt){ if(DIORAMA && THEME.block) return; const k=1-Math.pow(S.moving?0.08:0.02,dt); S.cam.x+=(camTargetX()-S.cam.x)*k; S.cam.y+=(S.pos.y-S.cam.y)*k;
   if(!S.moving){ const ka=1-Math.pow(0.30,dt); let da=S.cam.ta-S.cam.a; da=Math.atan2(Math.sin(da),Math.cos(da)); S.cam.a+=da*ka; S.cam.s+=(S.cam.ts-S.cam.s)*k; S.cam.tilt+=(S.cam.ttilt-S.cam.tilt)*k; } }
 // flyover: cup → tee, low angle rising to TILT
 let INTRO_DUR=2.8; const ease=k=>k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-function startIntro(){ const h=H_(), c=cup(); INTRO_DUR=Math.min(5.5, 2.2+Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])/260)+(THEME.block?2.2:0); S.intro={t:0}; }
+function startIntro(){ if(DIORAMA && THEME.block && !S.attract){ S.intro=null; return; } const h=H_(), c=cup(); INTRO_DUR=Math.min(5.5, 2.2+Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])/260)+(THEME.block?2.2:0); S.intro={t:0}; }
 function endIntro(){ S.intro=null; msg(S.hi===S.startHole ? '오늘은 '+WX[S.wx].name+' · '+BALLS[S.ball].name : ''); }
 function introCam(){ const k=Math.min(1,S.intro.t/INTRO_DUR); const c=cup(), h=H_();
   const K2={ x:S.cam.x, y:S.pos.y, s:S.cam.ts, tilt:TILT, sy:BALL_SY }, K1={ x:c[0], y:c[1]+40, s:S.cam.ts+0.6, tilt:0.42, sy:BALL_SY*0.5 };
@@ -638,7 +638,12 @@ function introCam(){ const k=Math.min(1,S.intro.t/INTRO_DUR); const c=cup(), h=H
   const K0={ x:(x0+x1)/2, y:(y0+y1)/2, s:so, tilt:tl, sy:H*0.44 };
   if(k<0.3) return K0; if(k<0.55) return lerpCam(K0,K1,ease((k-0.3)/0.25)); return lerpCam(K1,K2,ease((k-0.55)/0.45)); }
 function lerpCam(A,B,e){ const o={}; for(const key in A) o[key]=A[key]+(B[key]-A[key])*e; return o; }
-function G(){ return S.intro ? Object.assign(introCam(),{a:0}) : {x:S.cam.x, y:S.cam.y, s:S.cam.s, tilt:S.cam.tilt, sy:BALL_SY, a:S.cam.a}; }
+// 디오라마 보기: 홀 하나를 작은 블록 모형 그대로 화면에 다 띄워 놓고, 그 위에서 바로 친다 (카메라 고정)
+let DIORAMA=true; const DIO_A=-Math.PI/6, DIO_TILT=0.62;
+function dioCam(h){ if(h._dio) return h._dio; const [x0,y0,x1,y1]=landRect(h), ca=Math.cos(DIO_A), sa=Math.sin(DIO_A), cx=(x0+x1)/2, cy=(y0+y1)/2;
+  let a0=1e9,a1=-1e9,b0=1e9,b1=-1e9; for(const [x,y] of [[x0,y0],[x1,y0],[x0,y1],[x1,y1]]){ const dx=x-cx, dy=y-cy, rx=dx*ca-dy*sa, ry=dx*sa+dy*ca; a0=Math.min(a0,rx); a1=Math.max(a1,rx); b0=Math.min(b0,ry); b1=Math.max(b1,ry); }
+  const sc=Math.min(W*0.94/(a1-a0), H*0.66/((b1-b0)*DIO_TILT)); return h._dio={ x:cx, y:cy, s:sc, tilt:DIO_TILT, sy:H*0.43, a:DIO_A }; }
+function G(){ if(DIORAMA && THEME.block) return dioCam(H_()); return S.intro ? Object.assign(introCam(),{a:0}) : {x:S.cam.x, y:S.cam.y, s:S.cam.s, tilt:S.cam.tilt, sy:BALL_SY, a:S.cam.a}; }
 function scr(p,g){ g=g||G(); const dx=p[0]-g.x, dy=p[1]-g.y; const ca=Math.cos(g.a), sa=Math.sin(g.a); const rx=dx*ca-dy*sa, ry=dx*sa+dy*ca; return { x: W/2 + g.s*rx, y: g.sy + g.s*g.tilt*ry }; }
 
 // ---------- sound ----------
@@ -803,7 +808,9 @@ function drawLandBlock(h,g){ // soil strata seen below the front edge, then the 
   ctx.fillStyle=THEME.paper; ctx.fillRect(0,0,W,H);
   const D=Math.max(46*g.s,34), bands=[[D,THEME.soil[4]],[D*0.78,THEME.soil[3]],[D*0.52,THEME.soil[2]],[D*0.24,THEME.soil[1]],[D*0.07,THEME.soil[0]]];
   ctx.save(); ctx.fillStyle='rgba(60,45,25,0.18)'; ctx.translate(0,D+10*g.s); groundBegin(g); landPath(h); ctx.restore(); ctx.fill(); ctx.restore();
-  for(const [d,c] of bands){ ctx.save(); ctx.translate(0,d); groundBegin(g); landPath(h); ctx.restore(); ctx.fillStyle=c; ctx.fill(); ctx.restore(); }
+  // 옆면: 1px씩 쌓아서 계단 없이 매끈한 흙 단면
+  const cut=[0.07,0.24,0.52,0.78]; for(let d=D;d>=0;d-=1){ const f=d/D, c= f>cut[3]?THEME.soil[4]: f>cut[2]?THEME.soil[3]: f>cut[1]?THEME.soil[2]: f>cut[0]?THEME.soil[1]:THEME.soil[0];
+    ctx.save(); ctx.translate(0,d); groundBegin(g); landPath(h); ctx.restore(); ctx.fillStyle=c; ctx.fill(); ctx.restore(); }
   groundBegin(g); landPath(h); ctx.fillStyle=THEME.rough; ctx.fill();
   ctx.save(); landPath(h); ctx.clip(); const [x0,y0,x1,y1]=landRect(h); ctx.fillStyle=THEME.roughDot; let sd=7; const rnd=()=>{ sd=(sd*16807)%2147483647; return sd/2147483647; };
   for(let i=0;i<(x1-x0)*(y1-y0)/700;i++){ ctx.beginPath(); ctx.arc(x0+rnd()*(x1-x0), y0+rnd()*(y1-y0), 1.2+rnd()*1.4, 0, Math.PI*2); ctx.fill(); } ctx.restore(); }
@@ -870,7 +877,7 @@ function drawProp(h,[t,x,y],g){ const p=scr([x,y],g), s=g.s;
   else if(t==='bin'){ ctx.fillStyle=THEME.bin; ctx.fillRect(p.x-6*s,p.y-18*s,12*s,18*s); ctx.fillStyle='#3a5a47'; ctx.fillRect(p.x-7*s,p.y-21*s,14*s,4*s); ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.fillRect(p.x-6*s,p.y-18*s,3*s,18*s); }
   else if(t==='sign'){ ctx.fillStyle=THEME.signPost; ctx.fillRect(p.x-2*s,p.y-30*s,4*s,30*s); ctx.fillStyle=THEME.sign; ctx.fillRect(p.x-36*s,p.y-50*s,72*s,22*s);
     ctx.font='800 '+Math.round(14*s)+'px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(h.n+'번 · 파'+h.par+' · '+dist()+'m', p.x, p.y-34*s); } }
-function drawBallUp(g){ const b=BALLS[S.ball], p=scr([S.pos.x,S.pos.y],g), s=g.s, r=R*s;
+function drawBallUp(g){ const b=BALLS[S.ball], p=scr([S.pos.x,S.pos.y],g), s=g.s, r=Math.max(R*s,5.5);
   ctx.beginPath(); ctx.arc(p.x,p.y-r*0.6,r,0,Math.PI*2); ctx.fillStyle=b.color; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.stroke();
   if(S.ball==='rubber'){ ctx.beginPath(); ctx.arc(p.x-2.5*s,p.y-r*0.6-2.5*s,2.2*s,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.fill(); }
   if(S.ball==='cork'){ ctx.fillStyle='rgba(90,60,20,0.35)'; for(const [ox,oy] of [[-3,-2],[2,-3],[0,3],[-3,3],[3,1]]){ ctx.beginPath(); ctx.arc(p.x+ox*s,p.y-r*0.6+oy*s,1*s,0,Math.PI*2); ctx.fill(); } } }
@@ -917,7 +924,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v21', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v22', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
