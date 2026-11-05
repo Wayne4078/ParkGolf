@@ -57,6 +57,8 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
 #start h1{font-size:32px;margin-bottom:2px}
 .seg{display:flex;width:100%;max-width:440px;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:4px;box-sizing:border-box;gap:4px}
 .seg .opt{flex:1;min-height:48px;border:0;border-radius:10px;font-size:19px;box-shadow:none;background:transparent}
+#courseRow{display:grid;grid-template-columns:1fr 1fr}
+#courseRow .opt{white-space:nowrap}
 .seg .opt.on{background:var(--accent);color:var(--accent-fg);box-shadow:none}
 .today{padding:12px 16px}
 .today #todayLine{font-size:22px}
@@ -125,6 +127,7 @@ html[lang=th] .t-small{letter-spacing:2px}
     <button class="opt" data-course="lesson">배우기</button>
     <button class="opt on" data-course="home">우리 동네</button>
     <button class="opt" data-course="jamsil">잠실 원정</button>
+    <button class="opt" data-course="hapcheon">합천 원정</button>
   </div>
   <div class="today">
     <div id="todayLine">11월 4일 · 맑음</div>
@@ -285,6 +288,17 @@ html[lang=th] .t-small{letter-spacing:2px}
     '오늘의 공':'ลูกของวันนี้',
     '너무 쉽다':'ง่ายเกินไป',
     '딱 좋다':'กำลังดี',
+    '합천 핫들생태공원 · B코스 9홀 570m':'สวนนิเวศฮัตดึล ฮับชอน · คอร์ส B 9 หลุม 570 ม.',
+    '합천 원정':'เยือนสนามฮับชอน',
+    '강 쪽 첫 홀':'หลุมแรกฝั่งแม่น้ำ',
+    '생울타리 홀':'หลุมแนวรั้วต้นไม้',
+    '가로등 홀':'หลุมเสาไฟ',
+    '꺾임 나무 홀':'หลุมเลี้ยวรอบต้นไม้',
+    '산책로 건너는 긴 홀':'หลุมยาวข้ามทางเดิน',
+    '나무섬 사이':'ระหว่างเกาะต้นไม้',
+    '느티나무 그늘':'ร่มต้นไม้ใหญ่',
+    '숲속 작은 홀':'หลุมเล็กในป่า',
+    '마지막 숲길':'ทางป่าสุดท้าย',
     '잠실 원정':'เยือนสนามจัมชิล',
     '우리 동네':'สนามข้างบ้าน',
     '연습 시작':'เริ่มฝึก',
@@ -536,7 +550,7 @@ const THEME_BLOCK=Object.assign({},THEME_FIELD,{ block:true,
   soil:['#5d6a36','#7a5b3c','#9b7b57','#b9a283','#8b8578'],
   treeDark:'#5f7a3a', treeLight:'#7c9650', trunk:'#4a3626', autumn:'#c98a3a', autumnLight:'#e0ad5a',
   roof:'#2f3338', roofEdge:'#4b5157', post:'#6b4a2e', wood:'#a87b4f', kaki:'#e07a2e', stoneWall:'#a9a49a', stoneWallDark:'#7d786f' });
-const THEME=THEME_BLOCK;
+const THEME=THEME_BLOCK; THEME.fieldPath=THEME.fieldPath||'#cdb98f';
 
 // ================= HOLE DATA. poly = fairway (walls on every edge). green = ellipse (faster grass). trees = inside, physics. deco = outside, no physics. =================
 const HOME_HOLES=[
@@ -596,10 +610,13 @@ const LESSON_HOLES=[
    tee:[252,506], pins:[[122,156],[122,156],[122,156]], green:{cx:128,cy:158,rx:48,ry:44},
    deco:[[120,330,22,false],[60,300,18,'kaki'],[150,430,20,true]], props:[['pavilion',70,470]] },
 ];
+// 원정 2호: 합천 핫들생태공원 파크골프장 B코스. 홀 모양은 2026 드론 전경(B-1~B-9 선)을 따름. 거리는 사진 비율로 PD가 잡은 값(합계 파33·570m) — 현장 제원표 받으면 m만 바꾸면 됨.
+const HAPCHEON_HOLES=[{"n":1,"par":4,"name":"강 쪽 첫 홀","poly":[[168,564],[164,540],[158,521],[163,498],[172,478],[179,453],[187,430],[201,407],[214,384],[221,357],[231,328],[245,301],[251,273],[253,246],[260,217],[271,190],[278,154],[281,124],[279,79],[254,61],[220,54],[186,61],[161,79],[162,129],[166,152],[169,178],[172,202],[168,229],[159,250],[152,274],[149,300],[139,324],[125,344],[116,368],[108,394],[95,417],[80,446],[73,480],[72,519],[70,550],[72,577],[82,594],[98,611],[120,617],[142,611],[158,594]],"tee":[120,571],"pins":[[220,98],[194,110],[244,92]],"green":{"cx":220,"cy":104,"rx":58,"ry":44},"trees":[[150,355,14]],"deco":[[22,571,23,false],[226,571,26,false],[28,489,20,false],[216,489,23,false],[42,412,26,true],[238,412,20,false],[82,341,23,false],[286,341,26,false],[115,262,20,false],[303,262,23,true],[114,184,26,false],[310,184,20,false],[122,104,23,false],[326,104,26,false]],"props":[["sign",210,601],["bench",30,587]],"puddles":[[190,341,14]],"leaves":[[140,412,16]],"m":70},{"n":2,"par":4,"name":"생울타리 홀","poly":[[247,607],[244,579],[243,549],[246,520],[242,493],[233,463],[230,437],[230,410],[224,385],[217,361],[218,337],[218,311],[212,286],[209,260],[213,236],[212,207],[210,177],[219,149],[231,121],[224,79],[199,61],[165,54],[131,61],[106,79],[98,119],[110,148],[119,179],[120,211],[121,240],[127,265],[127,291],[125,319],[129,345],[136,371],[136,398],[138,425],[146,451],[151,476],[152,505],[154,528],[160,551],[159,576],[153,601],[162,627],[178,644],[200,650],[222,644],[238,627]],"tee":[200,604],"pins":[[165,98],[139,110],[189,92]],"green":{"cx":165,"cy":104,"rx":58,"ry":44},"sand":[[[210,287],[203,296],[188,299],[172,296],[166,287],[172,279],[188,275],[203,279]]],"deco":[[104,604,23,false],[304,604,26,false],[112,524,20,false],[296,524,23,false],[84,444,26,true],[276,444,20,false],[80,366,23,false],[280,366,26,false],[82,289,20,false],[266,289,23,true],[62,209,26,false],[254,209,20,false],[69,120,23,false],[269,120,26,false]],"props":[["sign",110,634],["bench",290,620]],"puddles":[[184,341,14]],"leaves":[[180,444,16]],"m":75},{"n":3,"par":3,"name":"가로등 홀","poly":[[216,402],[212,375],[216,345],[220,323],[219,294],[220,268],[227,241],[230,216],[231,188],[240,163],[252,135],[249,79],[224,61],[190,54],[156,61],[131,79],[125,128],[134,155],[139,180],[134,206],[132,231],[134,258],[129,285],[122,315],[123,342],[126,376],[124,406],[132,427],[148,444],[170,450],[192,444],[208,427]],"tee":[170,404],"pins":[[190,98],[164,110],[214,92]],"green":{"cx":190,"cy":104,"rx":58,"ry":44},"trees":[[160,234,12]],"deco":[[72,404,23,false],[276,404,26,false],[81,319,20,false],[269,319,23,false],[74,236,26,true],[270,236,20,false],[89,159,23,false],[293,159,26,false]],"props":[["sign",80,434],["bench",260,420]],"puddles":[[190,236,14]],"leaves":[[166,289,16]],"m":45},{"n":4,"par":4,"name":"꺾임 나무 홀","poly":[[132,637],[132,610],[136,584],[135,557],[131,530],[134,505],[138,479],[134,454],[134,432],[142,405],[147,384],[149,360],[154,350],[169,343],[184,335],[207,322],[235,313],[274,295],[301,251],[301,209],[303,183],[312,160],[316,130],[315,79],[290,61],[256,54],[222,61],[197,79],[197,131],[200,160],[210,189],[219,214],[218,222],[212,225],[199,234],[177,245],[148,252],[117,266],[89,297],[71,329],[56,362],[53,390],[52,423],[48,451],[44,477],[46,504],[49,529],[45,557],[43,585],[47,610],[48,638],[52,660],[68,677],[90,683],[112,677],[128,660]],"tee":[90,637],"pins":[[256,98],[230,110],[280,92]],"green":{"cx":256,"cy":104,"rx":58,"ry":44},"trees":[[127,379,20],[73,478,12]],"deco":[[194,637,26,false],[186,557,23,false],[179,478,20,false],[201,398,26,false],[33,324,20,false],[168,160,20,true]],"props":[["sign",180,667],["bench",0,653]],"puddles":[[131,324,14]],"leaves":[[85,427,16]],"m":80},{"n":5,"par":5,"name":"산책로 건너는 긴 홀","poly":[[161,834],[163,805],[164,781],[160,756],[163,738],[173,719],[180,695],[185,670],[197,644],[210,619],[218,592],[226,568],[240,545],[252,521],[258,494],[267,468],[281,438],[288,410],[288,380],[292,352],[298,325],[295,294],[291,266],[294,236],[296,206],[292,176],[292,148],[298,118],[289,79],[264,61],[230,54],[196,61],[171,79],[166,131],[177,159],[182,185],[182,212],[186,238],[189,267],[186,295],[184,323],[187,344],[186,366],[178,388],[173,407],[169,434],[160,456],[147,478],[139,502],[132,528],[119,550],[105,577],[97,606],[89,634],[76,657],[65,685],[61,716],[56,747],[51,781],[53,811],[59,840],[72,860],[88,877],[110,883],[132,877],[148,860]],"tee":[110,837],"pins":[[230,98],[204,110],[254,92]],"green":{"cx":230,"cy":104,"rx":58,"ry":44},"sand":[[[215,495],[207,504],[189,508],[170,504],[163,495],[170,485],[189,482],[207,485]]],"trees":[[261,324,15]],"field":true,"near":[[[-98,850],[-99,819],[-101,781],[-99,732],[-91,683],[-80,640],[-68,605],[-58,579],[-47,551],[-35,520],[-23,490],[-12,465],[-2,442],[7,420],[15,400],[21,384],[27,366],[29,358],[31,346],[32,333],[33,319],[33,296],[32,269],[32,242],[31,220],[30,197],[28,173],[25,144],[23,123],[-77,132],[-75,154],[-72,182],[-70,204],[-69,225],[-68,244],[-68,270],[-67,297],[-67,317],[-68,326],[-68,333],[-69,338],[-69,339],[-73,351],[-78,364],[-85,382],[-94,403],[-104,426],[-115,451],[-128,483],[-141,515],[-151,543],[-162,571],[-175,611],[-189,661],[-199,723],[-201,782],[-199,824],[-197,856]],[[417,819],[416,792],[415,780],[415,780],[413,793],[413,793],[418,780],[425,761],[435,735],[443,713],[452,692],[462,670],[473,645],[484,616],[497,586],[510,550],[524,506],[535,459],[543,413],[547,370],[549,331],[549,293],[548,262],[548,230],[547,193],[544,157],[541,125],[538,95],[537,76],[437,85],[439,105],[442,134],[444,165],[447,199],[448,233],[448,263],[449,293],[449,328],[447,363],[443,400],[437,440],[427,479],[415,518],[403,550],[392,578],[381,605],[370,630],[360,653],[350,676],[342,699],[331,726],[324,746],[318,764],[315,771],[315,771],[315,780],[316,797],[318,825]]],"deco":[[240,849,27,false],[200,782,24,false],[488,775,24,true],[504,729,27,false],[-269,669,18,false],[250,685,18,false],[511,662,24,false],[-223,630,18,true],[247,637,18,false],[552,615,18,false],[42,561,27,false],[97,517,24,false],[-8,541,21,false],[316,533,18,false],[566,514,24,false],[85,475,18,false],[-189,483,21,false],[127,440,24,false],[-149,417,24,false],[347,412,21,false],[130,361,18,false],[346,371,24,false],[609,358,18,false],[113,314,18,false],[627,271,24,false],[141,219,24,false],[-157,212,21,false],[365,170,27,true],[112,87,18,true],[329,105,21,false],[620,110,24,false]],"paths":[[[-442,568],[758,648],[758,664],[-442,584]],[[-360,318],[840,398],[840,414],[-360,334]]],"people":[[-134,652],[466,451],[375,727],[-32,324]],"props":[["sign",200,867],["bench",20,853]],"puddles":[[219,475,14]],"leaves":[[150,598,16]],"m":110},{"n":6,"par":4,"name":"나무섬 사이","poly":[[289,543],[296,513],[294,478],[285,445],[278,413],[268,387],[253,365],[240,341],[235,318],[227,298],[216,276],[211,252],[210,228],[202,202],[198,176],[207,151],[215,129],[209,79],[184,61],[150,54],[116,61],[91,79],[82,123],[89,151],[99,183],[103,218],[106,250],[116,275],[124,302],[129,331],[138,357],[154,382],[165,407],[173,432],[184,452],[195,470],[194,485],[191,505],[191,531],[202,560],[218,577],[240,583],[262,577],[278,560]],"tee":[240,537],"pins":[[150,98],[124,110],[174,92]],"green":{"cx":150,"cy":104,"rx":58,"ry":44},"trees":[[217,352,15],[142,269,13]],"deco":[[138,537,23,false],[146,457,20,false],[342,457,23,false],[99,386,26,true],[303,386,20,false],[76,314,23,false],[288,314,26,false],[64,239,20,false],[260,239,23,true],[38,151,26,false],[242,151,20,false]],"props":[["sign",150,567],["bench",330,553]],"puddles":[[188,314,14]],"leaves":[[201,386,16]],"m":65},{"n":7,"par":3,"name":"느티나무 그늘","poly":[[224,471],[224,446],[220,412],[220,386],[224,358],[221,332],[216,304],[219,276],[221,249],[216,225],[214,199],[227,169],[237,143],[242,120],[239,79],[214,61],[180,54],[146,61],[121,79],[117,109],[117,135],[124,165],[136,198],[134,226],[131,251],[134,279],[138,307],[136,334],[134,360],[139,388],[141,413],[136,446],[136,470],[142,494],[158,511],[180,517],[202,511],[218,494]],"tee":[180,471],"pins":[[180,98],[154,110],[204,92]],"green":{"cx":180,"cy":104,"rx":58,"ry":44},"trees":[[193,277,12]],"deco":[[86,471,23,false],[282,471,26,false],[94,387,20,false],[274,387,23,false],[75,306,26,true],[263,306,20,false],[81,225,23,false],[277,225,26,false],[91,139,20,false],[271,139,23,true]],"props":[["sign",90,501],["bench",270,487]],"puddles":[[187,278,14]],"leaves":[[170,333,16]],"m":55},{"n":8,"par":3,"name":"숲속 작은 홀","poly":[[225,304],[221,277],[219,244],[224,216],[226,188],[230,159],[238,133],[239,79],[214,61],[180,54],[146,61],[121,79],[122,133],[130,159],[134,188],[136,216],[141,244],[139,277],[135,304],[142,327],[158,344],[180,350],[202,344],[218,327]],"tee":[180,304],"pins":[[180,98],[154,110],[204,92]],"green":{"cx":180,"cy":104,"rx":58,"ry":44},"sand":[[[218,188],[213,196],[200,198],[187,196],[182,188],[187,181],[200,178],[213,181]]],"deco":[[86,304,23,false],[282,304,26,false],[94,216,20,false],[274,216,23,false],[78,133,26,true],[266,133,20,false]],"props":[["sign",90,334],["bench",270,320]],"puddles":[[190,188,14]],"leaves":[[172,244,16]],"m":30},{"n":9,"par":3,"name":"마지막 숲길","poly":[[185,366],[178,343],[180,321],[188,306],[193,289],[202,265],[219,241],[232,214],[242,182],[252,150],[265,124],[259,79],[234,61],[200,54],[166,61],[141,79],[133,118],[143,141],[148,165],[144,184],[138,202],[130,226],[114,250],[99,275],[94,312],[96,348],[95,376],[102,394],[118,411],[140,417],[162,411],[178,394]],"tee":[140,371],"pins":[[200,98],[174,110],[224,92]],"green":{"cx":200,"cy":104,"rx":58,"ry":44},"water":[[[186,216],[182,223],[172,227],[160,227],[150,223],[146,216],[150,209],[160,204],[172,204],[182,209]]],"deco":[[44,371,23,false],[244,371,26,false],[55,291,20,false],[239,291,23,false],[74,222,26,true],[266,222,20,false],[102,146,23,false],[302,146,26,false]],"props":[["sign",50,401],["bench",230,387]],"puddles":[[153,291,14]],"leaves":[[145,269,16]],"m":40}];
 const COURSES={
   lesson:{key:'lesson', name:'배우는 코스', sub:'처음이라면 여기부터 · 세 홀이면 다 배워요', holes:LESSON_HOLES, store:'opg_lesson', onboard:false, lesson:true},
   home:{key:'home', name:'우리 동네 코스', sub:'연습하기 좋은 하천변 9홀', holes:HOME_HOLES, store:'opg_rounds', onboard:true},
-  jamsil:{key:'jamsil', name:'잠실 원정', sub:'잠실종합운동장 체육공원 · 9홀 513m · 현장 안내판 거리 그대로', holes:JAMSIL_HOLES, store:'opg_rounds_jamsil', onboard:false} };
+  jamsil:{key:'jamsil', name:'잠실 원정', sub:'잠실종합운동장 체육공원 · 9홀 513m · 현장 안내판 거리 그대로', holes:JAMSIL_HOLES, store:'opg_rounds_jamsil', onboard:false},
+  hapcheon:{key:'hapcheon', name:'합천 원정', sub:'합천 핫들생태공원 · B코스 9홀 570m', holes:HAPCHEON_HOLES, store:'opg_rounds_hapcheon', onboard:false} };
 let COURSE=COURSES.home, HOLES=COURSE.holes;
 let PAR=HOLES.reduce((a,h)=>a+h.par,0);
 
@@ -645,15 +662,16 @@ function slopeAt(h,p){ if(!h.slopes) return null; for(const s of h.slopes){ if(i
 const BALL_SY=H*0.72;
 function camTarget(){ const c=cup(); const dx=Math.abs(c[0]-S.pos.x), dy=c[1]-S.pos.y;
   // 홀 전체를 담지 않는다. 공 주변을 크게 보여주고, 화면 밖 핀은 위쪽 표시로 알린다.
-  S.cam.ts = ZOOM; }
-function camTargetX(){ if(S.putt||S.turned||S.nearWall) return S.pos.x; const h=H_(); const xs=h.poly.map(p=>p[0]); const x0=Math.min(...xs)-10, x1=Math.max(...xs)+10; const s=S.cam.s;
+  S.cam.ts = H_().field ? ZOOM_FIELD : ZOOM; }
+const ZOOM_FIELD=1.8, ZOOM_FIELD_RUN=0.95, LOOK_AHEAD=0.55; // 들판: 서 있을 땐 공 가까이, 굴러가면 물러나며 앞 코스를 펼쳐 보인다
+function camTargetX(){ if(H_().field) return S.pos.x + (S.moving ? S.vel.x*LOOK_AHEAD : 0); if(S.putt||S.turned||S.nearWall) return S.pos.x; const h=H_(); const xs=h.poly.map(p=>p[0]); const x0=Math.min(...xs)-10, x1=Math.max(...xs)+10; const s=S.cam.s;
   if((x1-x0)*s<=W) return (x0+x1)/2; return Math.max(x0+W/2/s, Math.min(x1-W/2/s, S.pos.x)); }
 function camSnap(){ S.turned=false; S.nearWall=false; S.cam.sy=S.cam.tsy=BALL_SY; if(DIORAMA && THEME.block){ S.putt=false; S.cam.a=S.cam.ta=DIO_A; S.cam.tilt=S.cam.ttilt=DIO_TILT; return; } S.putt=false; S.cam.a=0; S.cam.ta=0; S.cam.tilt=TILT; S.cam.ttilt=TILT; camTarget(); S.cam.s=S.cam.ts; S.cam.y=S.pos.y; S.cam.x=camTargetX(); }
 // Putting camera: the one rotation. When the ball stops on the green, turn so the cup is straight up, zoom in, flatten the tilt a little.
 function wallDist(h,p){ let m=1e9; for(const [a,c] of wallEdges(h)){ const ex=c[0]-a[0], ey=c[1]-a[1], L2=ex*ex+ey*ey; let t=((p.x-a[0])*ex+(p.y-a[1])*ey)/L2; t=Math.max(0,Math.min(1,t)); m=Math.min(m,Math.hypot(p.x-a[0]-ex*t,p.y-a[1]-ey*t)); } return m; }
 function puttCheck(){ if(DIORAMA && THEME.block) return; const h=H_(); const c=cup(); const dx=c[0]-S.pos.x, dy=c[1]-S.pos.y;
   // 펜스에 붙은 공: 공이 화면 가장자리에 걸려 당길 자리가 없지 않게, 공을 화면 가운데로 데려온다
-  S.nearWall = wallDist(h,S.pos) < 42; S.cam.tsy = S.nearWall ? H*0.54 : BALL_SY;
+  S.nearWall = !h.field && wallDist(h,S.pos) < 42; S.cam.tsy = S.nearWall ? H*0.54 : BALL_SY;
   const gr=h.green; const ex=(S.pos.x-gr.cx)/(gr.rx*1.7), ey=(S.pos.y-gr.cy)/(gr.ry*1.7); const near = (ex*ex+ey*ey<=1) || Math.hypot(dx,dy)<110; // 그린 근처(그린의 1.7배 범위 또는 컵 13m 안)
   if(near && !S.holeOver){ const want=-Math.PI/2-Math.atan2(dy,dx); let diff=want-S.cam.ta; diff=Math.atan2(Math.sin(diff),Math.cos(diff));
     if(!S.putt || Math.abs(diff)>Math.PI/2){ S.cam.ta=want; } S.putt=true; S.cam.ts=2.1; S.cam.ttilt=0.82; }
@@ -662,16 +680,18 @@ function puttCheck(){ if(DIORAMA && THEME.block) return; const h=H_(); const c=c
     const off=Math.abs(Math.atan2(dx,-dy)), turn = S.turned ? off>0.45 : off>0.9;
     if(turn && !S.holeOver){ S.turned=true; const w=-Math.PI/2-Math.atan2(dy,dx); S.cam.ta=Math.atan2(Math.sin(w),Math.cos(w)); S.cam.ttilt=TILT; camTarget(); }
     else { S.turned=false; S.cam.ta=0; S.cam.ttilt=TILT; camTarget(); } } }
-function camUpdate(dt){ if(DIORAMA && THEME.block) return; const k=1-Math.pow(S.moving?0.08:0.02,dt); S.cam.x+=(camTargetX()-S.cam.x)*k; S.cam.y+=(S.pos.y-S.cam.y)*k;
+function camUpdate(dt){ if(DIORAMA && THEME.block) return; const k=1-Math.pow(S.moving?0.08:0.02,dt); const fld=H_().field && S.moving;
+  S.cam.x+=(camTargetX()-S.cam.x)*k; S.cam.y+=((S.pos.y+(fld?S.vel.y*LOOK_AHEAD:0))-S.cam.y)*k;
+  if(fld){ const sp=Math.min(1,Math.hypot(S.vel.x,S.vel.y)/(MAXV*0.55)); const ts=ZOOM_FIELD+(ZOOM_FIELD_RUN-ZOOM_FIELD)*sp; const kz=1-Math.pow(sp>0.3?0.25:0.6,dt); S.cam.s+=(ts-S.cam.s)*kz; S.cam.sy+=(H*0.62-S.cam.sy)*kz; }
   if(!S.moving){ const ka=1-Math.pow(0.30,dt); let da=S.cam.ta-S.cam.a; da=Math.atan2(Math.sin(da),Math.cos(da)); S.cam.a+=da*ka; S.cam.s+=(S.cam.ts-S.cam.s)*k; S.cam.tilt+=(S.cam.ttilt-S.cam.tilt)*k; S.cam.sy+=(S.cam.tsy-S.cam.sy)*k; } }
 // flyover: cup → tee, low angle rising to TILT
 let INTRO_DUR=2.8; const ease=k=>k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
 function showHint(t){ const el=$('hint'); if(!el) return; if(t){ el.innerHTML='<b>'+H_().n+'단계 · '+H_().name+'</b><br>'+t; el.hidden=false; } else el.hidden=true; }
-function startIntro(){ if(DIORAMA && THEME.block && !S.attract){ S.intro=null; return; } const h=H_(), c=cup(); INTRO_DUR=Math.min(5.5, 2.2+Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])/260)+(THEME.block?2.2:0); S.intro={t:0}; }
+function startIntro(){ if(DIORAMA && THEME.block && !S.attract){ S.intro=null; return; } const h=H_(), c=cup(); INTRO_DUR=Math.min(5.5, 2.2+Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])/260)+(THEME.block&&!h.field?2.2:0); S.intro={t:0}; }
 function endIntro(){ S.intro=null; msg(S.hi===S.startHole ? '오늘은 '+WX[S.wx].name+' · '+BALLS[S.ball].name : ''); }
 function introCam(){ const k=Math.min(1,S.intro.t/INTRO_DUR); const c=cup(), h=H_();
   const K2={ x:S.cam.x, y:S.pos.y, s:S.cam.ts, tilt:TILT, sy:BALL_SY, a:0 }, K1={ x:c[0], y:c[1]+40, s:S.cam.ts+0.6, tilt:0.42, sy:BALL_SY*0.5, a:0 };
-  if(!THEME.block) return lerpCam(K1,K2,ease(k));
+  if(!THEME.block || h.field) return lerpCam(K1,K2,ease(k));
   // 블록 모형 연출: 비스듬히 놓인 홀 전체를 먼저 보여 주고, 돌면서 컵으로 내려앉았다가, 티로 돌아와 원래 시점에서 친다
   const K0=dioCam(h);
   if(k<0.32) return K0; if(k<0.58) return lerpCam(K0,K1,ease((k-0.32)/0.26)); return lerpCam(K1,K2,ease((k-0.58)/0.42)); }
@@ -701,6 +721,12 @@ function rollUpdate(){ if(!rollGain) return; rollGain.gain.value=Math.min(0.12, 
 
 // ---------- physics (fixed step, no randomness) ----------
 const DT=1/120;
+// 들판 홀: 벽이 없다. 공이 OB 줄(페어웨이 경계)을 넘으면 1타 벌타, 나간 자리 바로 안쪽에서 다시 친다 (실제 파크골프 규칙)
+function fieldPoly(h){ return h._fp || (h._fp=smoothPts(h.poly)); }
+function fieldOB(h,p,v){ const fp=fieldPoly(h); if(inPoly(p,fp)){ S.lastIn={x:p.x,y:p.y}; return false; }
+  const sp=Math.hypot(v.x,v.y)||1; let q=S.lastIn||S.lastSafe; q={x:q.x-v.x/sp*10, y:q.y-v.y/sp*10}; if(!inPoly(q,fp)) q={...(S.lastIn||S.lastSafe)};
+  v.x=0; v.y=0; S.pos={x:q.x,y:q.y}; S.strokes[S.hi]++; S.fx.push({x:q.x,y:q.y,t:S.t,big:false}); sndStop(); msg('OB · 1타 벌타 · 나간 자리 안쪽에서 칩니다'); updateHud();
+  if(S.strokes[S.hi]>=h.par+3){ S.moving=false; holeOut(true); } return true; }
 function step(h){
   const b=BALLS[S.ball], wx=WX[S.wx], wv=windVec(); const p=S.pos, v=S.vel;
   let sp=Math.hypot(v.x,v.y); if(sp<=0) return; S.t+=DT;
@@ -710,7 +736,8 @@ function step(h){
   let fr=FRICTION*wx.fr; if(inSand(h,p)) fr*=3.2; else if(inGreen(h,p)) fr*=GREEN_FR;
   const dec=(sp<45?fr*2.2:fr)*DT; if(sp<=dec){ v.x=0; v.y=0; return; }
   v.x-=v.x/sp*dec; v.y-=v.y/sp*dec; p.x+=v.x*DT; p.y+=v.y*DT;
-  for(const [a,c] of wallEdges(h)){ const ex=c[0]-a[0], ey=c[1]-a[1], L2=ex*ex+ey*ey; let t=((p.x-a[0])*ex+(p.y-a[1])*ey)/L2; t=Math.max(0,Math.min(1,t));
+  if(h.field){ if(fieldOB(h,p,v)) return; }
+  else for(const [a,c] of wallEdges(h)){ const ex=c[0]-a[0], ey=c[1]-a[1], L2=ex*ex+ey*ey; let t=((p.x-a[0])*ex+(p.y-a[1])*ey)/L2; t=Math.max(0,Math.min(1,t));
     const qx=a[0]+ex*t, qy=a[1]+ey*t; const dx=p.x-qx, dy=p.y-qy; const d=Math.hypot(dx,dy); if(d<R+WALL && d>0) bounce(p,v,dx/d,dy/d,qx,qy,b); }
   if(h.trees) for(const [tx,ty,tr] of h.trees){ const dx=p.x-tx, dy=p.y-ty; const d=Math.hypot(dx,dy); if(d<tr+R && d>0){ const nx=dx/d, ny=dy/d; p.x=tx+nx*(tr+R); p.y=ty+ny*(tr+R);
       const vn=v.x*nx+v.y*ny; if(vn<0){ const e=Math.min(b.e,0.6); v.x-=(1+e)*vn*nx; v.y-=(1+e)*vn*ny; S.fx.push({x:p.x,y:p.y,t:S.t,big:false}); sndCurb(false); } } }
@@ -777,7 +804,7 @@ function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0);
   if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); }
   else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; loadHole(); }
-function loadHole(){ const h=H_(); if(COURSE.lesson){ S.ball=h.ball; S.wx=h.wx; S.windDir=h.windDir; } showHint(COURSE.lesson&&!S.attract?h.hint:''); S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
+function loadHole(){ const h=H_(); if(COURSE.lesson){ S.ball=h.ball; S.wx=h.wx; S.windDir=h.windDir; } showHint(COURSE.lesson&&!S.attract?h.hint:''); S.lastIn=null; S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
   msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); if(!S.attract) PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
 // 남은 거리: 공에서 핀까지. 실제 구장은 티에서 안내판 거리와 같아지도록 맞춘다.
 function remain(){ const h=H_(), c=cup(); const tee=Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])*M_PER_PX; const k= h.m ? h.m/Math.max(tee,1) : 1; return Math.max(0,Math.round(Math.hypot(c[0]-S.pos.x,c[1]-S.pos.y)*M_PER_PX*k)); }
@@ -855,9 +882,25 @@ function drawLandBlock(h,g){ // soil strata seen below the front edge, then the 
   groundBegin(g); landPath(h); ctx.fillStyle=THEME.rough; ctx.fill();
   ctx.save(); landPath(h); ctx.clip(); const [x0,y0,x1,y1]=landRect(h); ctx.fillStyle=THEME.roughDot; let sd=7; const rnd=()=>{ sd=(sd*16807)%2147483647; return sd/2147483647; };
   for(let i=0;i<(x1-x0)*(y1-y0)/700;i++){ ctx.beginPath(); ctx.arc(x0+rnd()*(x1-x0), y0+rnd()*(y1-y0), 1.2+rnd()*1.4, 0, Math.PI*2); ctx.fill(); } ctx.restore(); }
+// 들판 바닥: 끝없이 이어지는 러프, 옆 홀 페어웨이, 가로지르는 산책로
+function drawFieldLand(h,g){ groundBegin(g); if(!roughPattern) makeRough(); ctx.fillStyle=roughPattern; ctx.fillRect(-900,-900,2400,3000);
+  for(const q of (h.near||[])){ ctx.save(); smooth(q); ctx.clip(); ctx.fillStyle=THEME.fairway; ctx.globalAlpha=0.8; ctx.fillRect(-900,-900,2400,3000); ctx.fillStyle=THEME.fairwayStripe; for(let y=-900;y<2100;y+=26) ctx.fillRect(-900,y,2400,13); ctx.restore();
+    smooth(q); ctx.strokeStyle='rgba(255,255,255,0.45)'; ctx.lineWidth=1.2; ctx.stroke(); }
+  for(const pa of (h.paths||[])){ path(pa); ctx.fillStyle=THEME.fieldPath; ctx.fill(); } } // 바닥 좌표계는 drawGround가 이어서 쓴다 (restore 안 함)
+// OB 줄: 바닥의 흰 줄 (말뚝은 서 있는 물체로 따로 그린다)
+function drawOBLine(h,g){ groundBegin(g); smooth(h.poly); ctx.strokeStyle='rgba(255,255,255,0.75)'; ctx.lineWidth=1.6; ctx.stroke(); ctx.restore(); }
+function obStakes(h){ if(h._stk) return h._stk; const fp=fieldPoly(h), out=[]; let acc=0; for(let i=1;i<fp.length;i++){ acc+=Math.hypot(fp[i][0]-fp[i-1][0],fp[i][1]-fp[i-1][1]); if(acc>=46){ acc=0; out.push(fp[i]); } } return h._stk=out; }
+function drawStake(x,y,g){ const p=scr([x,y],g), s=g.s; ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(p.x-1*s,p.y-1*s,4*s,2*s); ctx.fillStyle='#f4f4ee'; ctx.fillRect(p.x-1.3*s,p.y-11*s,2.6*s,11*s); ctx.fillStyle='#d9d9d0'; ctx.fillRect(p.x,p.y-11*s,1.3*s,11*s); }
+// 옆 홀에서 치는 사람 (크기 비교용, 실제 키 1.7m 비율)
+function drawPerson(x,y,i,g){ const p=scr([x,y],g), s=g.s; const sw=Math.sin(S.t*0.8+i*2.1);
+  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(p.x+2*s,p.y,4*s,1.6*s,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#4a4a52'; ctx.fillRect(p.x-2.2*s,p.y-6*s,1.8*s,6*s); ctx.fillRect(p.x+0.4*s,p.y-6*s,1.8*s,6*s);
+  ctx.fillStyle=['#d9534f','#4f7fd9','#e0a93a','#6aa86a'][i%4]; ctx.fillRect(p.x-2.8*s,p.y-11.5*s,5.6*s,6*s);
+  ctx.fillStyle='#e8c39e'; ctx.beginPath(); ctx.arc(p.x,p.y-13.5*s,1.9*s,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#f4f4ee'; ctx.fillRect(p.x-2.4*s,p.y-15.6*s,4.8*s,1.4*s);
+  ctx.strokeStyle='#2b2b2b'; ctx.lineWidth=0.9*s; ctx.beginPath(); ctx.moveTo(p.x+1.5*s,p.y-8*s); ctx.lineTo(p.x+(1.5+sw*2.5)*s,p.y-0.5*s); ctx.stroke(); }
 function drawGround(h,g){
   const wx=WX[S.wx];
-  if(THEME.block){ drawLandBlock(h,g); } else { groundBegin(g); if(!roughPattern) makeRough(); ctx.fillStyle=roughPattern; ctx.fillRect(-W,-H,3*W,4*H); }
+  if(h.field){ drawFieldLand(h,g); } else if(THEME.block){ drawLandBlock(h,g); } else { groundBegin(g); if(!roughPattern) makeRough(); ctx.fillStyle=roughPattern; ctx.fillRect(-W,-H,3*W,4*H); }
   ctx.save(); smooth(h.poly); ctx.clip();
   ctx.fillStyle= wx.frost?THEME.fairwayFrost : wx.puddles?THEME.fairwayWet : THEME.fairway; ctx.fillRect(-W,-H,3*W,4*H);
   ctx.fillStyle=THEME.fairwayStripe; for(let y=-H;y<3*H;y+=26) ctx.fillRect(-W,y,3*W,13);
@@ -883,6 +926,7 @@ function drawGround(h,g){
   const [cx,cy]=cup(); ctx.beginPath(); ctx.arc(cx,cy,CUP_R,0,Math.PI*2); ctx.fillStyle=THEME.cup; ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle=THEME.cupRim; ctx.stroke();
   const p=S.pos; ctx.beginPath(); ctx.ellipse(p.x+2,p.y+3,R,R*0.8,0,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fill();
   ctx.restore();
+  if(h.field){ drawOBLine(h,g); return; }
   // wall
   const hWall=5*g.s, wWall=7*g.s; ctx.lineJoin='round'; ctx.lineCap='round';
   for(let i=hWall;i>=0;i-=1){ ctx.save(); ctx.translate(0,-i); groundBegin(g); smooth(h.poly); ctx.restore(); ctx.restore(); ctx.lineWidth=wWall; ctx.strokeStyle= i>hWall-1.5 ? THEME.wallTop : (i<2 ? THEME.wallBase : THEME.wall); ctx.stroke(); }
@@ -925,6 +969,7 @@ function drawBallUp(g){ const b=BALLS[S.ball], p=scr([S.pos.x,S.pos.y],g), s=g.s
 function drawStanding(h,g){ const items=[];
   (h.trees||[]).forEach(([x,y,r])=>items.push({y, f:()=>drawTreeUp(x,y,r,false,g)}));
   (h.deco||[]).forEach(([x,y,r,au])=>items.push({y, f:()=>drawTreeUp(x,y,r,au,g)}));
+  if(h.field){ obStakes(h).forEach(([x,y])=>items.push({y, f:()=>drawStake(x,y,g)})); (h.people||[]).forEach(([x,y],i)=>items.push({y, f:()=>drawPerson(x,y,i,g)})); }
   if(h.bridge) items.push({y:h.bridge[2][1], f:()=>drawRailsUp(h.bridge,g)});
   items.push({y:cup()[1], f:()=>drawFlagUp(h,g)});
   (h.props||[]).forEach(pr=>items.push({y:pr[2], f:()=>drawProp(h,pr,g)}));
@@ -965,7 +1010,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v26', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v28', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
