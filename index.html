@@ -95,6 +95,14 @@ html[lang=th] .t-small{letter-spacing:2px}
 .t-go{font-size:24px;min-height:64px;border-radius:32px;box-shadow:0 8px 24px rgba(0,0,0,.35);animation:tBreath 2.6s 2.4s ease-in-out infinite}
 @keyframes tUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @keyframes tBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+/* 타이틀 키아트(시안 D 가을 강변): 하늘에 로고, 잔디 위에 시작 버튼 */
+#title{background:#fbfaf6 url(art/title.jpg) center bottom/cover no-repeat;color:#24361f}
+#title .t-logo{text-shadow:0 2px 14px rgba(255,255,255,.9)}
+#title .t-emblem{filter:brightness(.22) drop-shadow(0 1px 4px rgba(255,255,255,.8))}
+#title .t-rule{background:linear-gradient(90deg,transparent,#24361f,transparent);opacity:.6}
+#title .t-tag{text-shadow:0 1px 8px rgba(255,255,255,.9);color:#3a4a2e}
+#title .t-top{margin-top:9vh}
+#title .t-date{color:#fff}
 @media (prefers-reduced-motion: reduce){.t-top,.t-bottom,.t-go{animation:none}}
 .hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 64px);width:min(92vw,420px);box-sizing:border-box;background:var(--panel);color:var(--fg);border:2px solid var(--accent);border-radius:16px;padding:14px 16px;font-size:19px;font-weight:700;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:4;pointer-events:none}
 .hint b{color:var(--accent)}
@@ -1024,7 +1032,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v30', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v31', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
