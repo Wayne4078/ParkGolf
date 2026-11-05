@@ -506,7 +506,7 @@ const WX_KEYS=Object.keys(WX);
 const FRICTION=115, MAXV=330, MAXDRAG=140, GREEN_FR=0.8;
 
 // ================= THEME =================
-const THEME={
+const THEME_FIELD={
   name:'동네 하천변 · 늦가을',
   rough:'#4a7f3a', fairway:'#5f9d49', fairwayStripe:'rgba(255,255,255,0.06)', green:'#79b25c', greenStripe:'rgba(255,255,255,0.09)',
   fairwayWet:'#4d8a3e', fairwayFrost:'#93b58c', greenFrost:'#aacb9f',
@@ -517,6 +517,16 @@ const THEME={
   bench:'#8b6a3e', benchDark:'#5d4527', sign:'#3a3a3a', signPost:'#5a4a3a', bin:'#4b6f5a',
   flag:'#e23b2e', cupRim:'#eef0e4', cup:'#1b2a16', pinMark:'rgba(255,255,255,0.85)', tee:'#2d3a2a', puddle:'rgba(70,120,170,0.75)', leaf1:'#c9742a', leaf2:'#a8431f',
 };
+// 블록 모형 스킨: 땅에서 떠낸 한 덩어리 모형 (타이틀 시안 C)
+const THEME_BLOCK=Object.assign({},THEME_FIELD,{ block:true,
+  paper:'#efe8d6', rough:'#7f8a4e', roughDot:'rgba(40,50,20,0.16)', fairway:'#a3b273', fairwayStripe:'rgba(255,255,255,0.07)', green:'#c2cf8f', greenStripe:'rgba(255,255,255,0.12)',
+  fairwayWet:'#8ea064', fairwayFrost:'#c9d3b4', greenFrost:'#dbe3c6',
+  wall:'#c8975f', wallTop:'#e8c792', wallBase:'#8e6439',
+  water:'#86aebd', waterDeep:'#6b98aa', stone:'#8c8a83',
+  soil:['#5d6a36','#7a5b3c','#9b7b57','#b9a283','#8b8578'],
+  treeDark:'#5f7a3a', treeLight:'#7c9650', trunk:'#4a3626', autumn:'#c98a3a', autumnLight:'#e0ad5a',
+  roof:'#2f3338', roofEdge:'#4b5157', post:'#6b4a2e', wood:'#a87b4f', kaki:'#e07a2e', stoneWall:'#a9a49a', stoneWallDark:'#7d786f' });
+const THEME=THEME_BLOCK;
 
 // ================= HOLE DATA. poly = fairway (walls on every edge). green = ellipse (faster grass). trees = inside, physics. deco = outside, no physics. =================
 const HOME_HOLES=[
@@ -530,7 +540,7 @@ const HOME_HOLES=[
    tee:[176,528], pins:[[160,122],[200,104],[128,154]], green:{cx:168,cy:126,rx:62,ry:52},
    water:[[[80,286],[112,276],[146,282],[180,274],[214,280],[250,272],[290,278],[290,330],[250,338],[214,332],[180,340],[146,334],[112,342],[80,334]]], bridge:[[200,268],[252,268],[252,344],[200,344]],
    stones:[[118,281,4],[160,279,3],[196,278,4],[262,276,3],[124,337,3],[176,338,4],[232,339,3],[270,334,4],[100,290,3]],
-   deco:[[54,230,22,false],[300,180,26,true],[310,440,20,false],[46,400,18,true]], props:[['bench',296,500],['sign',300,566],['bin',338,508]], puddles:[[160,420,16]], leaves:[[200,200,18]] },
+   deco:[[54,230,22,false],[300,180,26,'kaki'],[310,440,20,false],[46,400,18,true]], props:[['pavilion',318,330],['stonewall',300,232],['bench',296,500],['sign',300,566],['bin',338,508]], puddles:[[160,420,16]], leaves:[[200,200,18]] },
  { n:4, par:4, name:'내리막 홀', poly:[[118,740],[108,680],[112,600],[108,520],[114,440],[108,360],[112,280],[108,200],[114,120],[128,74],[180,58],[232,74],[246,120],[252,200],[248,280],[252,360],[246,440],[252,520],[248,600],[252,680],[242,740]],
    tee:[180,700], pins:[[180,110],[148,132],[214,122]], green:{cx:180,cy:118,rx:52,ry:44},
    slopes:[{poly:[[100,60],[260,60],[260,740],[100,740]], g:[0,-40]}], deco:[[60,300,20,false],[300,500,24,true],[70,600,18,false],[300,200,18,false]], props:[['bench',60,690],['sign',300,760]], puddles:[[180,400,16]], leaves:[[200,560,18]] },
@@ -618,10 +628,16 @@ function camUpdate(dt){ const k=1-Math.pow(S.moving?0.08:0.02,dt); S.cam.x+=(cam
   if(!S.moving){ const ka=1-Math.pow(0.30,dt); let da=S.cam.ta-S.cam.a; da=Math.atan2(Math.sin(da),Math.cos(da)); S.cam.a+=da*ka; S.cam.s+=(S.cam.ts-S.cam.s)*k; S.cam.tilt+=(S.cam.ttilt-S.cam.tilt)*k; } }
 // flyover: cup → tee, low angle rising to TILT
 let INTRO_DUR=2.8; const ease=k=>k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-function startIntro(){ const h=H_(), c=cup(); INTRO_DUR=Math.min(5.5, 2.2+Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])/260); S.intro={t:0}; }
+function startIntro(){ const h=H_(), c=cup(); INTRO_DUR=Math.min(5.5, 2.2+Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])/260)+(THEME.block?2.2:0); S.intro={t:0}; }
 function endIntro(){ S.intro=null; msg(S.hi===S.startHole ? '오늘은 '+WX[S.wx].name+' · '+BALLS[S.ball].name : ''); }
-function introCam(){ const k=Math.min(1,S.intro.t/INTRO_DUR); const e=ease(k); const c=cup();
-  return { x: c[0]+(S.cam.x-c[0])*e, y: (c[1]+40)+(S.pos.y-(c[1]+40))*e, s: (S.cam.ts+0.6)-0.6*e, tilt: 0.42+(TILT-0.42)*e, sy: BALL_SY*0.5+(BALL_SY-BALL_SY*0.5)*e }; }
+function introCam(){ const k=Math.min(1,S.intro.t/INTRO_DUR); const c=cup(), h=H_();
+  const K2={ x:S.cam.x, y:S.pos.y, s:S.cam.ts, tilt:TILT, sy:BALL_SY }, K1={ x:c[0], y:c[1]+40, s:S.cam.ts+0.6, tilt:0.42, sy:BALL_SY*0.5 };
+  if(!THEME.block) { const e=ease(k); return lerpCam(K1,K2,e); }
+  // 블록 모형: 먼저 홀 전체를 한 덩어리로 보여 주고, 컵으로 내려앉았다가, 티로 돌아온다
+  const [x0,y0,x1,y1]=landRect(h), lw=x1-x0, lh=y1-y0, tl=0.62, so=Math.min(W*0.9/lw, H*0.62/(lh*tl));
+  const K0={ x:(x0+x1)/2, y:(y0+y1)/2, s:so, tilt:tl, sy:H*0.44 };
+  if(k<0.3) return K0; if(k<0.55) return lerpCam(K0,K1,ease((k-0.3)/0.25)); return lerpCam(K1,K2,ease((k-0.55)/0.45)); }
+function lerpCam(A,B,e){ const o={}; for(const key in A) o[key]=A[key]+(B[key]-A[key])*e; return o; }
 function G(){ return S.intro ? Object.assign(introCam(),{a:0}) : {x:S.cam.x, y:S.cam.y, s:S.cam.s, tilt:S.cam.tilt, sy:BALL_SY, a:S.cam.a}; }
 function scr(p,g){ g=g||G(); const dx=p[0]-g.x, dy=p[1]-g.y; const ca=Math.cos(g.a), sa=Math.sin(g.a); const rx=dx*ca-dy*sa, ry=dx*sa+dy*ca; return { x: W/2 + g.s*rx, y: g.sy + g.s*g.tilt*ry }; }
 
@@ -778,9 +794,22 @@ function makeRough(){ const pc=document.createElement('canvas'); pc.width=64; pc
   for(let i=0;i<140;i++){ g.strokeStyle= i%3? 'rgba(0,0,0,0.12)':'rgba(255,255,255,0.08)'; g.lineWidth=1.2; const x=rnd()*64, y=rnd()*64; g.beginPath(); g.moveTo(x,y); g.lineTo(x+(rnd()-0.5)*4, y-3-rnd()*4); g.stroke(); }
   roughPattern=ctx.createPattern(pc,'repeat'); }
 function bbox(poly){ const xs=poly.map(p=>p[0]), ys=poly.map(p=>p[1]); return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]; }
+function landRect(h){ if(h._land) return h._land; const pts=[...h.poly]; (h.water||[]).forEach(w=>pts.push(...w));
+  (h.deco||[]).forEach(([x,y,r])=>{ pts.push([x-r,y-r],[x+r,y+r]); }); (h.props||[]).forEach(([t,x,y])=>{ pts.push([x-28,y-10],[x+28,y+10]); });
+  const [x0,y0,x1,y1]=bbox(pts), m=22; return h._land=[x0-m,y0-m,x1+m,y1+m]; }
+function landPath(h){ const [x0,y0,x1,y1]=landRect(h), r=14; ctx.beginPath(); ctx.moveTo(x0+r,y0); ctx.lineTo(x1-r,y0); ctx.quadraticCurveTo(x1,y0,x1,y0+r); ctx.lineTo(x1,y1-r); ctx.quadraticCurveTo(x1,y1,x1-r,y1);
+  ctx.lineTo(x0+r,y1); ctx.quadraticCurveTo(x0,y1,x0,y1-r); ctx.lineTo(x0,y0+r); ctx.quadraticCurveTo(x0,y0,x0+r,y0); ctx.closePath(); }
+function drawLandBlock(h,g){ // soil strata seen below the front edge, then the grassy top
+  ctx.fillStyle=THEME.paper; ctx.fillRect(0,0,W,H);
+  const D=Math.max(46*g.s,34), bands=[[D,THEME.soil[4]],[D*0.78,THEME.soil[3]],[D*0.52,THEME.soil[2]],[D*0.24,THEME.soil[1]],[D*0.07,THEME.soil[0]]];
+  ctx.save(); ctx.fillStyle='rgba(60,45,25,0.18)'; ctx.translate(0,D+10*g.s); groundBegin(g); landPath(h); ctx.restore(); ctx.fill(); ctx.restore();
+  for(const [d,c] of bands){ ctx.save(); ctx.translate(0,d); groundBegin(g); landPath(h); ctx.restore(); ctx.fillStyle=c; ctx.fill(); ctx.restore(); }
+  groundBegin(g); landPath(h); ctx.fillStyle=THEME.rough; ctx.fill();
+  ctx.save(); landPath(h); ctx.clip(); const [x0,y0,x1,y1]=landRect(h); ctx.fillStyle=THEME.roughDot; let sd=7; const rnd=()=>{ sd=(sd*16807)%2147483647; return sd/2147483647; };
+  for(let i=0;i<(x1-x0)*(y1-y0)/700;i++){ ctx.beginPath(); ctx.arc(x0+rnd()*(x1-x0), y0+rnd()*(y1-y0), 1.2+rnd()*1.4, 0, Math.PI*2); ctx.fill(); } ctx.restore(); }
 function drawGround(h,g){
-  const wx=WX[S.wx]; groundBegin(g);
-  if(!roughPattern) makeRough(); ctx.fillStyle=roughPattern; ctx.fillRect(-W,-H,3*W,4*H);
+  const wx=WX[S.wx];
+  if(THEME.block){ drawLandBlock(h,g); } else { groundBegin(g); if(!roughPattern) makeRough(); ctx.fillStyle=roughPattern; ctx.fillRect(-W,-H,3*W,4*H); }
   ctx.save(); smooth(h.poly); ctx.clip();
   ctx.fillStyle= wx.frost?THEME.fairwayFrost : wx.puddles?THEME.fairwayWet : THEME.fairway; ctx.fillRect(-W,-H,3*W,4*H);
   ctx.fillStyle=THEME.fairwayStripe; for(let y=-H;y<3*H;y+=26) ctx.fillRect(-W,y,3*W,13);
@@ -811,7 +840,12 @@ function drawGround(h,g){
   for(let i=hWall;i>=0;i-=1){ ctx.save(); ctx.translate(0,-i); groundBegin(g); smooth(h.poly); ctx.restore(); ctx.restore(); ctx.lineWidth=wWall; ctx.strokeStyle= i>hWall-1.5 ? THEME.wallTop : (i<2 ? THEME.wallBase : THEME.wall); ctx.stroke(); }
   ctx.save(); ctx.translate(0,-hWall); groundBegin(g); smooth(h.poly); ctx.restore(); ctx.restore(); ctx.lineWidth=wWall*0.45; ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.stroke();
 }
-function drawTreeUp(x,y,r,autumn,g){ const p=scr([x,y],g), s=g.s; const d= autumn?THEME.autumn:THEME.treeDark, l= autumn?THEME.autumnLight:THEME.treeLight;
+function drawTreeUp(x,y,r,autumn,g){ const p=scr([x,y],g), s=g.s;
+  if(autumn==='kaki'){ // 감나무: 앙상한 가지와 주황 감
+    ctx.strokeStyle=THEME.trunk; ctx.lineCap='round'; ctx.lineWidth=4*s; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x,p.y-r*1.6*s); ctx.stroke();
+    ctx.lineWidth=2*s; for(const [ax,ay,bx,by] of [[0,-1.0,-0.9,-1.8],[0,-1.2,0.9,-2.0],[0,-1.5,-0.4,-2.4],[0,-1.4,0.5,-2.5],[-0.5,-1.5,-1.1,-1.6],[0.5,-1.7,1.2,-1.8]]){ ctx.beginPath(); ctx.moveTo(p.x+ax*r*s,p.y+ay*r*s); ctx.lineTo(p.x+bx*r*s,p.y+by*r*s); ctx.stroke(); }
+    ctx.fillStyle=THEME.treeLight; for(const [ox,oy] of [[-0.7,-1.9],[0.8,-2.1],[-0.2,-2.5],[0.3,-1.7]]){ ctx.beginPath(); ctx.ellipse(p.x+ox*r*s,p.y+oy*r*s,3*s,1.8*s,0.5,0,Math.PI*2); ctx.fill(); }
+    ctx.fillStyle=THEME.kaki; for(const [ox,oy] of [[-0.9,-1.8],[0.9,-2.0],[-0.4,-2.4],[0.5,-2.5],[-1.1,-1.6],[1.2,-1.8],[0.1,-2.1],[-0.6,-2.1]]){ ctx.beginPath(); ctx.arc(p.x+ox*r*s,p.y+oy*r*s,3*s,0,Math.PI*2); ctx.fill(); } return; } const d= autumn?THEME.autumn:THEME.treeDark, l= autumn?THEME.autumnLight:THEME.treeLight;
   ctx.fillStyle=THEME.trunk; ctx.fillRect(p.x-3*s, p.y-r*1.2*s, 6*s, r*1.2*s); const cy=p.y-r*1.5*s;
   for(const [ox,oy,rr] of [[0,0,1],[-0.5,-0.2,0.72],[0.5,-0.15,0.72],[0,-0.55,0.68],[-0.3,-0.75,0.5],[0.35,-0.7,0.5]]){ ctx.beginPath(); ctx.arc(p.x+ox*r*s, cy+oy*r*s, rr*r*s,0,Math.PI*2); ctx.fillStyle=d; ctx.fill(); }
   for(const [ox,oy,rr] of [[-0.25,-0.45,0.45],[0.3,-0.6,0.4]]){ ctx.beginPath(); ctx.arc(p.x+ox*r*s, cy+oy*r*s, rr*r*s,0,Math.PI*2); ctx.fillStyle=l; ctx.fill(); } }
@@ -823,6 +857,15 @@ function drawFlagUp(h,g){ const c=cup(); const p=scr(c,g), s=g.s, hh=52*s; const
   const fl=1+(wg?Math.sin(wt*40)*0.12:0); ctx.fillStyle=THEME.flag; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(tx+24*s*fl,ty+9*s); ctx.lineTo(tx,ty+18*s); ctx.closePath(); ctx.fill();
   ctx.font='800 '+Math.round(11*s)+'px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.fillText(String(h.n), tx+5*s, ty+13*s); }
 function drawProp(h,[t,x,y],g){ const p=scr([x,y],g), s=g.s;
+  if(t==='pavilion'){ // 정자: 기단, 네 기둥, 끝이 들린 기와지붕
+    ctx.fillStyle=THEME.stoneWallDark; ctx.fillRect(p.x-26*s,p.y-6*s,52*s,8*s); ctx.fillStyle=THEME.stoneWall; ctx.fillRect(p.x-26*s,p.y-9*s,52*s,4*s);
+    ctx.fillStyle=THEME.wood; ctx.fillRect(p.x-22*s,p.y-15*s,44*s,4*s);
+    ctx.fillStyle=THEME.post; for(const ox of [-20,-7,7,20]) ctx.fillRect(p.x+(ox-1.6)*s,p.y-42*s,3.2*s,30*s);
+    const ry=p.y-42*s; ctx.fillStyle=THEME.roof; ctx.beginPath(); ctx.moveTo(p.x-38*s,ry-6*s); ctx.quadraticCurveTo(p.x-28*s,ry+2*s,p.x-18*s,ry); ctx.lineTo(p.x+18*s,ry); ctx.quadraticCurveTo(p.x+28*s,ry+2*s,p.x+38*s,ry-6*s);
+    ctx.quadraticCurveTo(p.x+24*s,ry-10*s,p.x+12*s,ry-22*s); ctx.lineTo(p.x-12*s,ry-22*s); ctx.quadraticCurveTo(p.x-24*s,ry-10*s,p.x-38*s,ry-6*s); ctx.fill();
+    ctx.strokeStyle=THEME.roofEdge; ctx.lineWidth=1.2*s; for(let i=-10;i<=10;i+=4){ ctx.beginPath(); ctx.moveTo(p.x+i*1.1*s,ry-20*s); ctx.lineTo(p.x+i*2.6*s,ry-1*s); ctx.stroke(); }
+    ctx.fillStyle=THEME.roofEdge; ctx.fillRect(p.x-13*s,ry-24*s,26*s,3*s); return; }
+  if(t==='stonewall'){ const n=4; for(let r=0;r<3;r++) for(let i=0;i<n-(r%2?1:0);i++){ const bx=p.x+(i-(n-1)/2)*11*s+(r%2?5.5*s:0), by=p.y-(r+1)*7*s; ctx.fillStyle= (i+r)%2?THEME.stoneWall:THEME.stoneWallDark; ctx.fillRect(bx-5*s,by,10*s,6.5*s); } return; }
   if(t==='bench'){ ctx.fillStyle=THEME.benchDark; ctx.fillRect(p.x-18*s,p.y-14*s,4*s,14*s); ctx.fillRect(p.x+14*s,p.y-14*s,4*s,14*s); ctx.fillStyle=THEME.bench; ctx.fillRect(p.x-20*s,p.y-8*s,40*s,5*s); ctx.fillRect(p.x-20*s,p.y-22*s,40*s,5*s); ctx.fillStyle=THEME.benchDark; ctx.fillRect(p.x-20*s,p.y-16*s,40*s,3*s); }
   else if(t==='bin'){ ctx.fillStyle=THEME.bin; ctx.fillRect(p.x-6*s,p.y-18*s,12*s,18*s); ctx.fillStyle='#3a5a47'; ctx.fillRect(p.x-7*s,p.y-21*s,14*s,4*s); ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.fillRect(p.x-6*s,p.y-18*s,3*s,18*s); }
   else if(t==='sign'){ ctx.fillStyle=THEME.signPost; ctx.fillRect(p.x-2*s,p.y-30*s,4*s,30*s); ctx.fillStyle=THEME.sign; ctx.fillRect(p.x-36*s,p.y-50*s,72*s,22*s);
@@ -874,7 +917,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v20', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v21', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
