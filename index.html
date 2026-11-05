@@ -631,19 +631,18 @@ let INTRO_DUR=2.8; const ease=k=>k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
 function startIntro(){ if(DIORAMA && THEME.block && !S.attract){ S.intro=null; return; } const h=H_(), c=cup(); INTRO_DUR=Math.min(5.5, 2.2+Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])/260)+(THEME.block?2.2:0); S.intro={t:0}; }
 function endIntro(){ S.intro=null; msg(S.hi===S.startHole ? '오늘은 '+WX[S.wx].name+' · '+BALLS[S.ball].name : ''); }
 function introCam(){ const k=Math.min(1,S.intro.t/INTRO_DUR); const c=cup(), h=H_();
-  const K2={ x:S.cam.x, y:S.pos.y, s:S.cam.ts, tilt:TILT, sy:BALL_SY }, K1={ x:c[0], y:c[1]+40, s:S.cam.ts+0.6, tilt:0.42, sy:BALL_SY*0.5 };
-  if(!THEME.block) { const e=ease(k); return lerpCam(K1,K2,e); }
-  // 블록 모형: 먼저 홀 전체를 한 덩어리로 보여 주고, 컵으로 내려앉았다가, 티로 돌아온다
-  const [x0,y0,x1,y1]=landRect(h), lw=x1-x0, lh=y1-y0, tl=0.62, so=Math.min(W*0.9/lw, H*0.62/(lh*tl));
-  const K0={ x:(x0+x1)/2, y:(y0+y1)/2, s:so, tilt:tl, sy:H*0.44 };
-  if(k<0.3) return K0; if(k<0.55) return lerpCam(K0,K1,ease((k-0.3)/0.25)); return lerpCam(K1,K2,ease((k-0.55)/0.45)); }
+  const K2={ x:S.cam.x, y:S.pos.y, s:S.cam.ts, tilt:TILT, sy:BALL_SY, a:0 }, K1={ x:c[0], y:c[1]+40, s:S.cam.ts+0.6, tilt:0.42, sy:BALL_SY*0.5, a:0 };
+  if(!THEME.block) return lerpCam(K1,K2,ease(k));
+  // 블록 모형 연출: 비스듬히 놓인 홀 전체를 먼저 보여 주고, 돌면서 컵으로 내려앉았다가, 티로 돌아와 원래 시점에서 친다
+  const K0=dioCam(h);
+  if(k<0.32) return K0; if(k<0.58) return lerpCam(K0,K1,ease((k-0.32)/0.26)); return lerpCam(K1,K2,ease((k-0.58)/0.42)); }
 function lerpCam(A,B,e){ const o={}; for(const key in A) o[key]=A[key]+(B[key]-A[key])*e; return o; }
 // 디오라마 보기: 홀 하나를 작은 블록 모형 그대로 화면에 다 띄워 놓고, 그 위에서 바로 친다 (카메라 고정)
-let DIORAMA=true; const DIO_A=-Math.PI/6, DIO_TILT=0.62;
+let DIORAMA=false; /* 플레이 중 고정 보기는 끔 — 블록 모형은 홀 시작 장면에서만 */ const DIO_A=-Math.PI/6, DIO_TILT=0.62;
 function dioCam(h){ if(h._dio) return h._dio; const [x0,y0,x1,y1]=landRect(h), ca=Math.cos(DIO_A), sa=Math.sin(DIO_A), cx=(x0+x1)/2, cy=(y0+y1)/2;
   let a0=1e9,a1=-1e9,b0=1e9,b1=-1e9; for(const [x,y] of [[x0,y0],[x1,y0],[x0,y1],[x1,y1]]){ const dx=x-cx, dy=y-cy, rx=dx*ca-dy*sa, ry=dx*sa+dy*ca; a0=Math.min(a0,rx); a1=Math.max(a1,rx); b0=Math.min(b0,ry); b1=Math.max(b1,ry); }
   const sc=Math.min(W*0.94/(a1-a0), H*0.66/((b1-b0)*DIO_TILT)); return h._dio={ x:cx, y:cy, s:sc, tilt:DIO_TILT, sy:H*0.43, a:DIO_A }; }
-function G(){ if(DIORAMA && THEME.block) return dioCam(H_()); return S.intro ? Object.assign(introCam(),{a:0}) : {x:S.cam.x, y:S.cam.y, s:S.cam.s, tilt:S.cam.tilt, sy:BALL_SY, a:S.cam.a}; }
+function G(){ if(DIORAMA && THEME.block) return dioCam(H_()); return S.intro ? introCam() : {x:S.cam.x, y:S.cam.y, s:S.cam.s, tilt:S.cam.tilt, sy:BALL_SY, a:S.cam.a}; }
 function scr(p,g){ g=g||G(); const dx=p[0]-g.x, dy=p[1]-g.y; const ca=Math.cos(g.a), sa=Math.sin(g.a); const rx=dx*ca-dy*sa, ry=dx*sa+dy*ca; return { x: W/2 + g.s*rx, y: g.sy + g.s*g.tilt*ry }; }
 
 // ---------- sound ----------
@@ -924,7 +923,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v22', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v23', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
