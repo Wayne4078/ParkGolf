@@ -75,6 +75,34 @@ canvas{display:block;border-radius:12px;max-width:100%;max-height:100%;touch-act
 .ball-note{font-size:17px;font-weight:700;color:var(--muted);text-align:center;margin-top:-4px;min-height:24px}
 .two{display:flex;gap:10px;width:100%;max-width:440px}
 .two .btn{flex:1;min-width:0;font-size:20px}
+/* 여정 길: 섬 모형 그림을 한 길로 잇는 코스 고르기 (지도 바탕은 두 테마 모두 한지색) */
+#journey{justify-content:flex-start;gap:0;padding:0;padding-top:env(safe-area-inset-top,0px)}
+.jBar{width:100%;max-width:480px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:8px max(12px,env(safe-area-inset-left,0px)) 8px;box-sizing:border-box}
+.jBar .link{justify-self:start;padding-left:0}
+.jName{font-family:"Noto Serif KR",serif;font-weight:900;font-size:24px}
+.jMap{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;background:#f3efe4;-webkit-overflow-scrolling:touch}
+.jRoad{position:relative;width:100%;max-width:480px;margin:0 auto}
+.jRoad svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.jStop{position:absolute;width:60%;background:none;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;color:#24361f}
+.jStop img{width:100%;mix-blend-mode:multiply;display:block}
+.jStop .lb{margin-top:-18px;display:flex;flex-direction:column;align-items:center;background:#fffdf7;border:2px solid #e1dbc9;border-radius:14px;padding:6px 16px;min-width:120px}
+.jStop .lb b{font-family:"Noto Serif KR",serif;font-weight:900;font-size:22px;line-height:1.2}
+.jStop .lb small{font-size:15px;font-weight:800;color:#5a6250}
+.jStop.sel .lb{border-color:#2f6b3a;border-width:3px;background:#f4f7ec}
+.jStop.lk img{filter:grayscale(1) opacity(.5)}
+.jStop.lk .lb{color:#7d7a70}
+.jStop:focus-visible .lb{outline:3px solid #2f6b3a;outline-offset:2px}
+.jSign{width:150px;height:110px;text-align:center;line-height:1.25;font-size:22px!important;display:flex;align-items:center;justify-content:center;background:#c8975f;border:4px solid #8e6439;border-radius:10px;color:#fffaf0;font-family:"Noto Serif KR",serif;font-weight:900;font-size:26px;box-shadow:0 8px 0 #6f4c2a;margin-bottom:26px}
+.jHere{position:absolute;z-index:2;background:#c8352a;color:#fff;font-weight:900;font-size:15px;padding:6px 12px;border-radius:999px;box-shadow:0 4px 10px rgba(0,0,0,.2);pointer-events:none;transform:translateX(-50%);white-space:nowrap}
+.jHere:after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-top-color:#c8352a;border-bottom:0}
+.jSheet{width:100%;max-width:480px;box-sizing:border-box;background:var(--panel);border-radius:22px 22px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.14);padding:14px max(18px,env(safe-area-inset-left,0px)) calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px}
+.jHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.jHead b{font-family:"Noto Serif KR",serif;font-weight:900;font-size:26px}
+.jHead span{font-size:17px;font-weight:800;color:#a8791f;white-space:nowrap}
+.jMeta{font-size:17px;font-weight:700;color:var(--muted)}
+.jSheet .btn{max-width:none}
+.btn:disabled{opacity:.55;cursor:default}
+.sBack{align-self:flex-start;margin-left:max(0px,calc(50% - 220px))}
 .link{background:none;border:0;font:inherit;font-size:17px;font-weight:800;color:var(--accent);text-decoration:underline;text-underline-offset:4px;min-height:44px;padding:4px 12px;cursor:pointer}
 .tips{text-align:left}
 .tips h2{text-align:left;font-size:24px;margin-bottom:8px}
@@ -134,9 +162,20 @@ html[lang=th] .t-small{letter-spacing:2px}
   </div>
 </div>
 
+<div class="screen" id="journey" hidden>
+  <div class="jBar"><button class="link" id="jTitle" type="button">‹ 첫 화면</button><span class="jName">파크골프 여정</span><span class="jSp"></span></div>
+  <div class="jMap" id="jMap"><div class="jRoad" id="jRoad"></div></div>
+  <div class="jSheet">
+    <div class="jHead"><b id="jCourse">합천 원정</b><span id="jBest"></span></div>
+    <div class="jMeta" id="jMeta"></div>
+    <button class="btn" id="jGo" type="button">이 코스로 가기</button>
+  </div>
+</div>
+
 <div class="screen" id="start" hidden>
-  <h1>오늘의 파크골프</h1>
-  <div class="seg" id="courseRow">
+  <button class="link sBack" id="sBack" type="button">‹ 코스 고르기</button>
+  <h1 id="startTitle">오늘의 파크골프</h1>
+  <div class="seg" id="courseRow" hidden>
     <button class="opt" data-course="lesson">배우기</button>
     <button class="opt on" data-course="home">우리 동네</button>
     <button class="opt" data-course="jamsil">잠실 원정</button>
@@ -223,7 +262,7 @@ html[lang=th] .t-small{letter-spacing:2px}
     <p class="sub" id="svMsg" style="text-align:left"></p>
   </div>
   <button class="btn" id="again">다시 치기</button>
-  <button class="btn ghost" id="home">처음으로</button>
+  <button class="btn ghost" id="home">코스 고르기로</button>
 </div>
 
 <script>
@@ -333,6 +372,30 @@ html[lang=th] .t-small{letter-spacing:2px}
     '이 자리에서 이어 칩니다':'ตีต่อจากจุดเดิม',
     '연못 옆 숲길':'ทางป่าริมสระ',
     '강 쪽 마지막 홀':'หลุมสุดท้ายฝั่งแม่น้ำ',
+    '파크골프 여정':'เส้นทางพาร์คกอล์ฟ',
+    '‹ 첫 화면':'‹ หน้าแรก',
+    '‹ 코스 고르기':'‹ เลือกคอร์ส',
+    '이 코스로 가기':'ไปคอร์สนี้',
+    '지금 여기':'อยู่ที่นี่',
+    '아직 안 쳐 봤어요':'ยังไม่เคยตี',
+    '🔒 잠김':'🔒 ล็อก',
+    '곧 열립니다':'เปิดเร็ว ๆ นี้',
+    '곧 열려요':'เปิดเร็ว ๆ นี้',
+    '처음이라면':'ครั้งแรก',
+    '여기부터':'เริ่มที่นี่',
+    '우리 동네 오늘의 라운드를 한 번 돌면 열려요':'ตีรอบวันนี้ที่สนามบ้านเราครบหนึ่งรอบเพื่อปลดล็อก',
+    '하천변 연습장':'สนามซ้อมริมลำธาร',
+    '서울 송파 · 한강변':'ซงพา โซล · ริมแม่น้ำฮัน',
+    '경남 합천 · 황강 둔치':'ฮับชอน · ริมแม่น้ำฮวัง',
+    '전남 화순 · 연못 정원':'ฮวาซุน · สวนสระน้ำ',
+    '화순 원정':'เยือนสนามฮวาซุน',
+    '배우기':'เรียน',
+    '화순':'ฮวาซุน',
+    '잠실':'จัมชิล',
+    '합천':'ฮับชอน',
+    '벽 있는 연습장':'สนามซ้อมมีขอบ',
+    '세 단계 · 치는 법 → 코르크공과 바람 → 고무공':'สามขั้น · วิธีตี → ลูกไม้ก๊อกกับลม → ลูกยาง',
+    '배우기 끝! 이제 우리 동네에서 오늘의 라운드를 쳐 보세요':'เรียนจบแล้ว! ลองตีรอบวันนี้ที่สนามบ้านเราดู',
     '잠실 원정':'เยือนสนามจัมชิล',
     '우리 동네':'สนามข้างบ้าน',
     '연습 시작':'เริ่มฝึก',
@@ -854,7 +917,7 @@ function resumeKey(){ return COURSE.store+'_resume'; }
 function loadResume(){ try{ const r=JSON.parse(localStorage.getItem(resumeKey())||'null'); return r && r.date===TODAY ? r : null; }catch(e){ return null; } }
 function saveResume(){ if(S.mode!=='today' || S.attract || COURSE.lesson) return; try{ localStorage.setItem(resumeKey(), JSON.stringify({date:TODAY, hi:S.hi, strokes:S.strokes.slice(), ball:S.ball, pos:S.holeOver?null:{x:S.pos.x,y:S.pos.y}, done:S.holeOver})); }catch(e){} }
 function clearResume(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
-function playing(){ return !S.attract && ['title','start','end','practice','how','pause'].every(id=>!$(id) || $(id).hidden); }
+function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause'].every(id=>!$(id) || $(id).hidden); }
 function openPause(){ if(!playing() && $('holeDone').hidden) return; const h=H_(), tot=S.strokes.reduce((a,b)=>a+b,0);
   $('pauseSub').textContent = S.mode==='today' ? h.n+'번 홀 · 지금까지 '+tot+'타 · 나갔다 와도 이 자리에서 이어 칩니다' : COURSE.lesson ? h.n+'단계 배우는 중' : h.n+'번 홀 · 연습 (기록 안 남음)';
   $('pRetry').hidden = S.mode==='today'; saveResume(); $('pause').hidden=false; PT.event('pause',{c:COURSE.key,mode:S.mode,n:h.n}); }
@@ -862,7 +925,7 @@ function leaveRound(){ saveResume(); S.moving=false; S.vel={x:0,y:0}; S.drag=nul
 $('menuBtn').onclick=openPause;
 $('pResume').onclick=()=>{ $('pause').hidden=true; };
 $('pRetry').onclick=()=>{ $('pause').hidden=true; S.strokes[S.hi]=0; loadHole(); S.intro=null; };
-$('pCourse').onclick=()=>{ leaveRound(); setupToday(); $('start').hidden=false; };
+$('pCourse').onclick=()=>{ leaveRound(); setupToday(); showJourney(); };
 $('pTitle').onclick=()=>{ leaveRound(); setupToday(); showTitle(); };
 addEventListener('pagehide',saveResume); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') saveResume(); });
 // 폰의 뒤로 가기: 치는 중이면 잠깐 쉬기를 열고, 쉬는 중이면 닫는다. 연습·설명 화면에서는 코스 고르기로 돌아간다.
@@ -872,9 +935,64 @@ addEventListener('popstate',()=>{
   if(playing() || !$('holeDone').hidden){ openPause(); guardBack(); return; }
   if(!$('practice').hidden){ $('practice').hidden=true; $('start').hidden=false; guardBack(); return; }
   if(!$('how').hidden){ $('how').hidden=true; $('start').hidden=false; guardBack(); return; }
-  if(!$('end').hidden){ $('end').hidden=true; setupToday(); $('start').hidden=false; guardBack(); return; } });
+  if(!$('end').hidden){ $('end').hidden=true; setupToday(); showJourney(); guardBack(); return; }
+  if(!$('start').hidden){ showJourney(); guardBack(); return; }
+  if(!$('journey').hidden){ $('journey').hidden=true; setupToday(); showTitle(); guardBack(); return; } });
+// ===== 여정 길 (코스 고르기) =====
+const JOURNEY=[
+  {k:'lesson', label:'배우기', place:'치는 법 세 단계'},
+  {k:'home', img:'art/course_home.jpg', label:'우리 동네', place:'하천변 연습장'},
+  {k:'jamsil', img:'art/course_jamsil.jpg', label:'잠실', place:'서울 송파 · 한강변'},
+  {k:'hapcheon', img:'art/course_hapcheon.jpg', label:'합천', place:'경남 합천 · 황강 둔치'},
+  {k:'hwasun', img:'art/course_hwasun.jpg', label:'화순', place:'전남 화순 · 연못 정원', soon:true} ];
+const OPEN_ALL=/[?&]all\b/.test(location.search); // 테스트용: 주소 끝에 ?all 을 붙이면 다 열림
+function roundsOf(k){ try{ return JSON.parse(localStorage.getItem(COURSES[k].store)||'{}'); }catch(e){ return {}; } }
+function bestOf(k){ const t=Object.values(roundsOf(k)).map(r=>r.strokes.reduce((a,b)=>a+b,0)); return t.length?Math.min(...t):null; }
+function parOf(k){ return COURSES[k].holes.reduce((a,h)=>a+h.par,0); }
+function metersOf(k){ const m=COURSES[k].holes.reduce((a,h)=>a+(h.m||0),0); return m||null; }
+function lessonDone(){ try{ return !!localStorage.getItem('opg_lesson_done'); }catch(e){ return false; } }
+function stopState(st){ const k=st.k;
+  if(st.soon) return {open:false, cond:'곧 열립니다'};
+  if(k==='lesson') return {open:true, done:lessonDone()};
+  if(k==='home') return {open:true, done:bestOf('home')!=null};
+  if(k==='jamsil') return {open:OPEN_ALL||bestOf('home')!=null, done:bestOf('jamsil')!=null, cond:'우리 동네 오늘의 라운드를 한 번 돌면 열려요'};
+  if(k==='hapcheon'){ const b=bestOf('jamsil'), need=parOf('jamsil')+3; return {open:OPEN_ALL||(b!=null&&b<=need), done:bestOf('hapcheon')!=null, cond:'잠실을 '+need+'타 이하로 돌면 열려요'}; }
+  return {open:false}; }
+S.jSel=null;
+function renderJourney(){ const road=$('jRoad'), W=Math.min(road.clientWidth||360,480), N=JOURNEY.length, SH=Math.round(W*0.66)+40, H=N*SH+60;
+  road.style.height=H+'px'; const pts=[];
+  let html=''; JOURNEY.forEach((st,i)=>{ const ss=stopState(st), left=i%2===0, x=left?W*0.04:W*0.36, y=H-(i+1)*SH+10;
+    pts.push([x+W*0.30, y+SH*0.42]);
+    const sub= st.soon ? '곧 열려요' : !ss.open ? '🔒 잠김' : ss.done ? (st.k==='lesson'?'다 배웠어요 ✓':'최고 '+bestOf(st.k)+'타 ✓') : '아직 안 쳐 봤어요';
+    html+='<button type="button" class="jStop'+(ss.open?'':' lk')+(S.jSel===st.k?' sel':'')+'" data-k="'+st.k+'" style="left:'+x+'px;top:'+y+'px">'+
+      (st.img?'<img src="'+st.img+'" alt="">':'<div class="jSign">처음이라면<br>여기부터</div>')+
+      '<span class="lb"><b>'+st.label+'</b><small>'+sub+'</small></span></button>'; });
+  let d='M'+pts[0][0]+' '+pts[0][1]; for(let i=1;i<pts.length;i++){ const a=pts[i-1], b=pts[i], my=(a[1]+b[1])/2; d+=' C'+a[0]+' '+my+','+b[0]+' '+my+','+b[0]+' '+b[1]; }
+  const sel=JOURNEY.findIndex(st=>st.k===S.jSel), sp=pts[sel];
+  road.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-hidden="true"><path d="'+d+'" fill="none" stroke="#cdbf9b" stroke-width="10" stroke-linecap="round" stroke-dasharray="2 18"/></svg>'+html+
+    (sp?'<div class="jHere" style="left:'+(sp[0])+'px;top:'+(H-(sel+1)*SH-22)+'px">지금 여기</div>':'');
+  road.querySelectorAll('.jStop').forEach(b=>b.onclick=()=>{ S.jSel=b.dataset.k; renderJourney(); fillSheet(); });
+  return {SH,H,sel}; }
+function fillSheet(){ const st=JOURNEY.find(x=>x.k===S.jSel), ss=stopState(st);
+  const name= st.soon ? '화순 원정' : COURSES[st.k].name; $('jCourse').textContent=name;
+  if(st.k==='lesson'){ $('jBest').textContent=ss.done?'다 배웠어요':''; $('jMeta').textContent='세 단계 · 치는 법 → 코르크공과 바람 → 고무공'; }
+  else if(st.soon){ $('jBest').textContent=''; $('jMeta').textContent=st.place+' · 9홀 열 개 코스'; }
+  else { const b=bestOf(st.k), p=parOf(st.k), m=metersOf(st.k), fld=COURSES[st.k].holes[0].field;
+    $('jBest').textContent= b!=null ? '최고 '+b+'타 ('+(b-p>0?'+':'')+(b-p===0?'±0':b-p)+')' : '';
+    $('jMeta').textContent=st.place+' · '+COURSES[st.k].holes.length+'홀 · 파'+p+(m?' · '+m+'m':'')+' · '+(fld?'들판':'벽 있는 연습장'); }
+  $('jGo').disabled=!ss.open; $('jGo').textContent= ss.open ? (st.k==='lesson'?'배우러 가기':'이 코스로 가기') : (ss.cond||'아직 잠겨 있어요'); }
+function showJourney(){ $('start').hidden=true; $('title').hidden=true;
+  const ok=k=>{ const st=JOURNEY.find(x=>x.k===k); return st && stopState(st).open; };
+  if(!ok(S.jSel)) S.jSel = ok(COURSE.key) ? COURSE.key : 'home';
+  $('journey').hidden=false; const r=renderJourney(); fillSheet();
+  const map=$('jMap'); requestAnimationFrame(()=>{ map.scrollTop = Math.max(0, r.H-(r.sel+1)*r.SH - map.clientHeight/2 + r.SH/2); }); }
+function showStart(){ $('journey').hidden=true; $('startTitle').textContent=COURSE.name; $('start').hidden=false; }
+$('jGo').onclick=()=>{ const k=S.jSel; if(k!==COURSE.key) setCourse(k); else setupToday(); showStart(); PT.event('course_pick',{c:k}); };
+$('jTitle').onclick=()=>{ $('journey').hidden=true; setupToday(); showTitle(); };
+$('sBack').onclick=showJourney;
+addEventListener('resize',()=>{ if(!$('journey').hidden) renderJourney(); });
 $('next').onclick=()=>{ if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else { PT.closeBubble(); finishRound(); } };
-function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); document.querySelectorAll('#courseRow .opt').forEach(b=>b.classList.toggle('on',b.dataset.course==='home')); $('start').hidden=false; $('todayNote').textContent='배우기 끝! 이제 우리 동네 코스에서 오늘의 라운드를 쳐 보세요'; return; }
+function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; showJourney(); msg('배우기 끝! 이제 우리 동네에서 오늘의 라운드를 쳐 보세요'); return; }
   $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); }
   showCard(S.mode==='today'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
 function showCard(practice){
@@ -894,7 +1012,7 @@ function showCard(practice){
     today ? (now.getMonth()+1)+'월 '+now.getDate()+'일 · '+WX[today.wx].name+' · '+BALLS[today.ball].name+(bestTot!=null?' · 내 최고 '+bestTot+'타':'') : '아직 기록이 없어요';
   $('again').textContent = (S.mode==='today' && today && !practice) ? '연습으로 한 번 더' : '다시 치기'; $('end').hidden=false; }
 $('again').onclick=()=>{ if(S.mode==='today'){ S.mode='practice'; S.startHole=0; } startRound(S.mode); };
-$('home').onclick=()=>{ $('end').hidden=true; setupToday(); $('start').hidden=false; };
+$('home').onclick=()=>{ $('end').hidden=true; setupToday(); showJourney(); };
 $('goToday').onclick=()=>startRound('today');
 $('goPractice').onclick=()=>{ $('start').hidden=true; $('practice').hidden=false; };
 $('backP').onclick=()=>{ $('practice').hidden=true; $('start').hidden=false; };
@@ -1085,7 +1203,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v33', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v34', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
@@ -1097,11 +1215,11 @@ $('svSend').onclick=()=>{ const ans=Object.assign({name:$('svName').value.trim()
       $('svMsg').innerHTML='전송이 안 됐어요. 아래 버튼으로 카톡·라인에 보내 주세요.<br><a class="btn ghost" style="display:block;text-align:center;text-decoration:none;margin-top:8px;line-height:32px" target="_blank" rel="noopener" href="https://line.me/R/share?text='+encodeURIComponent(txt)+'">라인으로 보내기</a>'; } }); };
 const ATTRACT=[2,7,8];
 function showTitle(){ S.attract=true; S.attractN=0; document.body.classList.add('attract'); S.hi=ATTRACT[0]; S.strokes=HOLES.map(()=>0); loadHole(); startIntro();
-  $('tDate').textContent=$('todayLine').textContent+' · '+COURSE.name; $('title').hidden=false; $('start').hidden=true; }
+  $('tDate').textContent=$('todayLine').textContent+' · '+COURSE.name; $('title').hidden=false; $('start').hidden=true; $('journey').hidden=true; }
 function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; document.body.classList.remove('attract'); $('title').hidden=true;
   let fresh=false; try{ fresh=!localStorage.getItem('opg_lesson_done') && localStorage.getItem('opg_rounds')===null; }catch(e){}
   if(fresh){ setCourse('lesson'); document.querySelectorAll('#courseRow .opt').forEach(b=>b.classList.toggle('on',b.dataset.course==='lesson')); }
-  S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; $('start').hidden=false; PT.event('title_go',{}); }
+  S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; S.jSel = fresh ? 'lesson' : null; guardBack(); showJourney(); PT.event('title_go',{}); }
 $('title').addEventListener('click',leaveTitle);
 S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loop);
 if(/[?&]sim\b/.test(location.search)) window.__pg={S,step,H_,cup,loadHole,setCourse,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
