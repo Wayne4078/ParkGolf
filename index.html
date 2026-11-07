@@ -25,7 +25,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-
 .hudBtn{flex:0 0 auto;min-height:48px;min-width:64px;padding:0 12px;margin-right:10px;border:3px solid var(--line);border-radius:12px;background:var(--panel);color:var(--fg);font:inherit;font-size:18px;font-weight:800;cursor:pointer;align-self:center}
 .hudBtn:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .hud #hudL{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
-#pause,#lessonDone{background:rgba(12,20,10,.62);z-index:8}
+#pause,#lessonDone,#adScreen{background:rgba(12,20,10,.62);z-index:8}
 #lessonDone .pauseCard{display:flex;flex-direction:column;gap:6px}
 #pause .pauseCard{display:flex;flex-direction:column;gap:6px}
 .hud small{font-size:17px;font-weight:700;color:var(--muted);margin-left:6px}
@@ -260,6 +260,7 @@ html[lang=th] .t-small{letter-spacing:2px}
 
 <div class="screen" id="end" hidden style="justify-content:flex-start">
   <div class="paper"><h3 id="paperTitle">스코어 카드</h3><p class="sub" id="endSub"></p><table id="sc"></table></div>
+  <button class="btn" id="bonusBtn" type="button" hidden>🎬 광고 보고 한 판 더</button>
   <div class="card" id="survey" hidden style="text-align:left;display:flex;flex-direction:column;gap:12px">
     <div style="font-size:20px;font-weight:800">한 바퀴 쳐 주셔서 고마워요</div>
     <p class="sub" style="text-align:left">짧게 여섯 가지만 알려 주세요.</p>
@@ -275,6 +276,15 @@ html[lang=th] .t-small{letter-spacing:2px}
   </div>
   <button class="btn" id="again">다시 치기</button>
   <button class="btn ghost" id="home">코스 고르기로</button>
+</div>
+
+<div class="screen" id="adScreen" hidden>
+  <div class="card pauseCard" style="display:flex;flex-direction:column;gap:10px">
+    <div class="big">광고 자리</div>
+    <p class="sub">토스에 올리면 여기에 광고가 나옵니다.<br>광고가 끝나면 한 판 더 칠 수 있어요.</p>
+    <div class="big" id="adCount">3</div>
+  </div>
+  <button class="btn" id="adDone" type="button" disabled>한 판 더 치러 가기</button>
 </div>
 
 <script>
@@ -458,7 +468,7 @@ html[lang=th] .t-small{letter-spacing:2px}
   };
   L['치는 법 · 공 이야기']='วิธีตี · เรื่องของลูก'; L['알겠어요']='เข้าใจแล้ว'; L['하루 한 번, 아홉 홀']='วันละรอบ เก้าหลุม'; L['배우기']='ฝึกหัด'; L['배우는 코스']='สนามฝึกหัด'; L['배우기 시작']='เริ่มฝึกหัด'; L['배우는 코스 · 세 단계']='สนามฝึกหัด · 3 ขั้น';
   L['처음이라면 여기부터 · 세 홀이면 다 배워요']='ถ้าเพิ่งเริ่ม เริ่มที่นี่ · 3 หลุมก็เข้าใจครบ'; L['치는 법 → 코르크공과 바람 → 고무공']='วิธีตี → ลูกไม้ก๊อกกับลม → ลูกยาง';
-  L['코르크공과 바람']='ลูกไม้ก๊อกกับลม'; L['고무공 벽 튕기기']='ลูกยางเด้งขอบ'; L['⤺ 공으로']='⤺ กลับไปที่ลูก'; L['공을 잡고 뒤로 당겼다 놓으세요']='แตะที่ลูก ลากถอยหลังแล้วปล่อยเพื่อตี'; L['배우기 끝! 🎉']='เรียนจบแล้ว! 🎉'; L['세 단계를 다 배웠어요.']='เรียนครบทั้ง 3 ขั้นแล้ว'; L['이제 진짜 코스에서 쳐 볼까요?']='ไปลองตีในสนามจริงกันไหม?'; L['우리 동네 9홀 치러 가기']='ไปตี 9 หลุมที่สนามข้างบ้าน'; L['다른 코스 고르기']='เลือกสนามอื่น'; L['눌러서 닫기 · 치기 시작하면 사라져요']='แตะเพื่อปิด · เริ่มตีแล้วจะหายไป'; L['치는 법']='วิธีตี';
+  L['코르크공과 바람']='ลูกไม้ก๊อกกับลม'; L['고무공 벽 튕기기']='ลูกยางเด้งขอบ'; L['🎬 광고 보고 한 판 더']='🎬 ดูโฆษณาแล้วเล่นอีกรอบ'; L['광고 자리']='พื้นที่โฆษณา'; L['토스에 올리면 여기에 광고가 나옵니다.']='เมื่อขึ้น Toss โฆษณาจะแสดงตรงนี้'; L['광고가 끝나면 한 판 더 칠 수 있어요.']='ดูจบแล้วเล่นได้อีกหนึ่งรอบ'; L['한 판 더 치러 가기']='ไปเล่นอีกรอบ'; L['끝!']='จบ!'; L[' · 세 코스 다 치셨어요! 오늘 한 번 더 칠 수 있어요']=' · เล่นครบ 3 สนามแล้ว! วันนี้เล่นได้อีก 1 รอบ'; L['첫 판과 똑같아요']='เท่ากับรอบแรก'; L['내일 다시!']='พรุ่งนี้ลองใหม่!'; L['⤺ 공으로']='⤺ กลับไปที่ลูก'; L['공을 잡고 뒤로 당겼다 놓으세요']='แตะที่ลูก ลากถอยหลังแล้วปล่อยเพื่อตี'; L['배우기 끝! 🎉']='เรียนจบแล้ว! 🎉'; L['세 단계를 다 배웠어요.']='เรียนครบทั้ง 3 ขั้นแล้ว'; L['이제 진짜 코스에서 쳐 볼까요?']='ไปลองตีในสนามจริงกันไหม?'; L['우리 동네 9홀 치러 가기']='ไปตี 9 หลุมที่สนามข้างบ้าน'; L['다른 코스 고르기']='เลือกสนามอื่น'; L['눌러서 닫기 · 치기 시작하면 사라져요']='แตะเพื่อปิด · เริ่มตีแล้วจะหายไป'; L['치는 법']='วิธีตี';
   L['공을 손가락으로 잡고, 치고 싶은 쪽의 반대로 당겼다 놓으세요. 많이 당길수록 멀리 갑니다. 다른 곳을 끌면 코스를 둘러볼 수 있어요.']='แตะที่ลูก แล้วลากไปทางตรงข้ามกับทิศที่อยากตี แล้วปล่อย ยิ่งลากมากยิ่งไปไกล ลากที่อื่นเพื่อดูสนามได้';
   L['코르크공은 물 위를 건너고, 바람을 타고 휘어요. 오른쪽 위 노란 깃발이 바람 방향입니다. 컵보다 왼쪽을 겨냥하세요.']='ลูกไม้ก๊อกลอยข้ามน้ำได้และโค้งตามลม ธงเหลืองมุมขวาบนบอกทิศลม ให้เล็งทางซ้ายของหลุม';
   L['고무공은 벽에 맞으면 오히려 빨라져요. 오른쪽 위 비스듬한 모서리를 맞혀 왼쪽으로 꺾어 보세요.']='ลูกยางชนขอบแล้วยิ่งเร็วขึ้น ลองตีให้ชนมุมเฉียงขวาบนเพื่อเลี้ยวไปทางซ้าย';
@@ -485,6 +495,8 @@ html[lang=th] .t-small{letter-spacing:2px}
     [/파보다 (\d+)타 많이/g, 'เกินพาร์ $1'],
     [/이 세기 (\d+)m · 남은 (\d+)m/g, 'แรงนี้ $1 ม. · เหลือ $2 ม.'],
     [/핀까지 (\d+)m/g, 'ถึงธง $1 ม.'],
+    [/^첫 판$/, 'รอบแรก'], [/^한 판 더$/, 'อีกรอบ'],
+    [/한 판 더 (\d+)타/g, 'อีกรอบ $1 ครั้ง'], [/첫 판보다 (\d+)타 줄였어요!/g, 'น้อยกว่ารอบแรก $1 ครั้ง!'], [/첫 판보다 (\d+)타 많아요/g, 'มากกว่ารอบแรก $1 ครั้ง'],
     [/핀 (\d+)m/g, 'ธง $1 ม.'],
     [/지금 (\d+)타/g, 'ตีไป $1 ครั้ง'],
     [/내 최고 (\d+)타/g, 'ดีที่สุด $1 ครั้ง'],
@@ -935,12 +947,12 @@ function setupToday(){ $('courseSub').textContent=COURSE.sub;
   if(COURSE.lesson){ $('todayLine').textContent='배우는 코스 · 세 단계'; $('todayNote').textContent='치는 법 → 코르크공과 바람 → 고무공'; $('goToday').disabled=false; $('goToday').textContent='배우기 시작'; $('ballRow').hidden=true; $('ballNote').hidden=true; $('goPractice').hidden=true; return; }
   $('ballRow').hidden=false; $('ballNote').hidden=false; $('goPractice').hidden=false; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins();
   const rounds=loadRounds(); const played=rounds[TODAY]; $('todayLine').textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일 · '+WX[S.wx].name;
-  if(played){ $('todayNote').textContent='오늘 라운드는 쳤어요 · '+played.strokes.reduce((a,b)=>a+b,0)+'타 ('+BALLS[played.ball].name+')'; $('goToday').disabled=true; $('goToday').textContent='오늘의 라운드 (완료)'; }
+  if(played){ $('todayNote').textContent='오늘 라운드는 쳤어요 · '+played.strokes.reduce((a,b)=>a+b,0)+'타 ('+BALLS[played.ball].name+')'; $('goToday').disabled=true; $('goToday').textContent='오늘의 라운드 (완료)'; if(bonusAvail()){ $('goToday').disabled=false; $('goToday').textContent='🎬 광고 보고 한 판 더'; $('todayNote').textContent+=' · 세 코스 다 치셨어요! 오늘 한 번 더 칠 수 있어요'; } }
   else { const rs=loadResume(); $('todayNote').textContent= rs ? (rs.hi+1)+'번 홀에서 멈추셨어요 · 지금 '+rs.strokes.reduce((a,b)=>a+b,0)+'타' : WX[S.wx].line;
     if(rs){ $('ballRow').hidden=true; $('ballNote').textContent='처음 고른 '+BALLS[rs.ball].name+'으로 이어 칩니다'; } $('goToday').disabled=false; $('goToday').textContent= rs ? '오늘의 라운드 이어 치기' : '오늘의 라운드'; }
   $('showCard').hidden=Object.keys(rounds).length===0; }
 function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0);
-  let res=null; if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } }
+  let res=null; if(mode==='bonus'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); } else if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } }
   else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; guardBack(); loadHole();
   if(res){ if(res.done){ S.intro=null; holeOut(false,true); } else if(res.pos){ S.pos={...res.pos}; S.lastSafe={...res.pos}; S.intro=null; camSnap(); updateHud(); } msg('하던 자리에서 이어 칩니다'); } }
@@ -958,7 +970,7 @@ function resumeKey(){ return COURSE.store+'_resume'; }
 function loadResume(){ try{ const r=JSON.parse(localStorage.getItem(resumeKey())||'null'); return r && r.date===TODAY ? r : null; }catch(e){ return null; } }
 function saveResume(){ if(S.mode!=='today' || S.attract || COURSE.lesson) return; try{ localStorage.setItem(resumeKey(), JSON.stringify({date:TODAY, hi:S.hi, strokes:S.strokes.slice(), ball:S.ball, pos:S.holeOver?null:{x:S.pos.x,y:S.pos.y}, done:S.holeOver})); }catch(e){} }
 function clearResume(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
-function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause','lessonDone'].every(id=>!$(id) || $(id).hidden); }
+function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause','lessonDone','adScreen'].every(id=>!$(id) || $(id).hidden); }
 function openPause(){ if(!playing() && $('holeDone').hidden) return; const h=H_(), tot=S.strokes.reduce((a,b)=>a+b,0);
   $('pauseSub').textContent = S.mode==='today' ? h.n+'번 홀 · 지금까지 '+tot+'타 · 나갔다 와도 이 자리에서 이어 칩니다' : COURSE.lesson ? h.n+'단계 배우는 중' : h.n+'번 홀 · 연습 (기록 안 남음)';
   $('pRetry').hidden = S.mode==='today'; saveResume(); $('pause').hidden=false; PT.event('pause',{c:COURSE.key,mode:S.mode,n:h.n}); }
@@ -1036,9 +1048,21 @@ $('jTitle').onclick=()=>{ $('journey').hidden=true; setupToday(); showTitle(); }
 $('sBack').onclick=showJourney;
 addEventListener('resize',()=>{ if(!$('journey').hidden) renderJourney(); });
 $('next').onclick=()=>{ if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else { PT.closeBubble(); finishRound(); } };
+// ===== 한 판 더 (BM 1단계, 2026-11-07 대표 결정) =====
+// 오늘 세 코스(우리 동네·잠실·합천)를 다 치면, 하루 한 번 광고를 보고 한 판 더. 첫 판과 두 번째 판을 나란히 비교해 보여 준다.
+const BONUS_COURSES=['home','jamsil','hapcheon'];
+function allTodayDone(){ return BONUS_COURSES.every(k=>!!roundsOf(k)[TODAY]); }
+function bonusState(){ try{ const b=JSON.parse(localStorage.getItem('opg_bonus')||'null'); return b&&b.date===TODAY?b:null; }catch(e){ return null; } }
+function bonusSave(b){ try{ localStorage.setItem('opg_bonus',JSON.stringify(b)); }catch(e){} }
+function bonusAvail(){ return !COURSE.lesson && allTodayDone() && !bonusState(); }
+function showAd(cb){ // 토스 미니앱에서는 여기서 앱인토스 보상형 광고를 띄우고, 끝까지 보면 cb()
+  PT.event('bonus_ad',{c:COURSE.key}); $('adScreen').hidden=false; $('adDone').disabled=true; let n=3; $('adCount').textContent=n;
+  const t=setInterval(()=>{ n--; $('adCount').textContent=n>0?n:'끝!'; if(n<=0){ clearInterval(t); $('adDone').disabled=false; } },1000);
+  $('adDone').onclick=()=>{ $('adScreen').hidden=true; cb(); }; }
+function startBonus(){ showAd(()=>{ bonusSave({date:TODAY, course:COURSE.key}); PT.event('bonus_start',{c:COURSE.key}); startRound('bonus'); }); }
 function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; $('lessonDone').hidden=false; return; }
-  say(12,0.6); if(S.mode==='today') say(13,1.2); $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); }
-  showCard(S.mode==='today'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
+  say(12,0.6); if(S.mode!=='practice') say(13,1.2); if(S.mode==='bonus'){ const b=bonusState()||{date:TODAY,course:COURSE.key}; b.strokes=S.strokes.slice(); b.ball=S.ball; bonusSave(b); } $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); }
+  showCard(S.mode==='today'||S.mode==='bonus'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
 function showCard(practice){
   const rounds=loadRounds(); const today=rounds[TODAY], yday=rounds[YDAY]; const dates=Object.keys(rounds).sort();
   const best=HOLES.map((h,i)=> dates.length? Math.min(...dates.map(d=>rounds[d].strokes[i])) : null);
@@ -1049,15 +1073,20 @@ function showCard(practice){
   let html='<tr><th>홀</th>'+HOLES.map(h=>'<th>'+h.n+'</th>').join('')+'<th>합계</th></tr>';
   html+='<tr><td class="name">파</td>'+HOLES.map(h=>'<td>'+h.par+'</td>').join('')+'<td class="tot">'+PAR+'</td></tr>';
   if(practice) html+=row('연습', practice.strokes, practice.from);
-  html+=row('오늘', today?today.strokes:null); html+=row('어제', yday?yday.strokes:null);
+  const bz=bonusState(); const bonusHere=bz&&bz.course===COURSE.key&&bz.strokes; html+=row(bonusHere?'첫 판':'오늘', today?today.strokes:null); if(bonusHere) html+=row('한 판 더', bz.strokes); html+=row('어제', yday?yday.strokes:null);
   html+='<tr><td class="name">홀별 베스트</td>'+HOLES.map((h,i)=>'<td class="'+(best[i]!=null?'best':'')+'">'+(best[i]==null?'·':best[i])+'</td>').join('')+'<td class="tot">'+(best[0]==null?'·':best.reduce((a,b)=>a+b,0))+'</td></tr>';
   $('sc').innerHTML=html; $('paperTitle').textContent=COURSE.name+' · 스코어 카드';
   $('endSub').textContent = practice ? '연습 · '+WX[practice.wx].name+' · '+BALLS[practice.ball].name+' (기록 안 남음)' :
     today ? (now.getMonth()+1)+'월 '+now.getDate()+'일 · '+WX[today.wx].name+' · '+BALLS[today.ball].name+(bestTot!=null?' · 내 최고 '+bestTot+'타':'') : '아직 기록이 없어요';
-  $('again').textContent = (S.mode==='today' && today && !practice) ? '연습으로 한 번 더' : '다시 치기'; $('end').hidden=false; }
-$('again').onclick=()=>{ if(S.mode==='today'){ S.mode='practice'; S.startHole=0; } startRound(S.mode); };
+  $('again').textContent = ((S.mode==='today'||S.mode==='bonus') && today && !practice) ? '연습으로 한 번 더' : '다시 치기';
+  if(bonusHere && S.mode==='bonus' && today){ const a=today.strokes.reduce((x,y)=>x+y,0), b2=bz.strokes.reduce((x,y)=>x+y,0), d=a-b2;
+    $('endSub').textContent = d>0 ? '한 판 더 '+b2+'타 · 첫 판보다 '+d+'타 줄였어요!' : d<0 ? '한 판 더 '+b2+'타 · 첫 판보다 '+(-d)+'타 많아요 · 내일 다시!' : '한 판 더 '+b2+'타 · 첫 판과 똑같아요'; }
+  const offer = !practice && S.mode==='today' && bonusAvail(); $('bonusBtn').hidden=!offer; if(offer) PT.event('bonus_offer',{c:COURSE.key});
+  $('end').hidden=false; }
+$('bonusBtn').onclick=()=>{ $('end').hidden=true; startBonus(); };
+$('again').onclick=()=>{ if(S.mode==='today'||S.mode==='bonus'){ S.mode='practice'; S.startHole=0; } startRound(S.mode); };
 $('home').onclick=()=>{ $('end').hidden=true; setupToday(); showJourney(); };
-$('goToday').onclick=()=>startRound('today');
+$('goToday').onclick=()=>{ if(loadRounds()[TODAY] && bonusAvail()){ $('start').hidden=true; startBonus(); } else startRound('today'); };
 $('goPractice').onclick=()=>{ $('start').hidden=true; $('practice').hidden=false; };
 $('backP').onclick=()=>{ $('practice').hidden=true; $('start').hidden=false; };
 $('goP').onclick=()=>startRound('practice');
@@ -1274,7 +1303,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v42', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v43', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
