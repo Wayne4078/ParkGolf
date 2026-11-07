@@ -878,7 +878,7 @@ function scr(p,g){ g=g||G(); const dx=p[0]-g.x, dy=p[1]-g.y; const ca=Math.cos(g
 
 // ---------- sound ----------
 let AC=null, rollGain=null;
-function audioInit(){ if(AC){ loadCupBuf(); voiceLoad(); return; } try{ AC=new (window.AudioContext||window.webkitAudioContext)(); const buf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1); const src=AC.createBufferSource(); src.buffer=buf; src.loop=true; const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=600; rollGain=AC.createGain(); rollGain.gain.value=0; src.connect(f); f.connect(rollGain); rollGain.connect(AC.destination); src.start(); loadCupBuf(); voiceLoad(); }catch(e){ AC=null; } }
+function audioInit(){ if(AC){ loadCupBuf(); voiceLoad(); ambLoad(); return; } try{ AC=new (window.AudioContext||window.webkitAudioContext)(); const buf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1); const src=AC.createBufferSource(); src.buffer=buf; src.loop=true; const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=600; rollGain=AC.createGain(); rollGain.gain.value=0; src.connect(f); f.connect(rollGain); rollGain.connect(AC.destination); src.start(); loadCupBuf(); voiceLoad(); ambLoad(); }catch(e){ AC=null; } }
 function tone(freq,dur,type,vol){ if(!AC) return; const o=AC.createOscillator(), g=AC.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(freq,AC.currentTime); g.gain.setValueAtTime(vol||0.2,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+dur); }
 function noiseBurst(dur,vol,hp){ if(!AC) return; const n=Math.floor(AC.sampleRate*dur), b=AC.createBuffer(1,n,AC.sampleRate), d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
   const src=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); f.type='highpass'; f.frequency.value=hp||1800; g.gain.value=vol; src.buffer=b; src.connect(f); f.connect(g); g.connect(AC.destination); src.start(); }
@@ -903,6 +903,27 @@ function voiceLoad(){ if(!AC||VOICE.loading) return; VOICE.loading=1; for(let i=
   fetch('voice/'+k+'.mp3').then(r=>r.arrayBuffer()).then(a=>AC.decodeAudioData(a,b=>{VOICE.buf[i]=b;},()=>{})).catch(()=>{}); } }
 function say(i,delay){ if(!AC||S.attract) return; const b=VOICE.buf[i]; if(!b) return; const now=AC.currentTime; if(VOICE.busy>now+0.05 && !delay) return;
   const at=Math.max(now+(delay||0), delay?VOICE.busy:now); const src=AC.createBufferSource(), g=AC.createGain(); g.gain.value=1.0; src.buffer=b; src.connect(g); g.connect(AC.destination); src.start(at); VOICE.busy=at+b.duration+0.15; }
+// ===== 주변 소리 (2026-11-07): 배경음악 없이, 아주 작게 바람 + 가끔 새소리·물소리. 코스·계절마다 섞는 비율만 다르다 =====
+const AMB={buf:{bird:[],water:[]}, on:false, next:{bird:0,water:0}, wind:null};
+const AMB_MIX={ def:{bird:[4,10], water:0, wind:0.010}, pond:{bird:[9,18], water:[4,8], wind:0.012}, ferry:{bird:[22,40], water:[5,9], wind:0.020}, range:{bird:[5,11], water:[7,14], wind:0.010} };
+function ambLoad(){ if(!AC||AMB.loading) return; AMB.loading=1;
+  for(const [k,n] of [['bird',4],['water',4]]) for(let i=1;i<=n;i++) fetch('amb/'+k+i+'.mp3').then(r=>r.arrayBuffer()).then(a=>AC.decodeAudioData(a,b=>AMB.buf[k].push(b),()=>{})).catch(()=>{});
+  try{ const len=AC.sampleRate*4, nb=AC.createBuffer(1,len,AC.sampleRate), d=nb.getChannelData(0); let last=0; for(let i=0;i<len;i++){ last=(last+0.02*(Math.random()*2-1))/1.02; d[i]=last*3.5; }
+    const src=AC.createBufferSource(); src.buffer=nb; src.loop=true; const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=500; const g=AC.createGain(); g.gain.value=0;
+    src.connect(f); f.connect(g); g.connect(AC.destination); src.start(); AMB.wind={g,f}; }catch(e){} AMB.on=true; }
+function ambMix(){ return AMB_MIX[COURSE&&COURSE.key] || AMB_MIX.def; }
+function ambOne(kind){ const list=AMB.buf[kind]; if(!list.length) return; const b=list[Math.floor(Math.random()*list.length)];
+  const src=AC.createBufferSource(), g=AC.createGain(); src.buffer=b; src.playbackRate.value= kind==='bird' ? 0.9+Math.random()*0.22 : 0.92+Math.random()*0.12;
+  g.gain.value= kind==='bird' ? 0.05+Math.random()*0.07 : 0.06+Math.random()*0.05; let out=g;
+  try{ const pn=AC.createStereoPanner(); pn.pan.value=(Math.random()*2-1)*0.7; g.connect(pn); out=pn; }catch(e){}
+  src.connect(g); out.connect(AC.destination); src.start(); }
+function ambTick(){ if(!AC||!AMB.on) return; const now=AC.currentTime, m=ambMix(), quiet=document.hidden||S.attract;
+  if(AMB.wind){ const target= quiet?0 : m.wind*(0.7+0.3*Math.sin(now*0.23)+0.15*Math.sin(now*0.71)); AMB.wind.g.gain.setTargetAtTime(target, now, 0.8); }
+  if(quiet) return;
+  for(const kind of ['bird','water']){ const r=m[kind]; if(!r){ AMB.next[kind]=0; continue; }
+    if(!AMB.next[kind]) AMB.next[kind]=now+r[0]*Math.random();
+    if(now>=AMB.next[kind]){ ambOne(kind); if(kind==='bird' && Math.random()<0.35) setTimeout(()=>ambOne('bird'), 250+Math.random()*500); AMB.next[kind]=now+r[0]+Math.random()*(r[1]-r[0]); } } }
+setInterval(ambTick, 500);
 function rollUpdate(){ if(!rollGain) return; rollGain.gain.value=Math.min(0.12, Math.hypot(S.vel.x,S.vel.y)/MAXV*0.12); }
 
 // ---------- physics (fixed step, no randomness) ----------
@@ -1425,7 +1446,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v53', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v54', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
