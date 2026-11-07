@@ -146,7 +146,7 @@ html[lang=th] .t-small{letter-spacing:2px}
 </style>
 
 <div id="app">
-  <div class="hud"><button class="hudBtn" id="menuBtn" type="button" aria-label="메뉴 열기">메뉴</button><div id="hudL">1번 홀 <small>파 3</small></div><div id="hudR">지금 0타</div></div>
+  <div class="hud"><button class="hudBtn" id="menuBtn" type="button" aria-label="메뉴 열기">메뉴</button><button class="hudBtn" id="ballBtn" type="button" hidden>공</button><div id="hudL">1번 홀 <small>파 3</small></div><div id="hudR">지금 0타</div></div>
   <div class="stage"><canvas id="c" width="360" height="600"></canvas><button id="backBall" type="button" hidden>⤺ 공으로</button></div>
   <div class="msg" id="msg"></div>
   <div class="hint" id="hint" hidden></div>
@@ -478,7 +478,7 @@ html[lang=th] .t-small{letter-spacing:2px}
   };
   L['치는 법 · 공 이야기']='วิธีตี · เรื่องของลูก'; L['알겠어요']='เข้าใจแล้ว'; L['하루 한 번, 아홉 홀']='วันละรอบ เก้าหลุม'; L['배우기']='ฝึกหัด'; L['배우는 코스']='สนามฝึกหัด'; L['배우기 시작']='เริ่มฝึกหัด'; L['배우는 코스 · 세 단계']='สนามฝึกหัด · 3 ขั้น';
   L['처음이라면 여기부터 · 세 홀이면 다 배워요']='ถ้าเพิ่งเริ่ม เริ่มที่นี่ · 3 หลุมก็เข้าใจครบ'; L['치는 법 → 코르크공과 바람 → 고무공']='วิธีตี → ลูกไม้ก๊อกกับลม → ลูกยาง';
-  L['코르크공과 바람']='ลูกไม้ก๊อกกับลม'; L['고무공 벽 튕기기']='ลูกยางเด้งขอบ'; L['늦가을']='ปลายฤดูใบไม้ร่วง'; L['단풍 절정']='ใบไม้แดงเต็มที่'; L['초겨울 서리']='ต้นหนาว น้ำค้างแข็ง'; L['첫눈']='หิมะแรก'; L['을 올스타(9홀 모두 파 이하)로 깨면 바로 열려요']=' ได้ออลสตาร์ (ทุกหลุมไม่เกินพาร์) จะเปิดทันที'; L['에 열려요']=' จะเปิด'; L['(토)']='(ส.)'; L['☕ 3,000원에 지금 바로 열기']='☕ 3,000 วอน เปิดเลยตอนนี้'; L['결제 자리']='พื้นที่ชำระเงิน'; L['3,000원 한 번이면 모든 코스가 바로 열리고,']='จ่าย 3,000 วอนครั้งเดียว เปิดทุกสนามทันที'; L['한 판 더도 광고 없이 칠 수 있어요.']='เล่นอีกรอบได้โดยไม่ต้องดูโฆษณา'; L['토스에 올리면 여기서 토스로 결제합니다.']='เมื่อขึ้น Toss จะชำระผ่าน Toss ตรงนี้'; L['(시험) 결제한 셈 치기']='(ทดสอบ) ถือว่าจ่ายแล้ว'; L['그냥 기다릴게요']='รอก็ได้'; L['모든 코스가 열렸어요']='เปิดทุกสนามแล้ว'; L['⛳ 한 판 더']='⛳ เล่นอีกรอบ'; L['연못 정원']='สวนบึงบัว'; L['나루터']='ท่าเรือริมน้ำ'; L['남도 · 연못 정원']='ภาคใต้ · สวนบึงบัว'; L['강변 · 옛 나루터']='ริมแม่น้ำ · ท่าเรือเก่า'; L['⭐ 올스타로 먼저 열었어요']='⭐ เปิดก่อนด้วยออลสตาร์'; L['🎬 광고 보고 한 판 더']='🎬 ดูโฆษณาแล้วเล่นอีกรอบ'; L['광고 자리']='พื้นที่โฆษณา'; L['토스에 올리면 여기에 광고가 나옵니다.']='เมื่อขึ้น Toss โฆษณาจะแสดงตรงนี้'; L['광고가 끝나면 한 판 더 칠 수 있어요.']='ดูจบแล้วเล่นได้อีกหนึ่งรอบ'; L['한 판 더 치러 가기']='ไปเล่นอีกรอบ'; L['끝!']='จบ!'; L[' · 세 코스 다 치셨어요! 오늘 한 번 더 칠 수 있어요']=' · เล่นครบ 3 สนามแล้ว! วันนี้เล่นได้อีก 1 รอบ'; L['첫 판과 똑같아요']='เท่ากับรอบแรก'; L['내일 다시!']='พรุ่งนี้ลองใหม่!'; L['⤺ 공으로']='⤺ กลับไปที่ลูก'; L['공을 잡고 뒤로 당겼다 놓으세요']='แตะที่ลูก ลากถอยหลังแล้วปล่อยเพื่อตี'; L['배우기 끝! 🎉']='เรียนจบแล้ว! 🎉'; L['세 단계를 다 배웠어요.']='เรียนครบทั้ง 3 ขั้นแล้ว'; L['이제 진짜 코스에서 쳐 볼까요?']='ไปลองตีในสนามจริงกันไหม?'; L['우리 동네 9홀 치러 가기']='ไปตี 9 หลุมที่สนามข้างบ้าน'; L['다른 코스 고르기']='เลือกสนามอื่น'; L['눌러서 닫기 · 치기 시작하면 사라져요']='แตะเพื่อปิด · เริ่มตีแล้วจะหายไป'; L['치는 법']='วิธีตี';
+  L['코르크공과 바람']='ลูกไม้ก๊อกกับลม'; L['고무공 벽 튕기기']='ลูกยางเด้งขอบ'; L['바람 →']='ลม →'; L['← 바람']='← ลม'; L['연꽃 연못 첫 홀']='หลุมแรกบึงบัว'; L['징검다리 홀']='หลุมสะพานหิน'; L['버드나무 홀']='หลุมต้นหลิว'; L['정원 한 바퀴']='รอบสวน'; L['정자 앞 홀']='หลุมหน้าศาลา'; L['두 연못 사이']='ระหว่างสองบึง'; L['수련 홀']='หลุมบัวสาย'; L['돌다리 꺾임']='โค้งสะพานหิน'; L['잉어 홀']='หลุมปลาคาร์ป'; L['나룻배 긴 홀']='หลุมยาวเรือข้ามฟาก'; L['갈대밭 홀']='หลุมดงกก'; L['모래톱 홀']='หลุมสันทราย'; L['버드나무 둑길']='คันดินต้นหลิว'; L['나루터 홀']='หลุมท่าเรือ'; L['강바람 홀']='หลุมลมแม่น้ำ'; L['뱃사공 홀']='หลุมคนแจวเรือ'; L['물새 홀']='หลุมนกน้ำ'; L['노을 마지막 홀']='หลุมสุดท้ายยามเย็น'; L['남도 연못 정원 · 9홀 647m']='สวนบึงบัวภาคใต้ · 9 หลุม 647 ม.'; L['강변 옛 나루터 · 9홀 674m']='ท่าเรือเก่าริมน้ำ · 9 หลุม 674 ม.'; L['연습장']='สนามซ้อม'; L['⛳<br>연습장']='⛳<br>สนามซ้อม'; L['공 바꿔 가며 마음껏']='เปลี่ยนลูกได้ เล่นได้ไม่จำกัด'; L['언제든 무료']='ฟรีตลอด'; L['연습장 들어가기']='เข้าสนามซ้อม'; L['물·모래·꺾인 홀 다섯 개 · 기록 없이 마음껏 · 칠 때마다 바람이 바뀌고, 공은 화면 위 버튼으로 언제든 바꿔요']='5 หลุม มีน้ำ ทราย ทางเลี้ยว · ไม่บันทึกคะแนน · ลมเปลี่ยนทุกครั้งที่ตี เปลี่ยนลูกได้ที่ปุ่มด้านบน'; L['바람이 바뀌었어요 · ']='ลมเปลี่ยนแล้ว · '; L['오른쪽으로 →']='ไปทางขวา →'; L['← 왼쪽으로']='← ไปทางซ้าย'; L['날씨가 바뀌었어요 · ']='อากาศเปลี่ยนแล้ว · '; L['으로 바꿨어요']=' เปลี่ยนแล้ว'; L['물·모래·꺾인 홀 · 공 바꿔 가며 마음껏']='น้ำ ทราย ทางเลี้ยว · เปลี่ยนลูกได้'; L['늦가을']='ปลายฤดูใบไม้ร่วง'; L['단풍 절정']='ใบไม้แดงเต็มที่'; L['초겨울 서리']='ต้นหนาว น้ำค้างแข็ง'; L['첫눈']='หิมะแรก'; L['을 올스타(9홀 모두 파 이하)로 깨면 바로 열려요']=' ได้ออลสตาร์ (ทุกหลุมไม่เกินพาร์) จะเปิดทันที'; L['에 열려요']=' จะเปิด'; L['(토)']='(ส.)'; L['☕ 3,000원에 지금 바로 열기']='☕ 3,000 วอน เปิดเลยตอนนี้'; L['결제 자리']='พื้นที่ชำระเงิน'; L['3,000원 한 번이면 모든 코스가 바로 열리고,']='จ่าย 3,000 วอนครั้งเดียว เปิดทุกสนามทันที'; L['한 판 더도 광고 없이 칠 수 있어요.']='เล่นอีกรอบได้โดยไม่ต้องดูโฆษณา'; L['토스에 올리면 여기서 토스로 결제합니다.']='เมื่อขึ้น Toss จะชำระผ่าน Toss ตรงนี้'; L['(시험) 결제한 셈 치기']='(ทดสอบ) ถือว่าจ่ายแล้ว'; L['그냥 기다릴게요']='รอก็ได้'; L['모든 코스가 열렸어요']='เปิดทุกสนามแล้ว'; L['⛳ 한 판 더']='⛳ เล่นอีกรอบ'; L['연못 정원']='สวนบึงบัว'; L['나루터']='ท่าเรือริมน้ำ'; L['남도 · 연못 정원']='ภาคใต้ · สวนบึงบัว'; L['강변 · 옛 나루터']='ริมแม่น้ำ · ท่าเรือเก่า'; L['⭐ 올스타로 먼저 열었어요']='⭐ เปิดก่อนด้วยออลสตาร์'; L['🎬 광고 보고 한 판 더']='🎬 ดูโฆษณาแล้วเล่นอีกรอบ'; L['광고 자리']='พื้นที่โฆษณา'; L['토스에 올리면 여기에 광고가 나옵니다.']='เมื่อขึ้น Toss โฆษณาจะแสดงตรงนี้'; L['광고가 끝나면 한 판 더 칠 수 있어요.']='ดูจบแล้วเล่นได้อีกหนึ่งรอบ'; L['한 판 더 치러 가기']='ไปเล่นอีกรอบ'; L['끝!']='จบ!'; L[' · 세 코스 다 치셨어요! 오늘 한 번 더 칠 수 있어요']=' · เล่นครบ 3 สนามแล้ว! วันนี้เล่นได้อีก 1 รอบ'; L['첫 판과 똑같아요']='เท่ากับรอบแรก'; L['내일 다시!']='พรุ่งนี้ลองใหม่!'; L['⤺ 공으로']='⤺ กลับไปที่ลูก'; L['공을 잡고 뒤로 당겼다 놓으세요']='แตะที่ลูก ลากถอยหลังแล้วปล่อยเพื่อตี'; L['배우기 끝! 🎉']='เรียนจบแล้ว! 🎉'; L['세 단계를 다 배웠어요.']='เรียนครบทั้ง 3 ขั้นแล้ว'; L['이제 진짜 코스에서 쳐 볼까요?']='ไปลองตีในสนามจริงกันไหม?'; L['우리 동네 9홀 치러 가기']='ไปตี 9 หลุมที่สนามข้างบ้าน'; L['다른 코스 고르기']='เลือกสนามอื่น'; L['눌러서 닫기 · 치기 시작하면 사라져요']='แตะเพื่อปิด · เริ่มตีแล้วจะหายไป'; L['치는 법']='วิธีตี';
   L['공을 손가락으로 잡고, 치고 싶은 쪽의 반대로 당겼다 놓으세요. 많이 당길수록 멀리 갑니다. 다른 곳을 끌면 코스를 둘러볼 수 있어요.']='แตะที่ลูก แล้วลากไปทางตรงข้ามกับทิศที่อยากตี แล้วปล่อย ยิ่งลากมากยิ่งไปไกล ลากที่อื่นเพื่อดูสนามได้';
   L['코르크공은 물 위를 건너고, 바람을 타고 휘어요. 오른쪽 위 노란 깃발이 바람 방향입니다. 컵보다 왼쪽을 겨냥하세요.']='ลูกไม้ก๊อกลอยข้ามน้ำได้และโค้งตามลม ธงเหลืองมุมขวาบนบอกทิศลม ให้เล็งทางซ้ายของหลุม';
   L['고무공은 벽에 맞으면 오히려 빨라져요. 오른쪽 위 비스듬한 모서리를 맞혀 왼쪽으로 꺾어 보세요.']='ลูกยางชนขอบแล้วยิ่งเร็วขึ้น ลองตีให้ชนมุมเฉียงขวาบนเพื่อเลี้ยวไปทางซ้าย';
@@ -776,6 +776,7 @@ const COURSES={
   home:{key:'home', name:'우리 동네 코스', sub:'연습하기 좋은 하천변 9홀', holes:HOME_HOLES, store:'opg_rounds', onboard:true},
   jamsil:{key:'jamsil', name:'잠실 원정', sub:'잠실종합운동장 체육공원 · 9홀 513m · 현장 안내판 거리 그대로', holes:JAMSIL_HOLES, store:'opg_rounds_jamsil', onboard:false},
   hapcheon:{key:'hapcheon', name:'합천 원정', sub:'합천 핫들생태공원 · B코스 9홀 626m', holes:HAPCHEON_HOLES, store:'opg_rounds_hapcheon', onboard:false},
+  range:{key:'range', name:'연습장', sub:'물·모래·꺾인 홀 · 공 바꿔 가며 마음껏', holes:[POND_HOLES[0],POND_HOLES[1],HAPCHEON_HOLES[3],FERRY_HOLES[2],POND_HOLES[5]].map((h,i)=>Object.assign(JSON.parse(JSON.stringify(h)),{n:i+1})), store:'opg_rounds_range', onboard:false, range:true},
   pond:{key:'pond', name:'연못 정원', sub:'남도 연못 정원 · 9홀 647m', holes:POND_HOLES, store:'opg_rounds_pond', onboard:false},
   ferry:{key:'ferry', name:'나루터', sub:'강변 옛 나루터 · 9홀 674m', holes:FERRY_HOLES, store:'opg_rounds_ferry', onboard:false} };
 let COURSE=COURSES.home, HOLES=COURSE.holes;
@@ -830,6 +831,9 @@ function camTargetX(){ if(H_().field) return S.pos.x + (S.moving ? S.vel.x*LOOK_
 function camSnap(){ S.turned=false; S.nearWall=false; S.cam.sy=S.cam.tsy=BALL_SY; if(DIORAMA && THEME.block){ S.putt=false; S.cam.a=S.cam.ta=DIO_A; S.cam.tilt=S.cam.ttilt=DIO_TILT; return; } S.putt=false; S.cam.a=0; S.cam.ta=0; S.cam.tilt=TILT; S.cam.ttilt=TILT; camTarget(); S.cam.s=S.cam.ts; S.cam.y=S.pos.y; S.cam.x=camTargetX(); }
 // Putting camera: the one rotation. When the ball stops on the green, turn so the cup is straight up, zoom in, flatten the tilt a little.
 function wallDist(h,p){ let m=1e9; for(const [a,c] of wallEdges(h)){ const ex=c[0]-a[0], ey=c[1]-a[1], L2=ex*ex+ey*ey; let t=((p.x-a[0])*ex+(p.y-a[1])*ey)/L2; t=Math.max(0,Math.min(1,t)); m=Math.min(m,Math.hypot(p.x-a[0]-ex*t,p.y-a[1]-ey*t)); } return m; }
+// 연습장: 칠 때마다 날씨·바람이 바뀐다
+function rangeWeather(say){ const prev=S.wx+S.windDir; const pool=['clear','wind','wind','wind','frost','rain']; S.wx=pool[Math.floor(Math.random()*pool.length)]; S.windDir=Math.random()<0.5?-1:1; if(typeof updateHud==='function' && S.mode==='range') updateHud();
+  if(say && prev!==S.wx+S.windDir) msg(S.wx==='wind' ? '바람이 바뀌었어요 · '+(S.windDir>0?'오른쪽으로 →':'← 왼쪽으로') : '날씨가 바뀌었어요 · '+WX[S.wx].name); }
 function shotVoice(){ const sh=S.shot; if(!sh) return; S.shot=null; const c=cup(), d=Math.hypot(c[0]-S.pos.x,c[1]-S.pos.y);
   if(sh.lip) say(11,0.1); else if(d<22 && sh.d0>90) say(3,0.1); else if(d<45 && sh.d0>70) say(2,0.1); else if(d>sh.d0+12) say(8,0.1); }
 function puttCheck(){ if(DIORAMA && THEME.block) return; const h=H_(); const c=cup(); const dx=c[0]-S.pos.x, dy=c[1]-S.pos.y;
@@ -976,7 +980,7 @@ function setupToday(){ $('courseSub').textContent=COURSE.sub;
     if(rs){ $('ballRow').hidden=true; $('ballNote').textContent='처음 고른 '+BALLS[rs.ball].name+'으로 이어 칩니다'; } $('goToday').disabled=false; $('goToday').textContent= rs ? '오늘의 라운드 이어 치기' : '오늘의 라운드'; }
   $('showCard').hidden=Object.keys(rounds).length===0; }
 function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0);
-  let res=null; if(mode==='bonus'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); } else if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } }
+  let res=null; if(mode==='range'){ S.hi=0; S.pins=HOLES.map(()=>Math.floor(Math.random()*3)); rangeWeather(); } else if(mode==='bonus'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); } else if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } }
   else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; guardBack(); loadHole();
   if(res){ if(res.done){ S.intro=null; holeOut(false,true); } else if(res.pos){ S.pos={...res.pos}; S.lastSafe={...res.pos}; S.intro=null; camSnap(); updateHud(); } msg('하던 자리에서 이어 칩니다'); } }
@@ -984,7 +988,7 @@ function loadHole(){ const h=H_(); S.fade={}; if(S.lookT){ S.look={x:0,y:0,z:1};
   msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); saveResume(); if(!S.attract) PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
 // 남은 거리: 공에서 핀까지. 실제 구장은 티에서 안내판 거리와 같아지도록 맞춘다.
 function remain(){ const h=H_(), c=cup(); const tee=Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])*M_PER_PX; const k= h.m ? h.m/Math.max(tee,1) : 1; return Math.max(0,Math.round(Math.hypot(c[0]-S.pos.x,c[1]-S.pos.y)*M_PER_PX*k)); }
-function updateHud(){ const h=H_(); $('hudL').innerHTML=h.n+'번 홀 <small>파 '+h.par+'</small>'; $('hudR').textContent='지금 '+S.strokes[S.hi]+'타'; }
+function updateHud(){ const h=H_(); const bb=$('ballBtn'); if(bb){ bb.hidden=!COURSE.range; if(COURSE.range) bb.textContent=BALLS[S.ball].name+' ▾'; } if(COURSE.range){ $('hudL').innerHTML=h.n+'번 홀'; $('hudR').textContent= S.wx==='wind' ? (S.windDir>0?'바람 →':'← 바람') : WX[S.wx].name; return; } $('hudL').innerHTML=h.n+'번 홀 <small>파 '+h.par+'</small>'; $('hudR').textContent='지금 '+S.strokes[S.hi]+'타'; }
 function drawRemain(){ if(S.moving||S.drag||S.holeOver||S.intro||S.sink) return; const p=scr([S.pos.x,S.pos.y]); const t='핀까지 '+remain()+'m';
   ctx.font='800 18px "Noto Sans KR", sans-serif'; ctx.textAlign='center'; const w=ctx.measureText(t).width+20; const y=p.y+R+30;
   ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(p.x-w/2,y-20,w,28,8) : ctx.rect(p.x-w/2,y-20,w,28); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(t,p.x,y); }
@@ -1017,7 +1021,7 @@ addEventListener('popstate',()=>{
   if(!$('start').hidden){ showJourney(); guardBack(); return; }
   if(!$('journey').hidden){ $('journey').hidden=true; setupToday(); showTitle(); guardBack(); return; } });
 // ===== 여정 길 (코스 고르기) =====
-const JOURNEY=[{k:'lesson',label:'배우기',place:'치는 법 세 단계'},{k:'home',img:'art/course_home.jpg',label:'우리 동네',place:'하천변 연습장'},{k:'jamsil',img:'art/course_jamsil.jpg',label:'잠실',place:'서울 송파 · 한강변'},{k:'hapcheon',img:'art/course_hapcheon.jpg',label:'합천',place:'경남 합천 · 황강 둔치'},{k:'pond',img:'art/course_hwasun.jpg',label:'연못 정원',place:'남도 · 연못 정원',prev:'hapcheon',release:'2026-11-14'},{k:'ferry',img:'art/course_ferry.jpg',sign:'나루터',label:'나루터',place:'강변 · 옛 나루터',prev:'pond',release:'2026-11-21'}];
+const JOURNEY=[{k:'lesson',label:'배우기',place:'치는 법 세 단계'},{k:'range',sign:'⛳<br>연습장',label:'연습장',place:'공 바꿔 가며 마음껏'},{k:'home',img:'art/course_home.jpg',label:'우리 동네',place:'하천변 연습장'},{k:'jamsil',img:'art/course_jamsil.jpg',label:'잠실',place:'서울 송파 · 한강변'},{k:'hapcheon',img:'art/course_hapcheon.jpg',label:'합천',place:'경남 합천 · 황강 둔치'},{k:'pond',img:'art/course_hwasun.jpg',label:'연못 정원',place:'남도 · 연못 정원',prev:'hapcheon',release:'2026-11-14'},{k:'ferry',img:'art/course_ferry.jpg',sign:'나루터',label:'나루터',place:'강변 · 옛 나루터',prev:'pond',release:'2026-11-21'}];
 // 4·5코스 열림 규칙 (2026-11-07 대표 결정): 매주 토요일 하나씩 모두에게 열림 · 앞 코스를 올스타(9홀 모두 파 이하)로 깨면 바로 · 3,000원 한 번이면 전부 바로
 function hasPass(){ try{ return localStorage.getItem('opg_pass')==='1'; }catch(e){ return false; } }
 function allStar(k){ const hs=COURSES[k].holes; return Object.values(roundsOf(k)).some(r=>r.strokes.every((x,i)=>x>0&&x<=hs[i].par)); }
@@ -1032,6 +1036,7 @@ function stopState(st){ const k=st.k;
   if(st.soon) return {open:false, cond:'곧 열립니다'};
   if(k==='lesson') return {open:true, done:lessonDone()};
   if(k==='home') return {open:true, done:bestOf('home')!=null};
+  if(k==='range') return {open:true, done:false};
   if(k==='jamsil') return {open:OPEN_ALL||bestOf('home')!=null, done:bestOf('jamsil')!=null, cond:'우리 동네 오늘의 라운드를 한 번 돌면 열려요'};
   if(k==='hapcheon'){ const b=bestOf('jamsil'), need=parOf('jamsil')+3; return {open:OPEN_ALL||(b!=null&&b<=need), done:bestOf('hapcheon')!=null, cond:'잠실을 '+need+'타 이하로 돌면 열려요'}; }
   if(st.release){ const pv=JOURNEY.find(x=>x.k===st.prev), pvOpen=stopState(pv).open; const why = OPEN_ALL?'all': hasPass()?'pass': TODAY>=st.release?'week': (pvOpen&&allStar(st.prev))?'star':null;
@@ -1042,9 +1047,9 @@ function renderJourney(){ const road=$('jRoad'), W=Math.min(road.clientWidth||36
   road.style.height=H+'px'; const pts=[];
   let html=''; JOURNEY.forEach((st,i)=>{ const ss=stopState(st), left=i%2===0, x=left?W*0.04:W*0.36, y=H-(i+1)*SH+10;
     pts.push([x+W*0.30, y+SH*0.42]);
-    const sub= st.soon ? '곧 열려요' : !ss.open ? (st.release?'🔒 '+relLabel(st.release):'🔒 잠김') : ss.done ? (st.k==='lesson'?'다 배웠어요 ✓':'최고 '+bestOf(st.k)+'타 ✓') : '아직 안 쳐 봤어요';
+    const sub= st.k==='range' ? '언제든 무료' : st.soon ? '곧 열려요' : !ss.open ? (st.release?'🔒 '+relLabel(st.release):'🔒 잠김') : ss.done ? (st.k==='lesson'?'다 배웠어요 ✓':'최고 '+bestOf(st.k)+'타 ✓') : '아직 안 쳐 봤어요';
     html+='<button type="button" class="jStop'+(ss.open?'':' lk')+(S.jSel===st.k?' sel':'')+'" data-k="'+st.k+'" style="left:'+x+'px;top:'+y+'px">'+
-      (st.img?'<img src="'+st.img+'" alt="" onerror="this.outerHTML=\'<div class=jSign>'+(st.sign||'')+'</div>\'">':'<div class="jSign">처음이라면<br>여기부터</div>')+
+      (st.k==='range'?'<div class="jSign">'+st.sign+'</div>':st.img?'<img src="'+st.img+'" alt="" onerror="this.outerHTML=\'<div class=jSign>'+(st.sign||'')+'</div>\'">':'<div class="jSign">처음이라면<br>여기부터</div>')+
       '<span class="lb"><b>'+st.label+'</b><small>'+sub+'</small></span></button>'; });
   let d='M'+pts[0][0]+' '+pts[0][1]; for(let i=1;i<pts.length;i++){ const a=pts[i-1], b=pts[i], my=(a[1]+b[1])/2; d+=' C'+a[0]+' '+my+','+b[0]+' '+my+','+b[0]+' '+b[1]; }
   const sel=JOURNEY.findIndex(st=>st.k===S.jSel), sp=pts[sel];
@@ -1054,12 +1059,13 @@ function renderJourney(){ const road=$('jRoad'), W=Math.min(road.clientWidth||36
   return {SH,H,sel}; }
 function fillSheet(){ const st=JOURNEY.find(x=>x.k===S.jSel), ss=stopState(st);
   const name= st.soon ? '화순 원정' : COURSES[st.k].name; $('jCourse').textContent=name;
-  if(st.k==='lesson'){ $('jBest').textContent=ss.done?'다 배웠어요':''; $('jMeta').textContent='세 단계 · 치는 법 → 코르크공과 바람 → 고무공'; }
+  if(st.k==='range'){ $('jBest').textContent=''; $('jMeta').textContent='물·모래·꺾인 홀 다섯 개 · 기록 없이 마음껏 · 칠 때마다 바람이 바뀌고, 공은 화면 위 버튼으로 언제든 바꿔요'; }
+  else if(st.k==='lesson'){ $('jBest').textContent=ss.done?'다 배웠어요':''; $('jMeta').textContent='세 단계 · 치는 법 → 코르크공과 바람 → 고무공'; }
   else if(st.soon){ $('jBest').textContent=''; $('jMeta').textContent=st.place+' · 9홀 열 개 코스'; }
   else { const b=bestOf(st.k), p=parOf(st.k), m=metersOf(st.k), fld=COURSES[st.k].holes[0].field;
     $('jBest').textContent= b!=null ? '최고 '+b+'타 ('+(b-p>0?'+':'')+(b-p===0?'±0':b-p)+')' : '';
     $('jMeta').textContent=st.place+' · '+COURSES[st.k].holes.length+'홀 · 파'+p+(m?' · '+m+'m':'')+' · '+(SEASONS[st.k]&&SEASONS[st.k].season?SEASONS[st.k].season:(fld?'들판':'벽 있는 연습장')); }
-  $('jGo').disabled=!ss.open; $('jGo').textContent= ss.open ? (st.k==='lesson'?'배우러 가기':'이 코스로 가기') : (ss.cond||'아직 잠겨 있어요');
+  $('jGo').disabled=!ss.open; $('jGo').textContent= ss.open ? (st.k==='lesson'?'배우러 가기':st.k==='range'?'연습장 들어가기':'이 코스로 가기') : (ss.cond||'아직 잠겨 있어요');
   if(st.release && !ss.open) $('jMeta').textContent=st.place+' · 9홀 · 파'+parOf(st.k)+' · '+ss.star;
   if(st.release && ss.open && ss.why==='star') $('jBest').textContent=(bestOf(st.k)!=null?$('jBest').textContent+' · ':'')+'⭐ 올스타로 먼저 열었어요';
   $('jPass').hidden = !(st.release && !ss.open); }
@@ -1071,14 +1077,15 @@ function showJourney(){ $('start').hidden=true; $('title').hidden=true;
 function showStart(){ $('journey').hidden=true; $('startTitle').textContent=COURSE.name; $('start').hidden=false; }
 $('ldGo').onclick=()=>{ $('lessonDone').hidden=true; PT.event('lesson_next',{go:'home'}); setCourse('home'); showStart(); $('goToday').click(); };
 $('ldPick').onclick=()=>{ $('lessonDone').hidden=true; PT.event('lesson_next',{go:'pick'}); showJourney(); };
+$('ballBtn').onclick=()=>{ if(S.moving||S.sink) return; const ks=Object.keys(BALLS); S.ball=ks[(ks.indexOf(S.ball)+1)%ks.length]; updateHud(); msg(BALLS[S.ball].name+'으로 바꿨어요'); PT.event('range_ball',{b:S.ball}); };
 $('jPass').onclick=()=>{ PT.event('pass_offer',{k:S.jSel}); $('payScreen').hidden=false; };
 $('payNo').onclick=()=>{ $('payScreen').hidden=true; };
 $('payOk').onclick=()=>{ try{ localStorage.setItem('opg_pass','1'); }catch(e){} PT.event('pass_buy',{k:S.jSel,test:1}); $('payScreen').hidden=true; renderJourney(); fillSheet(); msg('모든 코스가 열렸어요'); };
-$('jGo').onclick=()=>{ const k=S.jSel; if(k!==COURSE.key) setCourse(k); else setupToday(); showStart(); PT.event('course_pick',{c:k}); };
+$('jGo').onclick=()=>{ const k=S.jSel; if(k!==COURSE.key) setCourse(k); else setupToday(); PT.event('course_pick',{c:k}); if(COURSE.range){ $('journey').hidden=true; startRound('range'); return; } showStart(); };
 $('jTitle').onclick=()=>{ $('journey').hidden=true; setupToday(); showTitle(); };
 $('sBack').onclick=showJourney;
 addEventListener('resize',()=>{ if(!$('journey').hidden) renderJourney(); });
-$('next').onclick=()=>{ if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else { PT.closeBubble(); finishRound(); } };
+$('next').onclick=()=>{ if(COURSE.range){ S.hi=(S.hi+1)%HOLES.length; loadHole(); rangeWeather(true); return; } if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else { PT.closeBubble(); finishRound(); } };
 // ===== 한 판 더 (BM 1단계, 2026-11-07 대표 결정) =====
 // 오늘 세 코스(우리 동네·잠실·합천)를 다 치면, 하루 한 번 광고를 보고 한 판 더. 첫 판과 두 번째 판을 나란히 비교해 보여 준다.
 const BONUS_COURSES=['home','jamsil','hapcheon'];
@@ -1333,13 +1340,13 @@ function render(){ const h=H_(), g=G(); ctx.fillStyle=THEME.rough; ctx.fillRect(
 // ---------- loop ----------
 let last=performance.now(), acc=0;
 function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt; const h=H_();
-  while(acc>=DT){ acc-=DT; if(S.moving && !S.holeOver){ step(h); if(S.vel.x===0 && S.vel.y===0 && S.moving){ S.moving=false; if(!S.holeOver && S.strokes[S.hi]>=h.par+3) holeOut(true); else if(!S.holeOver) shotVoice(); puttCheck(); updateHud(); } } }
+  while(acc>=DT){ acc-=DT; if(S.moving && !S.holeOver){ step(h); if(S.vel.x===0 && S.vel.y===0 && S.moving){ S.moving=false; if(!S.holeOver && S.strokes[S.hi]>=h.par+3) holeOut(true); else if(!S.holeOver){ shotVoice(); if(COURSE.range) rangeWeather(true); } puttCheck(); updateHud(); } } }
   if(S.attract){ if(!S.intro) startIntro(); S.intro.t+=dt*0.42; if(S.intro.t>=INTRO_DUR+0.6){ S.attractN=(S.attractN+1)%ATTRACT.length; S.hi=ATTRACT[S.attractN]; loadHole(); startIntro(); } }
   else if(S.intro){ S.intro.t+=dt; if(S.intro.t>=INTRO_DUR+0.4) endIntro(); }
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v45', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v46', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
