@@ -836,6 +836,7 @@ function rollUpdate(){ if(!rollGain) return; rollGain.gain.value=Math.min(0.12, 
 // ---------- physics (fixed step, no randomness) ----------
 const DT=1/120;
 // 들판 홀: 벽이 없다. 공이 OB 줄(페어웨이 경계)을 넘으면 1타 벌타, 나간 자리 바로 안쪽에서 다시 친다 (실제 파크골프 규칙)
+const FIELD_WALLS=true; // 2026-11-07 대표 결정: 원정 코스도 테두리(벽) — OB로 나가도 바로 안으로 들어와 보기에 어색함. 카메라·미니맵·주변 풍경은 그대로
 function fieldPoly(h){ return h._fp || (h._fp=smoothPts(h.poly)); }
 function fieldOB(h,p,v){ const fp=fieldPoly(h); if(inPoly(p,fp)){ S.lastIn={x:p.x,y:p.y}; return false; }
   const sp=Math.hypot(v.x,v.y)||1; let q=S.lastIn||S.lastSafe; q={x:q.x-v.x/sp*10, y:q.y-v.y/sp*10}; if(!inPoly(q,fp)) q={...(S.lastIn||S.lastSafe)};
@@ -850,7 +851,7 @@ function step(h){
   let fr=FRICTION*wx.fr; if(inSand(h,p)) fr*=3.2; else if(inGreen(h,p)) fr*=GREEN_FR;
   const dec=(sp<45?fr*2.2:fr)*DT; if(sp<=dec){ v.x=0; v.y=0; return; }
   v.x-=v.x/sp*dec; v.y-=v.y/sp*dec; p.x+=v.x*DT; p.y+=v.y*DT;
-  if(h.field){ if(fieldOB(h,p,v)) return; }
+  if(h.field && !FIELD_WALLS){ if(fieldOB(h,p,v)) return; }
   else for(const [a,c] of wallEdges(h)){ const ex=c[0]-a[0], ey=c[1]-a[1], L2=ex*ex+ey*ey; let t=((p.x-a[0])*ex+(p.y-a[1])*ey)/L2; t=Math.max(0,Math.min(1,t));
     const qx=a[0]+ex*t, qy=a[1]+ey*t; const dx=p.x-qx, dy=p.y-qy; const d=Math.hypot(dx,dy); if(d<R+WALL && d>0) bounce(p,v,dx/d,dy/d,qx,qy,b); }
   if(h.trees) for(const [tx,ty,tr] of h.trees){ const dx=p.x-tx, dy=p.y-ty; const d=Math.hypot(dx,dy); if(d<tr+R && d>0){ const nx=dx/d, ny=dy/d; p.x=tx+nx*(tr+R); p.y=ty+ny*(tr+R);
@@ -1122,7 +1123,7 @@ function drawGround(h,g){
   const [cx,cy]=cup(); ctx.beginPath(); ctx.arc(cx,cy,CUP_R,0,Math.PI*2); ctx.fillStyle=THEME.cup; ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle=THEME.cupRim; ctx.stroke();
   const p=S.pos; ctx.beginPath(); ctx.ellipse(p.x+2,p.y+3,R,R*0.8,0,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fill();
   ctx.restore();
-  if(h.field){ drawOBLine(h,g); return; }
+  if(h.field && !FIELD_WALLS){ drawOBLine(h,g); return; }
   // wall
   const hWall=5*g.s, wWall=7*g.s; ctx.lineJoin='round'; ctx.lineCap='round';
   for(let i=hWall;i>=0;i-=1){ ctx.save(); ctx.translate(0,-i); groundBegin(g); smooth(h.poly); ctx.restore(); ctx.restore(); ctx.lineWidth=wWall; ctx.strokeStyle= i>hWall-1.5 ? THEME.wallTop : (i<2 ? THEME.wallBase : THEME.wall); ctx.stroke(); }
@@ -1220,7 +1221,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v36', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v37', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
