@@ -921,7 +921,7 @@ function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0);
   else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; guardBack(); loadHole();
   if(res){ if(res.done){ S.intro=null; holeOut(false,true); } else if(res.pos){ S.pos={...res.pos}; S.lastSafe={...res.pos}; S.intro=null; camSnap(); updateHud(); } msg('하던 자리에서 이어 칩니다'); } }
-function loadHole(){ const h=H_(); if(COURSE.lesson){ S.ball=h.ball; S.wx=h.wx; S.windDir=h.windDir; } showHint(COURSE.lesson&&!S.attract?h.hint:''); S.lastIn=null; S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
+function loadHole(){ const h=H_(); S.fade={}; if(COURSE.lesson){ S.ball=h.ball; S.wx=h.wx; S.windDir=h.windDir; } showHint(COURSE.lesson&&!S.attract?h.hint:''); S.lastIn=null; S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
   msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); saveResume(); if(!S.attract) PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
 // 남은 거리: 공에서 핀까지. 실제 구장은 티에서 안내판 거리와 같아지도록 맞춘다.
 function remain(){ const h=H_(), c=cup(); const tee=Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])*M_PER_PX; const k= h.m ? h.m/Math.max(tee,1) : 1; return Math.max(0,Math.round(Math.hypot(c[0]-S.pos.x,c[1]-S.pos.y)*M_PER_PX*k)); }
@@ -1164,14 +1164,25 @@ function drawBallUp(g){ const b=BALLS[S.ball], p=scr([S.pos.x,S.pos.y],g), s=g.s
   if(S.ball==='rubber'){ ctx.beginPath(); ctx.arc(p.x-2.5*s,p.y-r*0.6-2.5*s,2.2*s,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.fill(); }
   if(S.ball==='cork'){ ctx.fillStyle='rgba(90,60,20,0.35)'; for(const [ox,oy] of [[-3,-2],[2,-3],[0,3],[-3,3],[3,1]]){ ctx.beginPath(); ctx.arc(p.x+ox*s,p.y-r*0.6+oy*s,1*s,0,Math.PI*2); ctx.fill(); } } }
 function drawStanding(h,g){ const items=[];
-  (h.trees||[]).forEach(([x,y,r])=>items.push({y, f:()=>drawTreeUp(x,y,r,false,g)}));
-  (h.deco||[]).forEach(([x,y,r,au])=>items.push({y, f:()=>drawTreeUp(x,y,r,au,g)}));
-  if(h.field){ (h.people||[]).forEach(([x,y],i)=>items.push({y, f:()=>drawPerson(x,y,i,g)})); } // OB 말뚝은 뺌 — 흰 줄만
+  (h.trees||[]).forEach(([x,y,r])=>items.push({y, x, r, f:()=>drawTreeUp(x,y,r,false,g)}));
+  (h.deco||[]).forEach(([x,y,r,au])=>items.push({y, x, r, f:()=>drawTreeUp(x,y,r,au,g)}));
+  if(h.field){ (h.people||[]).forEach(([x,y],i)=>items.push({y, x, r:8, f:()=>drawPerson(x,y,i,g)})); } // OB 말뚝은 뺌 — 흰 줄만
   if(h.bridge) items.push({y:h.bridge[2][1], f:()=>drawRailsUp(h.bridge,g)});
   items.push({y:cup()[1], f:()=>drawFlagUp(h,g)});
-  (h.props||[]).forEach(pr=>items.push({y:pr[2], f:()=>drawProp(h,pr,g)}));
-  if(!(S.sink&&S.sink.dropped) && !(S.holeOver&&S.pop)) items.push({y:S.pos.y+0.1, f:()=>drawBallUp(g)});
-  items.sort((a,b)=>a.y-b.y); items.forEach(i=>i.f()); }
+  (h.props||[]).forEach(pr=>items.push({y:pr[2], x:pr[1], r:26, f:()=>drawProp(h,pr,g)}));
+  const showBall=!(S.sink&&S.sink.dropped) && !(S.holeOver&&S.pop);
+  if(showBall) items.push({y:S.pos.y+0.1, ball:true, f:()=>drawBallUp(g)});
+  items.sort((a,b)=>a.y-b.y);
+  // 공 가림 처리: 공보다 앞(아래)에 서서 공을 덮는 나무·소품은 반투명으로, 그래도 가리면 공 테두리를 맨 위에 다시 그림
+  const bp=showBall?scr([S.pos.x,S.pos.y],g):null; let hid=false, past=false;
+  if(!S.fade) S.fade={};
+  items.forEach((it,i)=>{ if(it.ball){ past=true; it.f(); return; }
+    let a=1; if(bp && past && it.r){ const p=scr([it.x,it.y],g), rs=it.r*g.s; const k=(it.y-S.pos.y);
+      const cover = Math.abs(bp.x-p.x) < rs*1.25+8 && bp.y < p.y+6 && bp.y > p.y-rs*2.6-10;
+      if(cover && k>0){ a=0.32; hid=true; } }
+    const key=it.x+','+it.y; const cur=S.fade[key]==null?1:S.fade[key]; const nx=cur+(a-cur)*0.25; S.fade[key]=nx;
+    if(nx<0.99){ ctx.save(); ctx.globalAlpha=nx; it.f(); ctx.restore(); } else it.f(); });
+  if(hid && bp){ const r=Math.max(R*g.s,5.5)+3; ctx.beginPath(); ctx.arc(bp.x,bp.y-r*0.5,r,0,Math.PI*2); ctx.lineWidth=2.5; ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.stroke(); } }
 function drawWind(){ const w=windVec(); const x=W-44, y=30; ctx.strokeStyle='#f4f4ee'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+44); ctx.stroke(); ctx.fillStyle='#f7c948';
   if(w.x===0){ ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+8,y+10); ctx.lineTo(x,y+18); ctx.closePath(); ctx.fill(); return; }
   const a=S.cam.a; const vx=w.x*Math.cos(a), vy=w.x*Math.sin(a); const L=Math.hypot(vx,vy); const ux=vx/L, uy=vy/L;
@@ -1221,7 +1232,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v37', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v38', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
