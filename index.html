@@ -795,7 +795,7 @@ function camSnap(){ S.turned=false; S.nearWall=false; S.cam.sy=S.cam.tsy=BALL_SY
 // Putting camera: the one rotation. When the ball stops on the green, turn so the cup is straight up, zoom in, flatten the tilt a little.
 function wallDist(h,p){ let m=1e9; for(const [a,c] of wallEdges(h)){ const ex=c[0]-a[0], ey=c[1]-a[1], L2=ex*ex+ey*ey; let t=((p.x-a[0])*ex+(p.y-a[1])*ey)/L2; t=Math.max(0,Math.min(1,t)); m=Math.min(m,Math.hypot(p.x-a[0]-ex*t,p.y-a[1]-ey*t)); } return m; }
 function shotVoice(){ const sh=S.shot; if(!sh) return; S.shot=null; const c=cup(), d=Math.hypot(c[0]-S.pos.x,c[1]-S.pos.y);
-  if(sh.lip) say(11,0.1); else if(d<16 && sh.d0>90) say(3,0.1); else if(d<30 && sh.d0>60) say(2,0.1); else if(d>sh.d0+12) say(8,0.1); }
+  if(sh.lip) say(11,0.1); else if(d<22 && sh.d0>90) say(3,0.1); else if(d<45 && sh.d0>70) say(2,0.1); else if(d>sh.d0+12) say(8,0.1); }
 function puttCheck(){ if(DIORAMA && THEME.block) return; const h=H_(); const c=cup(); const dx=c[0]-S.pos.x, dy=c[1]-S.pos.y;
   // 펜스에 붙은 공: 공이 화면 가장자리에 걸려 당길 자리가 없지 않게, 공을 화면 가운데로 데려온다
   S.nearWall = !h.field && wallDist(h,S.pos) < 42; S.cam.tsy = S.nearWall ? H*0.54 : BALL_SY;
@@ -817,7 +817,7 @@ function camUpdate(dt){ lookUpdate(dt); if(DIORAMA && THEME.block) return; const
 let INTRO_DUR=2.8; const ease=k=>k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
 function showHint(t){ const el=$('hint'); if(!el) return; if(t){ el.innerHTML='<b>'+H_().n+'단계 · '+H_().name+'</b><br>'+t+'<small>눌러서 닫기 · 치기 시작하면 사라져요</small>'; el.hidden=false; el.onclick=()=>{el.hidden=true;}; } else el.hidden=true; }
 function startIntro(){ if(DIORAMA && THEME.block && !S.attract){ S.intro=null; return; } const h=H_(), c=cup(); INTRO_DUR=Math.min(5.5, 2.2+Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])/260)+(THEME.block&&!h.field?2.2:0); S.intro={t:0}; }
-function endIntro(){ S.intro=null; if(S.hi===S.startHole && !S.attract) say(1,0.2); msg(S.hi===S.startHole ? '오늘은 '+WX[S.wx].name+' · '+BALLS[S.ball].name : ''); }
+function endIntro(){ S.intro=null; if(!S.attract && (S.hi===S.startHole || Math.random()<0.4)) say(1,0.2); msg(S.hi===S.startHole ? '오늘은 '+WX[S.wx].name+' · '+BALLS[S.ball].name : ''); }
 function introCam(){ const k=Math.min(1,S.intro.t/INTRO_DUR); const c=cup(), h=H_();
   const K2={ x:S.cam.x, y:S.pos.y, s:S.cam.ts, tilt:TILT, sy:BALL_SY, a:0 }, K1={ x:c[0], y:c[1]+40, s:S.cam.ts+0.6, tilt:0.42, sy:BALL_SY*0.5, a:0 };
   if(!THEME.block || h.field) return lerpCam(K1,K2,ease(k));
@@ -897,7 +897,7 @@ function sinkUpdate(dt){ const k=S.sink; if(!k) return; k.t+=dt; const c=cup();
     S.pos={x:c[0]+Math.cos(a)*r, y:c[1]+Math.sin(a)*r};
     if(k.t>=SINK_ROLL){ k.dropped=true; S.pos={x:c[0],y:c[1]}; const hio=S.strokes[S.hi]===1; S.pop={t:0, hio}; playCupDrop(); try{ navigator.vibrate&&navigator.vibrate(hio?[18,50,30,50,40]:[14,40,24]); }catch(e){} } }
   if(S.pop) S.pop.t+=dt;
-  if(k.t>=SINK_END){ S.sink=null; holeOut(false,true); } }
+  if(k.t>=SINK_END){ S.sink=null; holeOut(false,true,true); } }
 function drawPop(g){ const P=S.pop; if(!P) return; const t=P.t; if(t>1.6){ return; } const c=scr(cup(),g), s=g.s;
   // ground rings
   for(let i=0;i<(P.hio?3:2);i++){ const tt=t-i*0.12; if(tt<0||tt>0.7) continue; const k=tt/0.7; ctx.beginPath(); ctx.ellipse(c.x,c.y,(CUP_R+k*46)*s,(CUP_R+k*46)*s*S.cam.tilt,0,0,Math.PI*2);
@@ -915,8 +915,8 @@ function bounce(p,v,nx,ny,qx,qy,b){ p.x=qx+nx*(R+WALL); p.y=qy+ny*(R+WALL); cons
     if(-vn>40 && S.t-S.lastHit>0.12){ S.lastHit=S.t; S.fx.push({x:p.x,y:p.y,t:S.t,big:S.ball==='rubber'}); sndCurb(S.ball==='rubber'); if(-vn>MAXV*0.55 && S.shot && !S.shot.wall){ S.shot.wall=1; say(9); } } } }
 function shoot(sdx,sdy){ const len=Math.min(Math.hypot(sdx,sdy),MAXDRAG); if(len<16) return false; showHint(''); const k=len/MAXDRAG*MAXV; const gx=sdx, gy=sdy/S.cam.tilt; const ca=Math.cos(S.cam.a), sa=Math.sin(S.cam.a); const wx=gx*ca+gy*sa, wy=-gx*sa+gy*ca; const l=Math.hypot(wx,wy);
   { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); sndHit(); return true; }
-function holeOut(capped,quiet){ if(S.holeOver) return; S.holeOver=true; S.moving=false; const h=H_(), s=S.strokes[S.hi], diff=s-h.par; if(!capped && !quiet) sndCup();
-  if(!quiet){ if(capped) say(8,0.2); else if(s===1) say(4,0.5); else if(diff<0) say(5,0.5); else if(diff===0) say(6,0.5); else say(7,0.5); }
+function holeOut(capped,quiet,voice){ if(S.holeOver) return; S.holeOver=true; S.moving=false; const h=H_(), s=S.strokes[S.hi], diff=s-h.par; if(!capped && !quiet) sndCup();
+  if(!quiet||voice){ if(capped) say(8,0.2); else if(s===1) say(4,0.5); else if(diff<0) say(5,0.5); else if(diff===0) say(6,0.5); else say(7,0.5); }
   PT.event('hole_end',{c:COURSE.key,mode:S.mode,n:h.n,par:h.par,s:s,capped:!!capped,ball:S.ball,wx:S.wx});
   const played=S.hi-S.startHole; const ctx={c:COURSE.key,n:h.n,s:s,par:h.par};
   if(played===0) PT.pulse('howto',{q:'공 치는 법, 바로 알았나요?',opts:['바로 알았다','조금 헤맸다','잘 모르겠다'],delay:1300,ctx});
@@ -1274,7 +1274,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v41', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v42', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
