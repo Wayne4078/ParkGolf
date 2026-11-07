@@ -25,7 +25,8 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-
 .hudBtn{flex:0 0 auto;min-height:48px;min-width:64px;padding:0 12px;margin-right:10px;border:3px solid var(--line);border-radius:12px;background:var(--panel);color:var(--fg);font:inherit;font-size:18px;font-weight:800;cursor:pointer;align-self:center}
 .hudBtn:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .hud #hudL{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
-#pause{background:rgba(12,20,10,.62);z-index:8}
+#pause,#lessonDone{background:rgba(12,20,10,.62);z-index:8}
+#lessonDone .pauseCard{display:flex;flex-direction:column;gap:6px}
 #pause .pauseCard{display:flex;flex-direction:column;gap:6px}
 .hud small{font-size:17px;font-weight:700;color:var(--muted);margin-left:6px}
 .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
@@ -234,6 +235,15 @@ html[lang=th] .t-small{letter-spacing:2px}
 <div class="screen" id="holeDone" hidden>
   <div class="card"><div id="hdTitle" class="sub">1번 홀</div><div class="big" id="hdScore">2타 (파 3)</div><div id="hdNote" class="sub"></div></div>
   <button class="btn" id="next">다음 홀</button>
+</div>
+
+<div class="screen" id="lessonDone" hidden>
+  <div class="card pauseCard">
+    <div class="big">배우기 끝! 🎉</div>
+    <p class="sub">세 단계를 다 배웠어요.<br>이제 진짜 코스에서 쳐 볼까요?</p>
+  </div>
+  <button class="btn" id="ldGo" type="button">우리 동네 9홀 치러 가기</button>
+  <button class="btn ghost" id="ldPick" type="button">다른 코스 고르기</button>
 </div>
 
 <div class="screen" id="pause" hidden>
@@ -447,7 +457,7 @@ html[lang=th] .t-small{letter-spacing:2px}
   };
   L['치는 법 · 공 이야기']='วิธีตี · เรื่องของลูก'; L['알겠어요']='เข้าใจแล้ว'; L['하루 한 번, 아홉 홀']='วันละรอบ เก้าหลุม'; L['배우기']='ฝึกหัด'; L['배우는 코스']='สนามฝึกหัด'; L['배우기 시작']='เริ่มฝึกหัด'; L['배우는 코스 · 세 단계']='สนามฝึกหัด · 3 ขั้น';
   L['처음이라면 여기부터 · 세 홀이면 다 배워요']='ถ้าเพิ่งเริ่ม เริ่มที่นี่ · 3 หลุมก็เข้าใจครบ'; L['치는 법 → 코르크공과 바람 → 고무공']='วิธีตี → ลูกไม้ก๊อกกับลม → ลูกยาง';
-  L['코르크공과 바람']='ลูกไม้ก๊อกกับลม'; L['고무공 벽 튕기기']='ลูกยางเด้งขอบ'; L['눌러서 닫기 · 치기 시작하면 사라져요']='แตะเพื่อปิด · เริ่มตีแล้วจะหายไป'; L['치는 법']='วิธีตี';
+  L['코르크공과 바람']='ลูกไม้ก๊อกกับลม'; L['고무공 벽 튕기기']='ลูกยางเด้งขอบ'; L['배우기 끝! 🎉']='เรียนจบแล้ว! 🎉'; L['세 단계를 다 배웠어요.']='เรียนครบทั้ง 3 ขั้นแล้ว'; L['이제 진짜 코스에서 쳐 볼까요?']='ไปลองตีในสนามจริงกันไหม?'; L['우리 동네 9홀 치러 가기']='ไปตี 9 หลุมที่สนามข้างบ้าน'; L['다른 코스 고르기']='เลือกสนามอื่น'; L['눌러서 닫기 · 치기 시작하면 사라져요']='แตะเพื่อปิด · เริ่มตีแล้วจะหายไป'; L['치는 법']='วิธีตี';
   L['화면 아무 데나 누르고, 치고 싶은 쪽의 반대로 당겼다 놓으세요. 많이 당길수록 멀리 갑니다.']='แตะตรงไหนก็ได้ ลากไปทางตรงข้ามกับทิศที่อยากตีแล้วปล่อย ยิ่งลากมากยิ่งไปไกล';
   L['코르크공은 물 위를 건너고, 바람을 타고 휘어요. 오른쪽 위 노란 깃발이 바람 방향입니다. 컵보다 왼쪽을 겨냥하세요.']='ลูกไม้ก๊อกลอยข้ามน้ำได้และโค้งตามลม ธงเหลืองมุมขวาบนบอกทิศลม ให้เล็งทางซ้ายของหลุม';
   L['고무공은 벽에 맞으면 오히려 빨라져요. 오른쪽 위 비스듬한 모서리를 맞혀 왼쪽으로 꺾어 보세요.']='ลูกยางชนขอบแล้วยิ่งเร็วขึ้น ลองตีให้ชนมุมเฉียงขวาบนเพื่อเลี้ยวไปทางซ้าย';
@@ -935,7 +945,7 @@ function resumeKey(){ return COURSE.store+'_resume'; }
 function loadResume(){ try{ const r=JSON.parse(localStorage.getItem(resumeKey())||'null'); return r && r.date===TODAY ? r : null; }catch(e){ return null; } }
 function saveResume(){ if(S.mode!=='today' || S.attract || COURSE.lesson) return; try{ localStorage.setItem(resumeKey(), JSON.stringify({date:TODAY, hi:S.hi, strokes:S.strokes.slice(), ball:S.ball, pos:S.holeOver?null:{x:S.pos.x,y:S.pos.y}, done:S.holeOver})); }catch(e){} }
 function clearResume(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
-function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause'].every(id=>!$(id) || $(id).hidden); }
+function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause','lessonDone'].every(id=>!$(id) || $(id).hidden); }
 function openPause(){ if(!playing() && $('holeDone').hidden) return; const h=H_(), tot=S.strokes.reduce((a,b)=>a+b,0);
   $('pauseSub').textContent = S.mode==='today' ? h.n+'번 홀 · 지금까지 '+tot+'타 · 나갔다 와도 이 자리에서 이어 칩니다' : COURSE.lesson ? h.n+'단계 배우는 중' : h.n+'번 홀 · 연습 (기록 안 남음)';
   $('pRetry').hidden = S.mode==='today'; saveResume(); $('pause').hidden=false; PT.event('pause',{c:COURSE.key,mode:S.mode,n:h.n}); }
@@ -950,6 +960,7 @@ addEventListener('pagehide',saveResume); document.addEventListener('visibilitych
 function guardBack(){ try{ history.pushState({pg:1},''); }catch(e){} }
 addEventListener('popstate',()=>{
   if(!$('pause').hidden){ $('pause').hidden=true; guardBack(); return; }
+  if(!$('lessonDone').hidden){ $('lessonDone').hidden=true; showJourney(); guardBack(); return; }
   if(playing() || !$('holeDone').hidden){ openPause(); guardBack(); return; }
   if(!$('practice').hidden){ $('practice').hidden=true; $('start').hidden=false; guardBack(); return; }
   if(!$('how').hidden){ $('how').hidden=true; $('start').hidden=false; guardBack(); return; }
@@ -1005,12 +1016,14 @@ function showJourney(){ $('start').hidden=true; $('title').hidden=true;
   $('journey').hidden=false; const r=renderJourney(); fillSheet();
   const map=$('jMap'); requestAnimationFrame(()=>{ map.scrollTop = Math.max(0, r.H-(r.sel+1)*r.SH - map.clientHeight/2 + r.SH/2); }); }
 function showStart(){ $('journey').hidden=true; $('startTitle').textContent=COURSE.name; $('start').hidden=false; }
+$('ldGo').onclick=()=>{ $('lessonDone').hidden=true; PT.event('lesson_next',{go:'home'}); setCourse('home'); showStart(); $('goToday').click(); };
+$('ldPick').onclick=()=>{ $('lessonDone').hidden=true; PT.event('lesson_next',{go:'pick'}); showJourney(); };
 $('jGo').onclick=()=>{ const k=S.jSel; if(k!==COURSE.key) setCourse(k); else setupToday(); showStart(); PT.event('course_pick',{c:k}); };
 $('jTitle').onclick=()=>{ $('journey').hidden=true; setupToday(); showTitle(); };
 $('sBack').onclick=showJourney;
 addEventListener('resize',()=>{ if(!$('journey').hidden) renderJourney(); });
 $('next').onclick=()=>{ if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else { PT.closeBubble(); finishRound(); } };
-function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; showJourney(); msg('배우기 끝! 이제 우리 동네에서 오늘의 라운드를 쳐 보세요'); return; }
+function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; $('lessonDone').hidden=false; return; }
   $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); }
   showCard(S.mode==='today'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
 function showCard(practice){
@@ -1232,7 +1245,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v38', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v39', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
