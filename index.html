@@ -701,8 +701,8 @@ const THEME=THEME_BLOCK; THEME.fieldPath=THEME.fieldPath||'#cdb98f';
 // ===== 계절 (2026-11-07): 코스마다 가을→겨울로 깊어진다. 가을·겨울 출시에 맞춰 =====
 const THEME_BASE=Object.assign({},THEME);
 const SEASONS={
-  home:{season:'늦가을'}, jamsil:{season:'가을'},
-  hapcheon:{season:'단풍 절정', autumnAll:0.7, autumn:'#c2451f', autumnLight:'#e8743a', treeDark:'#7a8a32', treeLight:'#a3a447', leaf1:'#c2451f', leaf2:'#e0a04a'},
+  home:{season:'늦가을', rough:'#8c7444', leafLitter:['#c9742a','#a8431f','#d9a441','#7a5a2e']}, jamsil:{season:'가을', rough:'#8f8446', leafLitter:['#d9a441','#c9742a','#b9b04a','#8a6a2e']},
+  hapcheon:{season:'단풍 절정', rough:'#99623a', leafLitter:['#c2451f','#e8743a','#e0a04a','#7a3a1e'], autumnAll:0.7, autumn:'#c2451f', autumnLight:'#e8743a', treeDark:'#7a8a32', treeLight:'#a3a447', leaf1:'#c2451f', leaf2:'#e0a04a'},
   pond:{season:'초겨울 서리', rough:'#8d9578', fairway:'#a7ae86', green:'#bcc49c', fairwayFrost:'#d4d8c2', greenFrost:'#dfe3cf', treeDark:'#7b6646', treeLight:'#9a8462', autumn:'#a0703e', autumnLight:'#c49660', water:'#8fb0c2', waterDeep:'#7aa0b5', leaf1:'#9a7448', leaf2:'#7a5a38', frost:1, fieldPath:'#d6cdb8'},
   ferry:{season:'첫눈', rough:'#e4e8ea', fairway:'#a9b38c', green:'#bac59f', treeDark:'#2f4c3c', treeLight:'#41644f', autumn:'#2f4c3c', autumnLight:'#41644f', sand:'#d9d4c6', water:'#557f9c', waterDeep:'#456f8c', leaf1:'#ffffff', leaf2:'#e6edf2', snowCap:1, snowfall:1, roughSnow:1, fieldPath:'#cfc8b6'}};
 function applySeason(k){ for(const key of Object.keys(THEME)) if(!(key in THEME_BASE)) delete THEME[key]; Object.assign(THEME,THEME_BASE,SEASONS[k]||{}); roughPattern=null; }
@@ -1171,6 +1171,7 @@ let roughPattern=null;
 function makeRough(){ const pc=document.createElement('canvas'); pc.width=64; pc.height=64; const g=pc.getContext('2d'); g.fillStyle=THEME.rough; g.fillRect(0,0,64,64);
   let seed=11; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
   for(let i=0;i<140;i++){ g.strokeStyle= THEME.roughSnow ? (i%3?'rgba(120,140,160,0.18)':'rgba(255,255,255,0.6)') : i%3? 'rgba(0,0,0,0.12)':'rgba(255,255,255,0.08)'; g.lineWidth=1.2; const x=rnd()*64, y=rnd()*64; g.beginPath(); g.moveTo(x,y); g.lineTo(x+(rnd()-0.5)*4, y-3-rnd()*4); g.stroke(); }
+  if(THEME.leafLitter){ const LL=THEME.leafLitter; for(let i=0;i<46;i++){ g.fillStyle=LL[i%LL.length]; g.save(); g.translate(rnd()*64,rnd()*64); g.rotate(rnd()*Math.PI); g.beginPath(); g.ellipse(0,0,2.6+rnd()*1.8,1.3+rnd()*0.8,0,0,Math.PI*2); g.fill(); g.restore(); } }
   roughPattern=ctx.createPattern(pc,'repeat'); }
 function bbox(poly){ const xs=poly.map(p=>p[0]), ys=poly.map(p=>p[1]); return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]; }
 function landRect(h){ if(h._land) return h._land; const pts=[...h.poly]; (h.water||[]).forEach(w=>pts.push(...w));
@@ -1346,7 +1347,7 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v46', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v47', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
