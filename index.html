@@ -1461,8 +1461,10 @@ function showTitle(){ S.attract=true; S.attractN=0; document.body.classList.add(
   $('tDate').textContent=$('todayLine').textContent+' · '+COURSE.name; $('title').hidden=false; $('start').hidden=true; $('journey').hidden=true; }
 function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; document.body.classList.remove('attract'); $('title').hidden=true;
   let fresh=false; try{ fresh=!localStorage.getItem('opg_lesson_done') && localStorage.getItem('opg_rounds')===null; }catch(e){}
-  if(fresh){ setCourse('lesson'); document.querySelectorAll('#courseRow .opt').forEach(b=>b.classList.toggle('on',b.dataset.course==='lesson')); }
-  S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; S.jSel = fresh ? 'lesson' : null; guardBack(); showJourney(); PT.event('title_go',{}); }
+  // 처음 온 손님(프로모션 손님 대부분): 코스 고르기·시작 화면·날아가는 소개 없이 「시작하기」 → 곧바로 배우기 첫 티샷 (첫 10~15초 안에 한 번 치게)
+  if(fresh){ setCourse('lesson'); document.querySelectorAll('#courseRow .opt').forEach(b=>b.classList.toggle('on',b.dataset.course==='lesson')); S.jSel='lesson';
+    $('journey').hidden=true; startRound('today'); S.intro=null; PT.event('title_go',{fresh:1}); return; }
+  S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; S.jSel = null; guardBack(); showJourney(); PT.event('title_go',{}); }
 $('title').addEventListener('click',leaveTitle);
 S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loop);
 if(/[?&]sim\b/.test(location.search)) window.__pg={S,step,H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
