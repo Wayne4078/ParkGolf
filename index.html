@@ -858,7 +858,7 @@ function puttCheck(){ if(DIORAMA && THEME.block) return; const h=H_(); const c=c
     const off=Math.abs(Math.atan2(dx,-dy)), turn = S.turned ? off>0.45 : off>0.9;
     if(turn && !S.holeOver){ S.turned=true; const w=-Math.PI/2-Math.atan2(dy,dx); S.cam.ta=Math.atan2(Math.sin(w),Math.cos(w)); S.cam.ttilt=TILT; camTarget(); }
     else { S.turned=false; S.cam.ta=0; S.cam.ttilt=TILT; camTarget(); } } }
-function lookUpdate(dt){ if(!S.look){ S.look={x:0,y:0,z:1}; S.lookT={x:0,y:0,z:1}; } const k=S.lookHold?1:1-Math.pow(0.004,dt); for(const q of ['x','y','z']) S.look[q]+=(S.lookT[q]-S.look[q])*k; const off=Math.hypot(S.lookT.x,S.lookT.y)>25||Math.abs(S.lookT.z-1)>0.12; const bb=$('backBall'); if(bb && bb.hidden===off) bb.hidden=!off; }
+function lookUpdate(dt){ if(!S.look){ S.look={x:0,y:0,z:1}; S.lookT={x:0,y:0,z:1}; } const k=S.lookHold?1:1-Math.pow(0.004,dt); for(const q of ['x','y','z']) S.look[q]+=(S.lookT[q]-S.look[q])*k; const off=Math.hypot(S.lookT.x,S.lookT.y)>25||Math.abs(S.lookT.z-1)>0.12; const bb=$('backBall'); const show=off&&!S.edge&&!S.moving; if(bb && bb.hidden===show) bb.hidden=!show; }
 function lookReset(){ if(S.lookT){ S.lookT={x:0,y:0,z:1}; } }
 function camUpdate(dt){ lookUpdate(dt); if(DIORAMA && THEME.block) return; const k=1-Math.pow(S.moving?0.08:0.02,dt); const fld=H_().field && S.moving;
   S.cam.x+=(camTargetX()-S.cam.x)*k; S.cam.y+=((S.pos.y+(fld?S.vel.y*LOOK_AHEAD:0))-S.cam.y)*k;
@@ -932,7 +932,7 @@ function ambTick(){ if(!AC||!AMB.on) return; const now=AC.currentTime, m=ambMix(
     if(!AMB.next[kind]) AMB.next[kind]=now+r[0]*Math.random();
     if(now>=AMB.next[kind]){ ambOne(kind); if(kind==='bird' && Math.random()<0.35) setTimeout(()=>ambOne('bird'), 250+Math.random()*500); AMB.next[kind]=now+r[0]+Math.random()*(r[1]-r[0]); } } }
 setInterval(ambTick, 500);
-function rollUpdate(){ if(!rollGain) return; rollGain.gain.value=Math.min(0.12, Math.hypot(S.vel.x,S.vel.y)/MAXV*0.12); }
+function rollUpdate(){ if(!rollGain) return; rollGain.gain.value=Math.min(S.edge?0.2:0.12, Math.hypot(S.vel.x,S.vel.y)/MAXV*(S.edge?0.5:0.12)); }
 
 // ---------- physics (fixed step, no randomness) ----------
 const DT=1/120;
@@ -1035,7 +1035,7 @@ function bounce(p,v,nx,ny,qx,qy,b){ p.x=qx+nx*(R+WALL); p.y=qy+ny*(R+WALL); cons
   if(vn<0){ v.x-=(1+b.e)*vn*nx; v.y-=(1+b.e)*vn*ny; v.x*=0.97; v.y*=0.97; const s2=Math.hypot(v.x,v.y), cap=MAXV*1.15; if(s2>cap){ v.x*=cap/s2; v.y*=cap/s2; }
     if(-vn>40 && S.t-S.lastHit>0.12){ S.lastHit=S.t; S.fx.push({x:p.x,y:p.y,t:S.t,big:S.ball==='rubber'}); sndCurb(S.ball==='rubber'); if(-vn>MAXV*0.55 && S.shot && !S.shot.wall){ S.shot.wall=1; say(9); } } } }
 function shoot(sdx,sdy){ const len=Math.min(Math.hypot(sdx,sdy),MAXDRAG); if(len<16) return false; showHint(''); const k=len/MAXDRAG*MAXV; const gx=sdx, gy=sdy/S.cam.tilt; const ca=Math.cos(S.cam.a), sa=Math.sin(S.cam.a); const wx=gx*ca+gy*sa, wy=-gx*sa+gy*ca; const l=Math.hypot(wx,wy);
-  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
+  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
 function holeOut(capped,quiet,voice){ if(S.holeOver) return; S.holeOver=true; S.moving=false; const h=H_(), s=S.strokes[S.hi], diff=s-h.par; if(!capped && !quiet) sndCup();
   if(!quiet||voice){ if(capped) say(8,0.2); else if(s===1) say(4,0.5); else if(diff<0) say(5,0.5); else if(diff===0) say(6,0.5); else say(7,0.5); }
   PT.event('hole_end',{c:COURSE.key,mode:S.mode,n:h.n,par:h.par,s:s,capped:!!capped,ball:S.ball,wx:S.wx});
@@ -1455,18 +1455,42 @@ function render(){ const h=H_(), g=G(); ctx.fillStyle=THEME.rough; ctx.fillRect(
   drawGround(h,g); drawStanding(h,g); drawPinMarker(g);
   if(WX[S.wx].frost){ ctx.fillStyle='rgba(220,235,255,0.10)'; ctx.fillRect(0,0,W,H); }
   if(S.intro && !S.attract){ ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,H-46,W,46); ctx.font='800 17px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText('화면을 누르면 바로 시작', W/2, H-17); }
-  else { drawFx(); drawPop(g); drawWind(); drawAimHint(h,g); drawPullHint(h,g); if(THEME.snowfall) drawSnowfall(); drawCelebrate(); if(h.field) drawMinimap(h); drawAim(); if(!pullHintOn()) drawRemain(); } }
+  else { drawEdge(); drawFx(); drawPop(g); drawWind(); drawAimHint(h,g); drawPullHint(h,g); if(THEME.snowfall) drawSnowfall(); drawCelebrate(); if(h.field) drawMinimap(h); drawAim(); if(!pullHintOn()) drawRemain(); } }
 
 // ---------- loop ----------
 let last=performance.now(), acc=0;
-function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; acc+=dt; const h=H_();
+// ===== 들어갈까요? (2026-11-09) — 공이 컵 가장자리로 굴러가면 느린 화면 + 카메라가 컵 쪽으로 다가감. 광고는 이 화면을 녹화
+function edgeWatch(){ if(!S.lookT) return;
+  if(!S.moving||S.holeOver||S.attract||S.intro){ if(S.edge) edgeEnd(S.holeOver?1300:600); return; }
+  const c=cup(), dx=c[0]-S.pos.x, dy=c[1]-S.pos.y, d=Math.hypot(dx,dy), v=S.vel, sp=Math.hypot(v.x,v.y);
+  if(!S.edge && !S.edgeUsed && S.strokes[S.hi]<=2 && d<64 && d>CUP_R*1.3 && sp>10 && sp<CAP_V*2.6){
+    const t=Math.max(0,(dx*v.x+dy*v.y)/(sp*sp)), ex=S.pos.x+v.x*t-c[0], ey=S.pos.y+v.y*t-c[1];
+    if(t<1.4 && Math.hypot(ex,ey)<CUP_R*1.5){ S.edge={t0:performance.now()}; S.edgeUsed=true; PT.event('edge_moment',{c:COURSE.key,h:S.hi+1,s:S.strokes[S.hi]}); } }
+  if(S.edge){ const Z=1.7, gy=(S.cam.sy-H*0.46)/(S.cam.s*Z*Math.max(0.3,S.cam.tilt)); S.lookT.x=(S.pos.x*0.35+c[0]*0.65)-S.cam.x; S.lookT.y=(S.pos.y*0.35+c[1]*0.65)+gy-S.cam.y; S.lookT.z=Z; S.lookHold=0; if(d>90||performance.now()-S.edge.t0>6000) edgeEnd(500); } }
+function edgeEnd(ms){ S.edge=null; clearTimeout(S.edgeT); S.edgeT=setTimeout(()=>{ if(!S.edge && !S.drag) lookReset(); }, ms||600); }
+function drawEdge(){ if(!S.edge) return; const k=Math.min(1,(performance.now()-S.edge.t0)/300); const g=ctx.createRadialGradient(W/2,H*0.45,Math.min(W,H)*0.25,W/2,H*0.45,Math.max(W,H)*0.7);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,'+(0.5*k)+')'); ctx.save(); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.restore(); }
+function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; edgeWatch(); acc+=dt*(S.edge?0.3:1); const h=H_();
   while(acc>=DT){ acc-=DT; if(S.moving && !S.holeOver){ step(h); if(S.vel.x===0 && S.vel.y===0 && S.moving){ S.moving=false; if(!S.holeOver && S.strokes[S.hi]>=h.par+3) holeOut(true); else if(!S.holeOver){ shotVoice(); if(COURSE.range) rangeWeather(true); } puttCheck(); updateHud(); } } }
   if(S.attract){ if(!S.intro) startIntro(); S.intro.t+=dt*0.42; if(S.intro.t>=INTRO_DUR+0.6){ S.attractN=(S.attractN+1)%ATTRACT.length; S.hi=ATTRACT[S.attractN]; loadHole(); startIntro(); } }
   else if(S.intro){ S.intro.t+=dt; if(S.intro.t>=INTRO_DUR+0.4) endIntro(); }
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
   rollUpdate(); camUpdate(dt); render(); requestAnimationFrame(loop); }
 // ---------- playtest ----------
-PT.init({game:'parkgolf', build:'v56', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+// ===== 유입 경로 (토스애즈 준비, 2026-11-09) — toss-ads-ready 스킬: referrer=tossads 를 우리 utm보다 먼저, 소재는 ad
+const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environment&&AIT.Environment.initialURL) url=AIT.Environment.initialURL; }catch(e){}
+  let q={}; try{ const i=url.indexOf('?'); if(i>=0) new URLSearchParams(url.slice(i+1).split('#')[0]).forEach((v,k)=>{ q[k]=v; }); }catch(e){}
+  const ref=q.referrer||''; const src=(ref==='tossads'||ref==='external_ads') ? ref : (q.utm_source||q.src||ref||'direct');
+  const ad=(q.ad||q.utm_campaign||q.utm_content||'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);
+  let first=null, isNew=false; try{ first=JSON.parse(localStorage.getItem('opg_first_src')||'null'); }catch(e){}
+  if(!first){ first={src, ad, d:TODAY}; isNew=true; try{ localStorage.setItem('opg_first_src', JSON.stringify(first)); }catch(e){} }
+  return {src, ad, ref, first, isNew}; })();
+PT.init({game:'parkgolf', build:'v57', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+// 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
+(function(){ const ev=PT.event; let last=performance.now();
+  PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
+PT.event(ENTRY.isNew?'first_open':'app_open', {now_src:ENTRY.src, now_ad:ENTRY.ad||undefined, toss_ref:ENTRY.ref||undefined});
+try{ if(window.AIT&&AIT.Analytics) AIT.Analytics.log({log_name:ENTRY.isNew?'first_open':'app_open', log_type:'event', params:{toss_ref:ENTRY.ref||'none', ad:ENTRY.ad||'none', src:ENTRY.first.src}}).catch(()=>{}); }catch(e){}
 const SV={}; let svDone=false;
 function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
