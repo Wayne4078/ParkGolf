@@ -1417,11 +1417,15 @@ function drawStanding(h,g){ const items=[];
     const key=it.x+','+it.y; const cur=S.fade[key]==null?1:S.fade[key]; const nx=cur+(a-cur)*0.25; S.fade[key]=nx;
     if(nx<0.99){ ctx.save(); ctx.globalAlpha=nx; it.f(); ctx.restore(); } else it.f(); });
   if(hid && bp){ const r=Math.max(R*g.s,5.5)+3; ctx.beginPath(); ctx.arc(bp.x,bp.y-r*0.5,r,0,Math.PI*2); ctx.lineWidth=2.5; ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.stroke(); } }
-function drawWind(){ const w=windVec(); const x=W-44, y=30; ctx.strokeStyle='#f4f4ee'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+44); ctx.stroke(); ctx.fillStyle='#f7c948';
-  if(w.x===0){ ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+8,y+10); ctx.lineTo(x,y+18); ctx.closePath(); ctx.fill(); return; }
-  const a=S.cam.a; const vx=w.x*Math.cos(a), vy=w.x*Math.sin(a); const L=Math.hypot(vx,vy); const ux=vx/L, uy=vy/L;
-  ctx.beginPath(); ctx.moveTo(x,y+2); ctx.lineTo(x+ux*30, y+10+uy*30); ctx.lineTo(x,y+18); ctx.closePath(); ctx.fill();
-  ctx.font='800 18px "Noto Sans KR", sans-serif'; ctx.fillStyle='#ffffff'; ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=4; ctx.textAlign='right'; ctx.strokeText('바람', x-18, y+16); ctx.fillText('바람', x-18, y+16); }
+function drawWind(){ const w=windVec();
+  // 어두운 받침 위에 주황·흰 줄무늬 바람자루 — 잔디·러프·흙 어디 위에서도 잘 보이게
+  const bw=118, bh=64, bx=W-bw-10, by=12; ctx.fillStyle='rgba(18,28,24,0.78)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,by,bw,bh,14) : ctx.rect(bx,by,bw,bh); ctx.fill();
+  ctx.font='800 18px "Noto Sans KR", sans-serif'; ctx.fillStyle='#ffffff'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('바람', bx+12, by+bh/2); ctx.textBaseline='alphabetic';
+  const px=bx+68, py=by+12; ctx.strokeStyle='#ffffff'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px,py+42); ctx.stroke();
+  let ux=0, uy=1, L=34; if(w.x!==0){ const a=S.cam.a; const vx=w.x*Math.cos(a), vy=w.x*Math.sin(a); const m=Math.hypot(vx,vy); ux=vx/m; uy=vy/m; L=40; } else { L=22; }
+  const nx=-uy, ny=ux, r0=8, r1=4, n=4;
+  for(let k=0;k<n;k++){ const t0=k/n, t1=(k+1)/n, ra=r0+(r1-r0)*t0, rb=r0+(r1-r0)*t1; const ax=px+ux*L*t0, ay=py+8+uy*L*t0, cx=px+ux*L*t1, cy=py+8+uy*L*t1;
+    ctx.fillStyle= k%2===0 ? '#ff6a13' : '#ffffff'; ctx.beginPath(); ctx.moveTo(ax+nx*ra, ay+ny*ra); ctx.lineTo(cx+nx*rb, cy+ny*rb); ctx.lineTo(cx-nx*rb, cy-ny*rb); ctx.lineTo(ax-nx*ra, ay-ny*ra); ctx.closePath(); ctx.fill(); } }
 function drawFx(){ S.fx=S.fx.filter(f=>S.t-f.t<0.6); for(const f of S.fx){ const k=(S.t-f.t)/0.6; const sp=scr([f.x,f.y]); const r=(f.big?14:8)+k*(f.big?44:18);
   ctx.beginPath(); ctx.ellipse(sp.x,sp.y,r,r*S.cam.tilt,0,0,Math.PI*2); ctx.lineWidth=f.big?5:3; ctx.strokeStyle=(f.big?'rgba(255,230,90,':'rgba(255,255,255,')+(1-k)*0.9+')'; ctx.stroke();
   if(f.big && k<0.5){ ctx.font='800 26px "Noto Sans KR", sans-serif'; ctx.textAlign='center'; ctx.lineWidth=5; ctx.strokeStyle='rgba(0,0,0,0.7)'; ctx.fillStyle='#ffe55a'; ctx.strokeText('통!', sp.x, sp.y-28-k*30); ctx.fillText('통!', sp.x, sp.y-28-k*30); } } }
@@ -1485,7 +1489,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
   let first=null, isNew=false; try{ first=JSON.parse(localStorage.getItem('opg_first_src')||'null'); }catch(e){}
   if(!first){ first={src, ad, d:TODAY}; isNew=true; try{ localStorage.setItem('opg_first_src', JSON.stringify(first)); }catch(e){} }
   return {src, ad, ref, first, isNew}; })();
-PT.init({game:'parkgolf', build:'v58', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v59', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
