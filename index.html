@@ -1060,7 +1060,7 @@ function setupToday(){ $('courseSub').textContent=COURSE.sub;
   else { const rs=loadResume(); $('todayNote').textContent= rs ? (rs.hi+1)+'번 홀에서 멈추셨어요 · 지금 '+rs.strokes.reduce((a,b)=>a+b,0)+'타' : WX[S.wx].line;
     if(rs){ $('ballRow').hidden=true; $('ballNote').textContent='처음 고른 '+BALLS[rs.ball].name+'으로 이어 칩니다'; } $('goToday').disabled=false; $('goToday').textContent= rs ? '오늘의 라운드 이어 치기' : '오늘의 라운드'; }
   $('showCard').hidden=Object.keys(rounds).length===0; }
-function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0);
+function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0); if(!S.attract && !COURSE.range){ try{ localStorage.setItem('opg_last_course',COURSE.key); }catch(e){} }
   let res=null; if(mode==='range'){ S.hi=0; S.pins=HOLES.map(()=>Math.floor(Math.random()*3)); rangeWeather(); } else if(mode==='bonus'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); } else if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } }
   else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; guardBack(); loadHole();
@@ -1485,7 +1485,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
   let first=null, isNew=false; try{ first=JSON.parse(localStorage.getItem('opg_first_src')||'null'); }catch(e){}
   if(!first){ first={src, ad, d:TODAY}; isNew=true; try{ localStorage.setItem('opg_first_src', JSON.stringify(first)); }catch(e){} }
   return {src, ad, ref, first, isNew}; })();
-PT.init({game:'parkgolf', build:'v57', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v58', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
@@ -1507,6 +1507,11 @@ function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; docu
   let fresh=false; try{ fresh=!localStorage.getItem('opg_lesson_done') && localStorage.getItem('opg_rounds')===null; }catch(e){}
   if(fresh){ setCourse('lesson'); document.querySelectorAll('#courseRow .opt').forEach(b=>b.classList.toggle('on',b.dataset.course==='lesson')); }
   if(fresh){ S.jSel='lesson'; S.assist=true; S.t0=performance.now(); PT.event('title_go',{fresh:1}); startRound('today'); S.intro=null; showHint(''); msg(''); return; }
+  // 친 적 있는 사람: 마지막에 나간 자리로 — 치다 만 오늘 라운드(또는 배우다 만 코스)가 있으면 바로 그 홀·그 자리에서 이어 친다
+  let last=null; try{ last=localStorage.getItem('opg_last_course'); }catch(e){}
+  if(last && COURSES[last] && !COURSES[last].range){ if(last!==COURSE.key) setCourse(last); document.querySelectorAll('#courseRow .opt').forEach(b=>b.classList.toggle('on',b.dataset.course===last));
+    let lessonOpen=false; try{ lessonOpen=COURSE.lesson && !localStorage.getItem('opg_lesson_done'); }catch(e){}
+    if(lessonOpen || (!COURSE.lesson && !roundsOf(last)[TODAY] && (r=>r && (r.hi>0 || r.strokes.some(x=>x>0)))(loadResume()))){ S.jSel=last; PT.event('title_go',{resume:1,c:last}); startRound('today'); return; } }
   S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; S.jSel=null; guardBack(); showJourney(); PT.event('title_go',{}); }
 $('title').addEventListener('click',leaveTitle);
 S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loop);
