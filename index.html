@@ -3,7 +3,7 @@
 <style>html,body{margin:0;padding:0}</style></head><body>
 <title>오늘의 파크골프</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@500;700;800&family=Noto+Serif+KR:wght@700;900&display=swap">
+<link rel="stylesheet" href="fonts/ko.css">
 <style>
 /* Layout: one-screen portrait app. HUD strip, course canvas fills the middle, one message line below. */
 :root{
@@ -173,7 +173,7 @@ html[lang=th] .t-small{letter-spacing:2px}
     <div class="jMeta" id="jMeta"></div>
     <button class="btn" id="jGo" type="button">이 코스로 가기</button>
     <button class="btn" id="jEarly" type="button" hidden>⭐ 올스타 달성! 광고 보고 먼저 열기</button>
-    <button class="btn ghost" id="jPass" type="button" hidden>☕ 3,000원에 지금 바로 열기</button>
+    <button class="btn ghost" id="jPass" type="button" hidden>☕ 3,300원에 지금 바로 열기</button>
   </div>
 </div>
 
@@ -283,10 +283,11 @@ html[lang=th] .t-small{letter-spacing:2px}
 <div class="screen" id="payScreen" hidden>
   <div class="card pauseCard" style="display:flex;flex-direction:column;gap:10px">
     <div class="big" id="payTitle">커피 한 잔 값으로</div>
-    <p class="sub" id="paySub">3,000원 한 번이면 지금 있는 코스가 다 바로 열리고,<br>한 판 더도 광고 없이 칠 수 있어요.<br>결제는 토스 앱에서 할 수 있어요.</p>
+    <p class="sub" id="paySub">3,300원 한 번이면 지금 있는 코스가 다 바로 열리고,<br>한 판 더도 광고 없이 칠 수 있어요.<br>결제는 토스 앱에서 할 수 있어요.</p>
   </div>
   <button class="btn" id="payOk" type="button">(웹 시험판) 바로 열어 보기</button>
   <button class="btn ghost" id="payNo" type="button">그냥 기다릴게요</button>
+  <button class="linkbtn" id="payRestore" type="button" hidden style="background:none;border:0;color:inherit;opacity:.8;text-decoration:underline;font:inherit;font-size:16px;padding:10px;min-height:44px">이미 사셨나요? 산 기록 다시 불러오기</button>
 </div>
 
 <div class="screen" id="adScreen" hidden>
@@ -478,9 +479,10 @@ html[lang=th] .t-small{letter-spacing:2px}
     '합계':'รวม',
     '통!':'ป๊อก!'
   };
+  L['이미 사셨나요? 산 기록 다시 불러오기']='ซื้อไว้แล้ว? โหลดประวัติการซื้อ'; L['산 기록을 다시 불러왔어요. 모든 코스가 열렸어요']='กู้คืนการซื้อแล้ว เปิดทุกสนามแล้ว'; L['이미 모든 코스가 열려 있어요']='เปิดทุกสนามอยู่แล้ว'; L['다시 불러올 산 기록이 없어요']='ไม่พบประวัติการซื้อ'; L['지금은 산 기록을 불러올 수 없어요']='ตอนนี้โหลดประวัติการซื้อไม่ได้';
   L['치는 법 · 공 이야기']='วิธีตี · เรื่องของลูก'; L['알겠어요']='เข้าใจแล้ว'; L['하루 한 번, 아홉 홀']='วันละรอบ เก้าหลุม'; L['배우기']='ฝึกหัด'; L['배우는 코스']='สนามฝึกหัด'; L['배우기 시작']='เริ่มฝึกหัด'; L['배우는 코스 · 세 단계']='สนามฝึกหัด · 3 ขั้น';
   L['처음이라면 여기부터 · 세 홀이면 다 배워요']='ถ้าเพิ่งเริ่ม เริ่มที่นี่ · 3 หลุมก็เข้าใจครบ'; L['치는 법 → 코르크공과 바람 → 고무공']='วิธีตี → ลูกไม้ก๊อกกับลม → ลูกยาง';
-  L['코르크공과 바람']='ลูกไม้ก๊อกกับลม'; L['고무공 벽 튕기기']='ลูกยางเด้งขอบ'; L['⭐ 올스타 달성! 광고 보고 먼저 열기']='⭐ ได้ออลสตาร์! ดูโฆษณาแล้วเปิดก่อน'; L['먼저 열렸어요! 다른 분들보다 먼저 쳐 보세요']='เปิดก่อนแล้ว! ลองตีก่อนใครเลย'; L['강변 공원']='สวนริมน้ำ'; L['도심 강변 체육공원 · 9홀 513m']='สวนกีฬาริมแม่น้ำในเมือง · 9 หลุม 513 ม.'; L['황강 둔치']='ริมแม่น้ำฮวัง'; L['남쪽 강변 생태공원 · 9홀 626m']='สวนนิเวศริมน้ำทางใต้ · 9 หลุม 626 ม.'; L['도심 · 강변 체육공원']='ในเมือง · สวนกีฬาริมน้ำ'; L['남쪽 강변 · 생태공원']='ริมน้ำทางใต้ · สวนนิเวศ'; L['강변 공원을 ']='สวนริมน้ำ '; L['홀인원!!']='โฮลอินวัน!!'; L['한 번에 쏙!']='ตีครั้งเดียวลงหลุม!'; L['이글!']='อีเกิล!'; L['버디!']='เบอร์ดี้!'; L['이쪽으로 치세요']='ตีไปทางนี้'; L['바람 →']='ลม →'; L['← 바람']='← ลม'; L['연꽃 연못 첫 홀']='หลุมแรกบึงบัว'; L['징검다리 홀']='หลุมสะพานหิน'; L['버드나무 홀']='หลุมต้นหลิว'; L['정원 한 바퀴']='รอบสวน'; L['정자 앞 홀']='หลุมหน้าศาลา'; L['두 연못 사이']='ระหว่างสองบึง'; L['수련 홀']='หลุมบัวสาย'; L['돌다리 꺾임']='โค้งสะพานหิน'; L['잉어 홀']='หลุมปลาคาร์ป'; L['나룻배 긴 홀']='หลุมยาวเรือข้ามฟาก'; L['갈대밭 홀']='หลุมดงกก'; L['모래톱 홀']='หลุมสันทราย'; L['버드나무 둑길']='คันดินต้นหลิว'; L['나루터 홀']='หลุมท่าเรือ'; L['강바람 홀']='หลุมลมแม่น้ำ'; L['뱃사공 홀']='หลุมคนแจวเรือ'; L['물새 홀']='หลุมนกน้ำ'; L['노을 마지막 홀']='หลุมสุดท้ายยามเย็น'; L['남도 연못 정원 · 9홀 647m']='สวนบึงบัวภาคใต้ · 9 หลุม 647 ม.'; L['강변 옛 나루터 · 9홀 674m']='ท่าเรือเก่าริมน้ำ · 9 หลุม 674 ม.'; L['연습장']='สนามซ้อม'; L['⛳<br>연습장']='⛳<br>สนามซ้อม'; L['공 바꿔 가며 마음껏']='เปลี่ยนลูกได้ เล่นได้ไม่จำกัด'; L['언제든 무료']='ฟรีตลอด'; L['연습장 들어가기']='เข้าสนามซ้อม'; L['물·모래·꺾인 홀 다섯 개 · 기록 없이 마음껏 · 칠 때마다 바람이 바뀌고, 공은 화면 위 버튼으로 언제든 바꿔요']='5 หลุม มีน้ำ ทราย ทางเลี้ยว · ไม่บันทึกคะแนน · ลมเปลี่ยนทุกครั้งที่ตี เปลี่ยนลูกได้ที่ปุ่มด้านบน'; L['바람이 바뀌었어요 · ']='ลมเปลี่ยนแล้ว · '; L['오른쪽으로 →']='ไปทางขวา →'; L['← 왼쪽으로']='← ไปทางซ้าย'; L['날씨가 바뀌었어요 · ']='อากาศเปลี่ยนแล้ว · '; L['으로 바꿨어요']=' เปลี่ยนแล้ว'; L['물·모래·꺾인 홀 · 공 바꿔 가며 마음껏']='น้ำ ทราย ทางเลี้ยว · เปลี่ยนลูกได้'; L['늦가을']='ปลายฤดูใบไม้ร่วง'; L['단풍 절정']='ใบไม้แดงเต็มที่'; L['초겨울 서리']='ต้นหนาว น้ำค้างแข็ง'; L['첫눈']='หิมะแรก'; L['을 올스타(9홀 모두 파 이하)로 깨면 바로 열려요']=' ได้ออลสตาร์ (ทุกหลุมไม่เกินพาร์) จะเปิดทันที'; L['를 올스타(9홀 모두 파 이하)로 깨면 바로 열려요']=' ได้ออลสตาร์ (ทุกหลุมไม่เกินพาร์) จะเปิดทันที'; L['에 열려요']=' จะเปิด'; L['(토)']='(ส.)'; L['☕ 3,000원에 지금 바로 열기']='☕ 3,000 วอน เปิดเลยตอนนี้';  L['3,000원 한 번이면 지금 있는 코스가 다 바로 열리고,']='จ่าย 3,000 วอนครั้งเดียว เปิดทุกสนามที่มีตอนนี้ทันที'; L['한 판 더도 광고 없이 칠 수 있어요.']='เล่นอีกรอบได้โดยไม่ต้องดูโฆษณา'; L['결제는 토스 앱에서 할 수 있어요.']='ชำระเงินได้ในแอป Toss'; L['(웹 시험판) 바로 열어 보기']='(เวอร์ชันทดลองบนเว็บ) เปิดดูเลย'; L['그냥 기다릴게요']='รอก็ได้'; L['모든 코스가 열렸어요']='เปิดทุกสนามแล้ว'; L['⛳ 한 판 더']='⛳ เล่นอีกรอบ'; L['연못 정원']='สวนบึงบัว'; L['나루터']='ท่าเรือริมน้ำ'; L['남도 · 연못 정원']='ภาคใต้ · สวนบึงบัว'; L['강변 · 옛 나루터']='ริมแม่น้ำ · ท่าเรือเก่า'; L['⭐ 올스타로 먼저 열었어요']='⭐ เปิดก่อนด้วยออลสตาร์'; L['🎬 광고 보고 한 판 더']='🎬 ดูโฆษณาแล้วเล่นอีกรอบ'; L['잠깐만요']='รอสักครู่'; L['토스 앱에서는 여기에 짧은 광고가 나와요.']='ในแอป Toss จะมีโฆษณาสั้น ๆ ตรงนี้'; L['광고가 끝나면 한 판 더 칠 수 있어요.']='ดูจบแล้วเล่นได้อีกหนึ่งรอบ'; L['한 판 더 치러 가기']='ไปเล่นอีกรอบ'; L['끝!']='จบ!'; L[' · 세 코스 다 치셨어요! 오늘 한 번 더 칠 수 있어요']=' · เล่นครบ 3 สนามแล้ว! วันนี้เล่นได้อีก 1 รอบ'; L['첫 판과 똑같아요']='เท่ากับรอบแรก'; L['내일 다시!']='พรุ่งนี้ลองใหม่!'; L['⤺ 공으로']='⤺ กลับไปที่ลูก'; L['공을 잡고 치고 싶은 쪽 반대로 당겼다 놓으세요']='กดที่ลูกค้างไว้ แล้วลากไปทางตรงข้ามกับทิศที่อยากตี แล้วปล่อย'; L['배우기 끝! 🎉']='เรียนจบแล้ว! 🎉'; L['세 단계를 다 배웠어요.']='เรียนครบทั้ง 3 ขั้นแล้ว'; L['이제 진짜 코스에서 쳐 볼까요?']='ไปลองตีในสนามจริงกันไหม?'; L['우리 동네 9홀 치러 가기']='ไปตี 9 หลุมที่สนามบ้านเรา'; L['다른 코스 고르기']='เลือกสนามอื่น'; L['눌러서 닫기 · 치기 시작하면 사라져요']='แตะเพื่อปิด · เริ่มตีแล้วจะหายไป'; L['치는 법']='วิธีตี';
+  L['코르크공과 바람']='ลูกไม้ก๊อกกับลม'; L['고무공 벽 튕기기']='ลูกยางเด้งขอบ'; L['⭐ 올스타 달성! 광고 보고 먼저 열기']='⭐ ได้ออลสตาร์! ดูโฆษณาแล้วเปิดก่อน'; L['먼저 열렸어요! 다른 분들보다 먼저 쳐 보세요']='เปิดก่อนแล้ว! ลองตีก่อนใครเลย'; L['강변 공원']='สวนริมน้ำ'; L['도심 강변 체육공원 · 9홀 513m']='สวนกีฬาริมแม่น้ำในเมือง · 9 หลุม 513 ม.'; L['황강 둔치']='ริมแม่น้ำฮวัง'; L['남쪽 강변 생태공원 · 9홀 626m']='สวนนิเวศริมน้ำทางใต้ · 9 หลุม 626 ม.'; L['도심 · 강변 체육공원']='ในเมือง · สวนกีฬาริมน้ำ'; L['남쪽 강변 · 생태공원']='ริมน้ำทางใต้ · สวนนิเวศ'; L['강변 공원을 ']='สวนริมน้ำ '; L['홀인원!!']='โฮลอินวัน!!'; L['한 번에 쏙!']='ตีครั้งเดียวลงหลุม!'; L['이글!']='อีเกิล!'; L['버디!']='เบอร์ดี้!'; L['이쪽으로 치세요']='ตีไปทางนี้'; L['바람 →']='ลม →'; L['← 바람']='← ลม'; L['연꽃 연못 첫 홀']='หลุมแรกบึงบัว'; L['징검다리 홀']='หลุมสะพานหิน'; L['버드나무 홀']='หลุมต้นหลิว'; L['정원 한 바퀴']='รอบสวน'; L['정자 앞 홀']='หลุมหน้าศาลา'; L['두 연못 사이']='ระหว่างสองบึง'; L['수련 홀']='หลุมบัวสาย'; L['돌다리 꺾임']='โค้งสะพานหิน'; L['잉어 홀']='หลุมปลาคาร์ป'; L['나룻배 긴 홀']='หลุมยาวเรือข้ามฟาก'; L['갈대밭 홀']='หลุมดงกก'; L['모래톱 홀']='หลุมสันทราย'; L['버드나무 둑길']='คันดินต้นหลิว'; L['나루터 홀']='หลุมท่าเรือ'; L['강바람 홀']='หลุมลมแม่น้ำ'; L['뱃사공 홀']='หลุมคนแจวเรือ'; L['물새 홀']='หลุมนกน้ำ'; L['노을 마지막 홀']='หลุมสุดท้ายยามเย็น'; L['남도 연못 정원 · 9홀 647m']='สวนบึงบัวภาคใต้ · 9 หลุม 647 ม.'; L['강변 옛 나루터 · 9홀 674m']='ท่าเรือเก่าริมน้ำ · 9 หลุม 674 ม.'; L['연습장']='สนามซ้อม'; L['⛳<br>연습장']='⛳<br>สนามซ้อม'; L['공 바꿔 가며 마음껏']='เปลี่ยนลูกได้ เล่นได้ไม่จำกัด'; L['언제든 무료']='ฟรีตลอด'; L['연습장 들어가기']='เข้าสนามซ้อม'; L['물·모래·꺾인 홀 다섯 개 · 기록 없이 마음껏 · 칠 때마다 바람이 바뀌고, 공은 화면 위 버튼으로 언제든 바꿔요']='5 หลุม มีน้ำ ทราย ทางเลี้ยว · ไม่บันทึกคะแนน · ลมเปลี่ยนทุกครั้งที่ตี เปลี่ยนลูกได้ที่ปุ่มด้านบน'; L['바람이 바뀌었어요 · ']='ลมเปลี่ยนแล้ว · '; L['오른쪽으로 →']='ไปทางขวา →'; L['← 왼쪽으로']='← ไปทางซ้าย'; L['날씨가 바뀌었어요 · ']='อากาศเปลี่ยนแล้ว · '; L['으로 바꿨어요']=' เปลี่ยนแล้ว'; L['물·모래·꺾인 홀 · 공 바꿔 가며 마음껏']='น้ำ ทราย ทางเลี้ยว · เปลี่ยนลูกได้'; L['늦가을']='ปลายฤดูใบไม้ร่วง'; L['단풍 절정']='ใบไม้แดงเต็มที่'; L['초겨울 서리']='ต้นหนาว น้ำค้างแข็ง'; L['첫눈']='หิมะแรก'; L['을 올스타(9홀 모두 파 이하)로 깨면 바로 열려요']=' ได้ออลสตาร์ (ทุกหลุมไม่เกินพาร์) จะเปิดทันที'; L['를 올스타(9홀 모두 파 이하)로 깨면 바로 열려요']=' ได้ออลสตาร์ (ทุกหลุมไม่เกินพาร์) จะเปิดทันที'; L['에 열려요']=' จะเปิด'; L['(토)']='(ส.)'; L['☕ 3,300원에 지금 바로 열기']='☕ 3,300 วอน เปิดเลยตอนนี้';  L['3,300원 한 번이면 지금 있는 코스가 다 바로 열리고,']='จ่าย 3,300 วอนครั้งเดียว เปิดทุกสนามที่มีตอนนี้ทันที'; L['한 판 더도 광고 없이 칠 수 있어요.']='เล่นอีกรอบได้โดยไม่ต้องดูโฆษณา'; L['결제는 토스 앱에서 할 수 있어요.']='ชำระเงินได้ในแอป Toss'; L['(웹 시험판) 바로 열어 보기']='(เวอร์ชันทดลองบนเว็บ) เปิดดูเลย'; L['그냥 기다릴게요']='รอก็ได้'; L['모든 코스가 열렸어요']='เปิดทุกสนามแล้ว'; L['⛳ 한 판 더']='⛳ เล่นอีกรอบ'; L['연못 정원']='สวนบึงบัว'; L['나루터']='ท่าเรือริมน้ำ'; L['남도 · 연못 정원']='ภาคใต้ · สวนบึงบัว'; L['강변 · 옛 나루터']='ริมแม่น้ำ · ท่าเรือเก่า'; L['⭐ 올스타로 먼저 열었어요']='⭐ เปิดก่อนด้วยออลสตาร์'; L['🎬 광고 보고 한 판 더']='🎬 ดูโฆษณาแล้วเล่นอีกรอบ'; L['잠깐만요']='รอสักครู่'; L['토스 앱에서는 여기에 짧은 광고가 나와요.']='ในแอป Toss จะมีโฆษณาสั้น ๆ ตรงนี้'; L['광고가 끝나면 한 판 더 칠 수 있어요.']='ดูจบแล้วเล่นได้อีกหนึ่งรอบ'; L['한 판 더 치러 가기']='ไปเล่นอีกรอบ'; L['끝!']='จบ!'; L[' · 세 코스 다 치셨어요! 오늘 한 번 더 칠 수 있어요']=' · เล่นครบ 3 สนามแล้ว! วันนี้เล่นได้อีก 1 รอบ'; L['첫 판과 똑같아요']='เท่ากับรอบแรก'; L['내일 다시!']='พรุ่งนี้ลองใหม่!'; L['⤺ 공으로']='⤺ กลับไปที่ลูก'; L['공을 잡고 치고 싶은 쪽 반대로 당겼다 놓으세요']='กดที่ลูกค้างไว้ แล้วลากไปทางตรงข้ามกับทิศที่อยากตี แล้วปล่อย'; L['배우기 끝! 🎉']='เรียนจบแล้ว! 🎉'; L['세 단계를 다 배웠어요.']='เรียนครบทั้ง 3 ขั้นแล้ว'; L['이제 진짜 코스에서 쳐 볼까요?']='ไปลองตีในสนามจริงกันไหม?'; L['우리 동네 9홀 치러 가기']='ไปตี 9 หลุมที่สนามบ้านเรา'; L['다른 코스 고르기']='เลือกสนามอื่น'; L['눌러서 닫기 · 치기 시작하면 사라져요']='แตะเพื่อปิด · เริ่มตีแล้วจะหายไป'; L['치는 법']='วิธีตี';
   L['공을 아래로 당겼다 놓으세요']='ดึงลูกลงมาแล้วปล่อย';
   L['공을 손가락으로 잡고, 치고 싶은 쪽의 반대로 당겼다 놓으세요. 많이 당길수록 멀리 갑니다. 다른 곳을 끌면 코스를 둘러볼 수 있어요.']='กดที่ลูกค้างไว้ แล้วลากไปทางตรงข้ามกับทิศที่อยากตี แล้วปล่อย ยิ่งลากมากยิ่งไปไกล ลากที่อื่นเพื่อดูสนามได้';
   L['노란 화살표 쪽(컵보다 왼쪽)으로 치세요. 바람이 오른쪽으로 밀어서 컵 쪽으로 데려가 줘요. 코르크공은 가벼워서 바람을 많이 타고, 물 위도 건너요.']='ตีไปตามลูกศรสีเหลือง (ทางซ้ายของหลุม) ลมจะพัดลูกไปทางขวาเข้าหาหลุมเอง ลูกไม้ก๊อกเบาจึงลอยตามลมมาก และข้ามน้ำได้';
@@ -566,7 +568,7 @@ html[lang=th] .t-small{letter-spacing:2px}
   st.textContent = ':root{--font:"Noto Sans Thai","Noto Sans KR",sans-serif}body{word-break:normal;line-break:auto}';
   document.head.appendChild(st);
   var lk = document.createElement('link'); lk.rel = 'stylesheet';
-  lk.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@500;700;800&family=Noto+Serif+Thai:wght@700;900&display=swap';
+  lk.href = 'fonts/th.css';
   document.head.appendChild(lk);
 })();
 </script>
@@ -1109,11 +1111,11 @@ const aitOk=f=>{ try{ return !!(AIT&&f&&(!f.isSupported||f.isSupported())); }cat
 if(AIT){ try{ AIT.graniteEvent.addEventListener('backEvent',{onEvent:()=>{ if(!handleBack()) AIT.closeView(); }}); }catch(e){} }
 // ===== 여정 길 (코스 고르기) =====
 const JOURNEY=[{k:'lesson',label:'배우기',place:'치는 법 세 단계'},{k:'range',sign:'⛳<br>연습장',label:'연습장',place:'공 바꿔 가며 마음껏'},{k:'home',img:'art/course_home.jpg',label:'우리 동네',place:'하천변 연습장'},{k:'jamsil',img:'art/course_jamsil.jpg',label:'강변 공원',place:'도심 · 강변 체육공원'},{k:'hapcheon',img:'art/course_hapcheon.jpg',label:'황강 둔치',place:'남쪽 강변 · 생태공원'},{k:'pond',passOpen:true,img:'art/course_hwasun.jpg',label:'연못 정원',place:'남도 · 연못 정원',prev:'hapcheon',release:'2026-11-14'},{k:'ferry',passOpen:true,img:'art/course_ferry.jpg',sign:'나루터',label:'나루터',place:'강변 · 옛 나루터',prev:'pond',release:'2026-11-21'}];
-// 4·5코스 열림 규칙 (2026-11-07 대표 결정): 매주 토요일 하나씩 모두에게 열림 · 앞 코스를 올스타(9홀 모두 파 이하)로 깨면 바로 · 3,000원 한 번이면 그때 나와 있는 코스 전부 바로(우리 동네~나루터 다섯), 그 뒤 새 코스는 결제와 상관없이 매주 날짜에 열림 (2026-11-09 대표)
+// 4·5코스 열림 규칙 (2026-11-07 대표 결정): 매주 토요일 하나씩 모두에게 열림 · 앞 코스를 올스타(9홀 모두 파 이하)로 깨면 바로 · 3,300원 한 번이면 그때 나와 있는 코스 전부 바로(우리 동네~나루터 다섯), 그 뒤 새 코스는 결제와 상관없이 매주 날짜에 열림 (2026-11-09 대표)
 function hasPass(){ try{ return localStorage.getItem('opg_pass')==='1'; }catch(e){ return false; } }
 function allStar(k){ const hs=COURSES[k].holes; return Object.values(roundsOf(k)).some(r=>r.strokes.every((x,i)=>x>0&&x<=hs[i].par)); }
 function relLabel(d){ const [y,m,dd]=d.split('-').map(Number); return m+'월 '+dd+'일(토)'; }
-const OPEN_ALL=/[?&]all\b/.test(location.search); // 테스트용: 주소 끝에 ?all 을 붙이면 다 열림
+const OPEN_ALL=!window.AIT && /[?&]all\b/.test(location.search); // 테스트용: 주소 끝에 ?all 을 붙이면 다 열림
 function roundsOf(k){ try{ return JSON.parse(localStorage.getItem(COURSES[k].store)||'{}'); }catch(e){ return {}; } }
 function bestOf(k){ const t=Object.values(roundsOf(k)).map(r=>r.strokes.reduce((a,b)=>a+b,0)); return t.length?Math.min(...t):null; }
 function parOf(k){ return COURSES[k].holes.reduce((a,h)=>a+h.par,0); }
@@ -1168,13 +1170,24 @@ $('ballBtn').onclick=()=>{ if(S.moving||S.sink) return; const ks=Object.keys(BAL
 $('jEarly').onclick=()=>{ const k=S.jSel; showAd(()=>{ try{ localStorage.setItem('opg_early_'+k,'1'); }catch(e){} PT.event('early_unlock',{k}); renderJourney(); fillSheet(); msg('먼저 열렸어요! 다른 분들보다 먼저 쳐 보세요'); }); };
 $('jPass').onclick=()=>{ PT.event('pass_offer',{k:S.jSel}); $('payScreen').hidden=false; };
 $('payNo').onclick=()=>{ $('payScreen').hidden=true; };
-function grantPass(test){ try{ localStorage.setItem('opg_pass','1'); }catch(e){} PT.event('pass_buy',{k:S.jSel,test:test?1:0}); $('payScreen').hidden=true; renderJourney(); fillSheet(); msg('모든 코스가 열렸어요. 고맙습니다!'); }
+function grantPass(test,orderId){ try{ localStorage.setItem('opg_pass','1'); }catch(e){} PT.event('pass_buy',{k:S.jSel,test:test?1:0,order:orderId||undefined}); $('payScreen').hidden=true; renderJourney(); fillSheet(); msg('모든 코스가 열렸어요. 고맙습니다!'); }
 const TOSS_PAY=!!(AIT_CFG.sku && aitOk(AIT&&AIT.IAP&&AIT.IAP.createOneTimePurchaseOrder));
-if(TOSS_PAY){ $('payOk').textContent='3,000원으로 모두 열기'; $('payTitle').textContent='커피 한 잔 값으로'; $('paySub').innerHTML='3,000원 한 번이면 지금 있는 코스가 다 바로 열리고,<br>한 판 더도 광고 없이 칠 수 있어요.<br>매달 나가는 돈은 없어요.';
-  try{ AIT.IAP.getPendingOrders().then(r=>{ (r&&r.orders||[]).forEach(o=>{ try{ localStorage.setItem('opg_pass','1'); }catch(e){} AIT.IAP.completeProductGrant({params:{orderId:o.orderId}}).catch(()=>{}); }); }).catch(()=>{}); }catch(e){} }
+if(TOSS_PAY){ $('payOk').textContent='3,300원으로 모두 열기'; $('payTitle').textContent='커피 한 잔 값으로'; $('paySub').innerHTML='3,300원 한 번이면 지금 있는 코스가 다 바로 열리고,<br>한 판 더도 광고 없이 칠 수 있어요.<br>매달 나가는 돈은 없어요.';
+  try{ AIT.IAP.getPendingOrders().then(r=>{ (r&&r.orders||[]).forEach(o=>{ try{ localStorage.setItem('opg_pass','1'); }catch(e){} PT.event('pass_pending_grant',{order:o.orderId}); AIT.IAP.completeProductGrant({params:{orderId:o.orderId}}).catch(()=>{}); }); }).catch(()=>{}); }catch(e){}
+  $('payRestore').hidden=false; restorePass(false); }
+// 구매 복원: 토스에 남은 완료·환불 주문으로 이용권을 되살림(앱을 지우고 다시 깔거나 폰을 바꿔도) — 우리 장부는 기록(pass_restore·pass_refund, 주문 번호)
+async function restorePass(manual){ const f=AIT&&AIT.IAP&&AIT.IAP.getCompletedOrRefundedOrders; if(!aitOk(f)){ if(manual) msg('지금은 산 기록을 불러올 수 없어요'); return; }
+  try{ let key=null, done=false, refunded=false, oid=null, n=0;
+    do{ const r=await f(key?{key}:undefined); (r&&r.orders||[]).forEach(o=>{ if(o.sku!==AIT_CFG.sku) return; if(o.status==='COMPLETED'){ done=true; oid=o.orderId; } else if(o.status==='REFUNDED') refunded=true; }); key=r&&r.hasNext?r.nextKey:null; n++; } while(key && n<10);
+    const had=hasPass();
+    if(done){ if(!had){ try{ localStorage.setItem('opg_pass','1'); }catch(e){} PT.event('pass_restore',{order:oid,manual:manual?1:0}); try{ renderJourney(); if(S.jSel) fillSheet(); }catch(e){} msg('산 기록을 다시 불러왔어요. 모든 코스가 열렸어요'); } else if(manual) msg('이미 모든 코스가 열려 있어요'); $('payScreen').hidden=true; }
+    else if(refunded && had){ try{ localStorage.removeItem('opg_pass'); }catch(e){} PT.event('pass_refund',{}); try{ renderJourney(); if(S.jSel) fillSheet(); }catch(e){} }
+    else if(manual) msg('다시 불러올 산 기록이 없어요');
+  }catch(e){ if(manual) msg('지금은 산 기록을 불러올 수 없어요'); } }
+$('payRestore').onclick=()=>restorePass(true);
 $('payOk').onclick=()=>{ if(!TOSS_PAY){ grantPass(true); return; }
   let stop=null; try{ stop=AIT.IAP.createOneTimePurchaseOrder({ options:{ sku:AIT_CFG.sku, processProductGrant:()=>{ try{ localStorage.setItem('opg_pass','1'); }catch(e){} return true; } },
-    onEvent:e=>{ if(e.type==='success'){ grantPass(false); } if(stop) stop(); },
+    onEvent:e=>{ if(e.type==='success'){ grantPass(false, e.data&&e.data.orderId); } if(stop) stop(); },
     onError:()=>{ PT.event('pass_fail',{}); msg('결제가 끝나지 않았어요'); if(stop) stop(); } }); }catch(e){ msg('결제를 열 수 없어요'); } };
 $('jGo').onclick=()=>{ const k=S.jSel; if(k!==COURSE.key) setCourse(k); else setupToday(); PT.event('course_pick',{c:k}); if(COURSE.range){ $('journey').hidden=true; startRound('range'); return; } showStart(); };
 $('jTitle').onclick=()=>{ $('journey').hidden=true; setupToday(); showTitle(); };
@@ -1490,14 +1503,22 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
   let first=null, isNew=false; try{ first=JSON.parse(localStorage.getItem('opg_first_src')||'null'); }catch(e){}
   if(!first){ first={src, ad, d:TODAY}; isNew=true; try{ localStorage.setItem('opg_first_src', JSON.stringify(first)); }catch(e){} }
   return {src, ad, ref, first, isNew}; })();
-PT.init({game:'parkgolf', build:'v61', lang:window.LANG, endpoint:'https://nrcyoqajqqbuwazlrbpa.supabase.co', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+// 원격 설정(토스 심사 없이 바꿈) — play.arinplay.app/ParkGolf/config.json: notice(공지)·stop(긴급 정지)·release(코스 열리는 날 바꾸기). 3초 안에 못 불러오면 지금처럼 동작
+(function(){ try{ const th=window.LANG==='th', ctl=(window.AbortController?new AbortController():null); if(ctl) setTimeout(()=>ctl.abort(),3000);
+  fetch('https://play.arinplay.app/ParkGolf/config.json?t='+Date.now(),{cache:'no-store',signal:ctl?ctl.signal:undefined}).then(r=>r.ok?r.json():null).then(c=>{ if(!c||typeof c!=='object') return; window.REMOTE_CFG=c;
+    if(c.release&&typeof c.release==='object') JOURNEY.forEach(st=>{ if(st.release&&/^\d{4}-\d\d-\d\d$/.test(c.release[st.k]||'')) st.release=c.release[st.k]; });
+    if(c.stop){ const d=document.createElement('div'); d.id='stopScreen'; d.style.cssText='position:fixed;inset:0;z-index:99999;background:#14231c;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;font-size:22px;font-weight:800;line-height:1.6';
+      d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
+    const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
+  }).catch(()=>{}); }catch(e){} })();
+PT.init({game:'parkgolf', build:'v62', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
 PT.event(ENTRY.isNew?'first_open':'app_open', {now_src:ENTRY.src, now_ad:ENTRY.ad||undefined, toss_ref:ENTRY.ref||undefined});
 try{ if(window.AIT&&AIT.Analytics) AIT.Analytics.log({log_name:ENTRY.isNew?'first_open':'app_open', log_type:'event', params:{toss_ref:ENTRY.ref||'none', ad:ENTRY.ad||'none', src:ENTRY.first.src}}).catch(()=>{}); }catch(e){}
 const SV={}; let svDone=false;
-function showSurvey(){ if(svDone) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
+function showSurvey(){ if(svDone || window.AIT || !/[?&]survey\b/.test(location.search)) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
   $('survey').hidden=false; }
 $('svSend').onclick=()=>{ const ans=Object.assign({name:$('svName').value.trim().slice(0,30), note:$('svNote').value.trim().slice(0,1500), course:COURSE.key}, SV);
