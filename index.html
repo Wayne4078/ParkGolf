@@ -479,6 +479,7 @@ html[lang=th] .t-small{letter-spacing:2px}
     '합계':'รวม',
     '통!':'ป๊อก!'
   };
+  L['살랑']='เบาๆ'; L['솔솔']='พอประมาณ'; L['세게']='แรง'; L['없음']='ไม่มี';
   L['이미 사셨나요? 산 기록 다시 불러오기']='ซื้อไว้แล้ว? โหลดประวัติการซื้อ'; L['산 기록을 다시 불러왔어요. 모든 코스가 열렸어요']='กู้คืนการซื้อแล้ว เปิดทุกสนามแล้ว'; L['이미 모든 코스가 열려 있어요']='เปิดทุกสนามอยู่แล้ว'; L['다시 불러올 산 기록이 없어요']='ไม่พบประวัติการซื้อ'; L['지금은 산 기록을 불러올 수 없어요']='ตอนนี้โหลดประวัติการซื้อไม่ได้';
   L['치는 법 · 공 이야기']='วิธีตี · เรื่องของลูก'; L['알겠어요']='เข้าใจแล้ว'; L['하루 한 번, 아홉 홀']='วันละรอบ เก้าหลุม'; L['배우기']='ฝึกหัด'; L['배우는 코스']='สนามฝึกหัด'; L['배우기 시작']='เริ่มฝึกหัด'; L['배우는 코스 · 세 단계']='สนามฝึกหัด · 3 ขั้น';
   L['처음이라면 여기부터 · 세 홀이면 다 배워요']='ถ้าเพิ่งเริ่ม เริ่มที่นี่ · 3 หลุมก็เข้าใจครบ'; L['치는 법 → 코르크공과 바람 → 고무공']='วิธีตี → ลูกไม้ก๊อกกับลม → ลูกยาง';
@@ -818,7 +819,16 @@ const S={ mode:'today', wx:'clear', windDir:-1, ball:'normal', pins:dailyPins(TO
 const $=id=>document.getElementById(id); const msg=t=>{ $('msg').textContent=t; };
 const H_=()=>HOLES[S.hi];
 const cup=()=>H_().pins[S.pins[S.hi]];
-const windVec=()=>({x:WX[S.wx].wind*S.windDir, y:0});
+// 바람: 배우는 코스·연습장·1코스(우리 동네)는 예전대로(바람 부는 날만 좌우), 2코스부터는 홀마다 다른 바람 — 여덟 방향·세 세기, 날짜+코스+홀로 정해져 오늘 하루 누구에게나 같음
+const WIND_LV=[{k:'살랑',v:14},{k:'솔솔',v:26},{k:'세게',v:38}];
+function holeWind(){ const key=TODAY+'|'+COURSE.key+'|'+(HOLES[S.hi]?HOLES[S.hi].n:0)+'|'+S.wx;
+  if(S._wk===key) return S._wv;
+  let w={x:WX[S.wx].wind*S.windDir, y:0, lv:WX[S.wx].wind?2:-1};
+  if(!COURSE.lesson && !COURSE.range && COURSE.key!=='home' && !S.attract){ const h=hash(key+'hw'); const r=(h%1000)/1000;
+    const p= S.wx==='wind' ? [0.10,0.35] : [0.45,0.85]; const lv= r<p[0]?0 : r<p[1]?1 : 2; const ang=((h>>>10)%8)*Math.PI/4; const m=WIND_LV[lv].v;
+    w={x:Math.cos(ang)*m, y:Math.sin(ang)*m, lv}; }
+  S._wk=key; S._wv=w; return w; }
+const windVec=()=>holeWind();
 const dist=()=>H_().m || Math.round(Math.hypot(cup()[0]-H_().tee[0], cup()[1]-H_().tee[1])*M_PER_PX); // 실제 구장은 안내판 거리
 
 // ---------- geometry ----------
@@ -1441,9 +1451,11 @@ function drawStanding(h,g){ const items=[];
 function drawWind(){ const w=windVec();
   // 어두운 받침 위에 주황·흰 줄무늬 바람자루 — 잔디·러프·흙 어디 위에서도 잘 보이게
   const bw=118, bh=64, bx=W-bw-10, by=12; ctx.fillStyle='rgba(18,28,24,0.78)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,by,bw,bh,14) : ctx.rect(bx,by,bw,bh); ctx.fill();
-  ctx.font='800 18px "Noto Sans KR", sans-serif'; ctx.fillStyle='#ffffff'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('바람', bx+12, by+bh/2); ctx.textBaseline='alphabetic';
+  const lvTxt= w.lv>=0 ? WIND_LV[w.lv].k : '없음'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.font='700 15px "Noto Sans KR", sans-serif'; ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.fillText(window.LANG==='th'?'ลม':'바람', bx+12, by+20);
+  ctx.font='800 19px "Noto Sans KR", sans-serif'; ctx.fillStyle= w.lv===2 ? '#ffb27a' : '#ffffff'; ctx.fillText(tr(lvTxt), bx+12, by+44); ctx.textBaseline='alphabetic';
   const px=bx+68, py=by+12; ctx.strokeStyle='#ffffff'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px,py+42); ctx.stroke();
-  let ux=0, uy=1, L=34; if(w.x!==0){ const a=S.cam.a; const vx=w.x*Math.cos(a), vy=w.x*Math.sin(a); const m=Math.hypot(vx,vy); ux=vx/m; uy=vy/m; L=40; } else { L=22; }
+  let ux=0, uy=1, L=22; if(w.x!==0||w.y!==0){ const a=S.cam.a, ca=Math.cos(a), sa=Math.sin(a); const vx=w.x*ca-w.y*sa, vy=w.x*sa+w.y*ca; const m=Math.hypot(vx,vy); const droop=[0.55,0.25,0.05][w.lv<0?2:w.lv]; ux=vx/m; uy=vy/m+droop; const mm=Math.hypot(ux,uy); ux/=mm; uy/=mm; L=[30,36,42][w.lv<0?2:w.lv]; }
   const nx=-uy, ny=ux, r0=8, r1=4, n=4;
   for(let k=0;k<n;k++){ const t0=k/n, t1=(k+1)/n, ra=r0+(r1-r0)*t0, rb=r0+(r1-r0)*t1; const ax=px+ux*L*t0, ay=py+8+uy*L*t0, cx=px+ux*L*t1, cy=py+8+uy*L*t1;
     ctx.fillStyle= k%2===0 ? '#ff6a13' : '#ffffff'; ctx.beginPath(); ctx.moveTo(ax+nx*ra, ay+ny*ra); ctx.lineTo(cx+nx*rb, cy+ny*rb); ctx.lineTo(cx-nx*rb, cy-ny*rb); ctx.lineTo(ax-nx*ra, ay-ny*ra); ctx.closePath(); ctx.fill(); } }
@@ -1518,7 +1530,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v64', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v65', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
