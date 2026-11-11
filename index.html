@@ -1039,13 +1039,16 @@ function bounce(p,v,nx,ny,qx,qy,b){ p.x=qx+nx*(R+WALL); p.y=qy+ny*(R+WALL); cons
     if(-vn>40 && S.t-S.lastHit>0.12){ S.lastHit=S.t; S.fx.push({x:p.x,y:p.y,t:S.t,big:S.ball==='rubber'}); sndCurb(S.ball==='rubber'); if(-vn>MAXV*0.55 && S.shot && !S.shot.wall){ S.shot.wall=1; say(9); } } } }
 function shoot(sdx,sdy){ const len=Math.min(Math.hypot(sdx,sdy),MAXDRAG); if(len<16) return false; showHint(''); const k=len/MAXDRAG*MAXV; const gx=sdx, gy=sdy/S.cam.tilt; const ca=Math.cos(S.cam.a), sa=Math.sin(S.cam.a); const wx=gx*ca+gy*sa, wy=-gx*sa+gy*ca; const l=Math.hypot(wx,wy);
   { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
+function pulseOnce(key,o){ let d={}; try{ d=JSON.parse(localStorage.getItem('opg_pulse')||'{}')||{}; }catch(e){} if(d[key]) return; if(PT.pulse(key,o)===false) return; d[key]=1; try{ localStorage.setItem('opg_pulse',JSON.stringify(d)); }catch(e){} }
 function holeOut(capped,quiet,voice){ if(S.holeOver) return; S.holeOver=true; S.moving=false; const h=H_(), s=S.strokes[S.hi], diff=s-h.par; if(!capped && !quiet) sndCup();
   if(!quiet||voice){ if(capped) say(8,0.2); else if(s===1) say(4,0.5); else if(diff<=-2) say(3,0.5); else if(diff<0) say(5,0.5); else if(diff===0) say(6,0.5); else say(7,0.5); }
   PT.event('hole_end',{c:COURSE.key,mode:S.mode,n:h.n,par:h.par,s:s,capped:!!capped,ball:S.ball,wx:S.wx});
-  const played=S.hi-S.startHole; const ctx={c:COURSE.key,n:h.n,s:s,par:h.par};
-  if(played===0) PT.pulse('howto',{q:'공 치는 법, 바로 알았나요?',opts:['바로 알았다','조금 헤맸다','잘 모르겠다'],delay:1300,ctx});
-  else if(played===3) PT.pulse('difficulty',{q:'지금까지 홀들, 쉬웠나요 어려웠나요?',opts:['너무 쉽다','딱 좋다','조금 어렵다','너무 어렵다'],delay:1300,ctx});
-  else if(played===6) PT.pulse('continue',{q:'여기까지 치고, 계속 치고 싶나요?',opts:['더 치고 싶다','그저 그렇다','그만하고 싶다'],delay:1300,ctx});
+  // 짧은 질문 3개는 이 폰에서 평생 한 번씩만 — 나갔다 들어와 이어 쳐도, 다음 라운드에도 다시 안 나옴. 기준은 '이 라운드에서 끝낸 홀 수'(이어 치기여도 1번 홀부터 센 수)
+  const ctx={c:COURSE.key,n:h.n,s:s,par:h.par}; const doneHoles=S.hi+1;
+  if(!S.attract && S.mode!=='practice'){
+    if(!COURSE.lesson && S.mode==='today' && doneHoles===3) pulseOnce('difficulty',{q:'지금까지 홀들, 쉬웠나요 어려웠나요?',opts:['너무 쉽다','딱 좋다','조금 어렵다','너무 어렵다'],delay:1300,ctx});
+    else if(!COURSE.lesson && S.mode==='today' && doneHoles===6) pulseOnce('continue',{q:'여기까지 치고, 계속 치고 싶나요?',opts:['더 치고 싶다','그저 그렇다','그만하고 싶다'],delay:1300,ctx});
+    else if(doneHoles===1) pulseOnce('howto',{q:'공 치는 법, 바로 알았나요?',opts:['바로 알았다','조금 헤맸다','잘 모르겠다'],delay:1300,ctx}); }
   $('hdTitle').textContent=h.n+'번 홀 · '+h.name; $('hdScore').textContent=s+'타 (파 '+h.par+')';
   $('hdNote').textContent= capped?'이 홀은 여기까지. 다음 홀로 갑니다' : s===1?'홀인원!' : diff<=-2?'이글! 파보다 '+(-diff)+'타 적게' : diff<0?'버디! 파보다 '+(-diff)+'타 적게' : diff===0?'파' : '파보다 '+diff+'타 많이';
   $('next').textContent = S.hi===HOLES.length-1 ? '스코어 카드 보기' : '다음 홀'; setTimeout(()=>{ $('holeDone').hidden=false; }, 600); }
@@ -1515,7 +1518,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v63', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v64', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
