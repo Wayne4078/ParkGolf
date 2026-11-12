@@ -902,11 +902,14 @@ function scr(p,g){ g=g||G(); const dx=p[0]-g.x, dy=p[1]-g.y; const ca=Math.cos(g
 
 // ---------- sound ----------
 let AC=null, rollGain=null, SFX=null, AMBB=null;
+// 앱을 내렸다 다시 열면(토스가 화면을 살려 둔 채) 폰이 소리판을 '멈춤'으로 바꿔 둠 — 손가락이 닿을 때마다 깨움(폰은 손가락이 닿은 순간에만 소리를 다시 켜 줌)
+function audioWake(){ try{ if(AC && AC.state!=='running' && AC.state!=='closed') AC.resume().catch(()=>{}); }catch(e){} }
+['pointerdown','touchend','click','keydown'].forEach(t=>document.addEventListener(t,audioWake,{capture:true,passive:true}));
 // 소리 설정(폰에 저장, 처음엔 둘 다 켜짐): 배경 소리 = 새·물·바람, 효과음 = 치는 소리·캐디 목소리
 const SND=(()=>{ try{ return Object.assign({amb:1,sfx:1}, JSON.parse(localStorage.getItem('opg_snd')||'{}')); }catch(e){ return {amb:1,sfx:1}; } })();
 function sndApply(){ if(SFX) SFX.gain.value=SND.sfx?1:0; if(AMBB) AMBB.gain.value=SND.amb?1:0; try{ localStorage.setItem('opg_snd',JSON.stringify(SND)); }catch(e){} sndLabels(); }
 function sndLabels(){ const a=document.getElementById('pAmb'), b=document.getElementById('pSfx'); if(a) a.textContent=tr(SND.amb?'배경 소리 켜짐':'배경 소리 꺼짐'); if(b) b.textContent=tr(SND.sfx?'효과음 켜짐':'효과음 꺼짐'); if(a) a.setAttribute('aria-pressed',SND.amb?'true':'false'); if(b) b.setAttribute('aria-pressed',SND.sfx?'true':'false'); }
-function audioInit(){ if(AC){ loadCupBuf(); voiceLoad(); ambLoad(); return; } try{ AC=new (window.AudioContext||window.webkitAudioContext)(); SFX=AC.createGain(); SFX.connect(AC.destination); AMBB=AC.createGain(); AMBB.connect(AC.destination); sndApply(); const buf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1); const src=AC.createBufferSource(); src.buffer=buf; src.loop=true; const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=600; rollGain=AC.createGain(); rollGain.gain.value=0; src.connect(f); f.connect(rollGain); rollGain.connect(SFX); src.start(); loadCupBuf(); voiceLoad(); ambLoad(); }catch(e){ AC=null; } }
+function audioInit(){ if(AC){ audioWake(); loadCupBuf(); voiceLoad(); ambLoad(); return; } try{ AC=new (window.AudioContext||window.webkitAudioContext)(); SFX=AC.createGain(); SFX.connect(AC.destination); AMBB=AC.createGain(); AMBB.connect(AC.destination); sndApply(); const buf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1); const src=AC.createBufferSource(); src.buffer=buf; src.loop=true; const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=600; rollGain=AC.createGain(); rollGain.gain.value=0; src.connect(f); f.connect(rollGain); rollGain.connect(SFX); src.start(); loadCupBuf(); voiceLoad(); ambLoad(); }catch(e){ AC=null; } }
 function tone(freq,dur,type,vol){ if(!AC) return; const o=AC.createOscillator(), g=AC.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(freq,AC.currentTime); g.gain.setValueAtTime(vol||0.2,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur); o.connect(g); g.connect(SFX); o.start(); o.stop(AC.currentTime+dur); }
 function noiseBurst(dur,vol,hp){ if(!AC) return; const n=Math.floor(AC.sampleRate*dur), b=AC.createBuffer(1,n,AC.sampleRate), d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
   const src=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); f.type='highpass'; f.frequency.value=hp||1800; g.gain.value=vol; src.buffer=b; src.connect(f); f.connect(g); g.connect(SFX); src.start(); }
@@ -1113,7 +1116,7 @@ $('pRetry').onclick=()=>{ $('pause').hidden=true; S.strokes[S.hi]=0; loadHole();
 $('pCourse').onclick=()=>{ leaveRound(); setupToday(); showJourney(); };
 $('pTitle').onclick=()=>{ leaveRound(); setupToday(); showTitle(); };
 $('pAmb').onclick=()=>{ SND.amb=SND.amb?0:1; sndApply(); }; $('pSfx').onclick=()=>{ SND.sfx=SND.sfx?0:1; sndApply(); }; sndLabels();
-document.addEventListener('visibilitychange',()=>{ if(!AC) return; try{ if(document.visibilityState==='hidden') AC.suspend(); else AC.resume(); }catch(e){} });
+document.addEventListener('visibilitychange',()=>{ if(!AC) return; try{ if(document.visibilityState==='hidden') AC.suspend(); else audioWake(); }catch(e){} }); addEventListener('pageshow',()=>audioWake()); addEventListener('focus',()=>audioWake());
 addEventListener('pagehide',saveResume); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') saveResume(); });
 // 폰의 뒤로 가기: 치는 중이면 잠깐 쉬기를 열고, 쉬는 중이면 닫는다. 연습·설명 화면에서는 코스 고르기로 돌아간다.
 function guardBack(){ try{ history.pushState({pg:1},''); }catch(e){} }
@@ -1541,7 +1544,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v66', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v67', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
@@ -1571,7 +1574,7 @@ function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; docu
   S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; S.jSel=null; guardBack(); showJourney(); PT.event('title_go',{}); }
 $('title').addEventListener('click',leaveTitle);
 S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loop);
-if(/[?&]sim\b/.test(location.search)) window.__pg={S,askNoti:()=>askNewCourseAlarm(),step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
+if(/[?&]sim\b/.test(location.search)) window.__pg={S,askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
 })();
 </script>
 
