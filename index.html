@@ -144,6 +144,75 @@ html[lang=th] .t-small{letter-spacing:2px}
 .hint small{display:block;margin-top:6px;font-size:16px;font-weight:600;opacity:.6;text-align:right}
 .hint b{color:var(--accent)}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+/* ================= 아린 신문 모듈 CSS (복사해서 쓰기) ================= */
+.ap-layer{position:fixed;inset:0;z-index:9000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#0f0d0a;perspective:1200px;padding:calc(10px + max(env(safe-area-inset-top,0px),var(--sat,0px))) 0 calc(10px + env(safe-area-inset-bottom))}
+.ap-layer.on{display:flex}
+.ap-press{position:absolute;inset:0;opacity:0;transition:opacity .3s;background:repeating-linear-gradient(0deg,#1a1712 0 18px,#2a251c 18px 22px,#0f0d0a 22px 40px)}
+.ap-press.on{opacity:1;animation:apRoll .12s linear infinite}
+@keyframes apRoll{to{background-position:0 40px}}
+.ap-paper{position:relative;width:min(94vw,520px);max-height:calc(100dvh - 110px);overflow:hidden;padding:12px 14px 14px;opacity:0;
+  background:radial-gradient(circle at 20% 15%,rgba(255,255,255,.35),transparent 40%),radial-gradient(circle at 80% 85%,rgba(120,90,40,.18),transparent 45%),linear-gradient(#efe6cf,#e4d7b6);
+  box-shadow:0 0 60px #000;color:#1d1a15}
+.ap-paper.spin{animation:apSpin 2s cubic-bezier(.25,.6,.3,1) forwards}
+@keyframes apSpin{0%{opacity:1;transform:scale(.05) rotate(0)}85%{transform:scale(1.04) rotate(1080deg)}100%{opacity:1;transform:scale(1) rotate(1080deg)}}
+.ap-paper.thud{opacity:1;animation:apThud .35s ease-out}
+@keyframes apThud{0%{transform:scale(1.05)}40%{transform:scale(.985) translateY(3px)}100%{transform:none}}
+.ap-mast{text-align:center;border-bottom:4px double #1d1a15;padding-bottom:4px}
+.ap-name{font-family:'Noto Serif KR',serif;font-weight:900;font-size:clamp(32px,9.5vw,46px);letter-spacing:5px;line-height:1.1}
+.ap-line{display:flex;justify-content:space-between;font-size:15px;font-weight:700;border-top:1px solid #1d1a15;margin-top:3px;padding-top:3px}
+.ap-head{font-family:'Noto Serif KR',serif;font-weight:900;font-size:clamp(28px,8vw,40px);line-height:1.22;margin:10px 0 6px;letter-spacing:-.5px}
+.ap-sub{font-size:20px;font-weight:700;line-height:1.4;border-left:5px solid #b3261e;padding-left:8px;margin-bottom:8px}
+.ap-photo{position:relative;width:100%;aspect-ratio:16/9;border:2px solid #1d1a15;background:repeating-linear-gradient(45deg,rgba(0,0,0,.07) 0 3px,transparent 3px 7px),#cfc3a3;
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#5a5140;overflow:hidden}
+.ap-photo img,.ap-photo canvas{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.15) sepia(.25)}
+.ap-body{font-size:18px;line-height:1.55;margin-top:8px}
+.ap-stats{display:flex;gap:6px;margin-top:8px}
+.ap-stats div{flex:1;border:2px solid #1d1a15;text-align:center;padding:4px 2px;font-size:14px;font-weight:700}
+.ap-stats b{display:block;font-size:22px;font-weight:800}
+.ap-paper.has-card .ap-photo{aspect-ratio:21/9}
+.ap-card9{width:100%;border-collapse:collapse;margin-top:8px;font-size:15px;text-align:center}
+.ap-card9 th,.ap-card9 td{border:1.5px solid #1d1a15;padding:3px 0;font-weight:700}
+.ap-card9 th{background:rgba(0,0,0,.08);font-size:13px}
+.ap-card9 td.u{color:#b3261e}
+.ap-stamp{position:absolute;z-index:2;right:6px;bottom:6px;font-family:'Noto Serif KR',serif;font-weight:900;font-size:28px;color:#b3261e;border:4px solid #b3261e;
+  padding:0 10px;transform:rotate(-12deg);background:rgba(239,230,207,.75);opacity:0}
+.ap-stamp.in{animation:apStamp .5s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes apStamp{0%{transform:rotate(-12deg) scale(3);opacity:0}100%{transform:rotate(-12deg) scale(1);opacity:1}}
+.ap-btns{position:relative;z-index:2;width:min(94vw,520px);display:flex;gap:10px;visibility:hidden;opacity:0;transition:opacity .3s}
+.ap-btns.on{visibility:visible;opacity:1}
+.ap-btns button{flex:1;font-family:'Noto Sans KR';font-size:21px;font-weight:800;padding:16px 4px;border-radius:14px;border:none;background:#efe6cf;color:#1d1a15}
+.ap-btns button.ap-keep{background:#c9a24a}
+.ap-saved{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(0,0,0,.92);color:#fff;padding:20px;text-align:center}
+.ap-saved.on{display:flex}
+.ap-saved img{max-width:86vw;max-height:62dvh;box-shadow:0 0 30px #000}
+.ap-saved p{font-size:20px;font-weight:700;line-height:1.5}
+.ap-saved button{font-family:'Noto Sans KR';font-size:21px;font-weight:800;padding:14px 40px;border-radius:14px;border:none;background:#efe6cf}
+/* 보관함 */
+.ap-box{position:fixed;inset:0;z-index:9100;display:none;flex-direction:column;background:#1b1813;color:#efe6cf}
+.ap-box.on{display:flex}
+.ap-box h2{font-family:'Noto Serif KR',serif;font-weight:900;font-size:28px;padding:calc(18px + max(env(safe-area-inset-top,0px),var(--sat,0px))) 16px 8px}
+.ap-list{flex:1;overflow:auto;padding:0 14px 14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+.ap-card{background:#efe6cf;color:#1d1a15;padding:8px;min-height:150px;position:relative;cursor:pointer}
+.ap-card .d{font-size:13px;font-weight:700;border-bottom:2px solid #1d1a15;padding-bottom:2px}
+.ap-card .h{font-family:'Noto Serif KR',serif;font-weight:900;font-size:18px;line-height:1.3;margin-top:6px}
+.ap-card .s{position:absolute;right:6px;bottom:6px;font-family:'Noto Serif KR',serif;font-weight:900;color:#b3261e;border:2px solid #b3261e;padding:0 6px;transform:rotate(-10deg);font-size:15px}
+.ap-box .ap-close{margin:10px 14px calc(14px + env(safe-area-inset-bottom));font-family:'Noto Sans KR';font-size:21px;font-weight:800;padding:16px;border-radius:14px;border:none;background:#efe6cf}
+.ap-empty{grid-column:1/-1;text-align:center;font-size:19px;opacity:.7;padding:40px 0}
+.ap-more{grid-column:1/-1;text-align:center;font-size:15px;opacity:.6}
+/* 테마 noir: 흑백·빨강 사회면 호외(히어로 강반장 등 키아트가 검정·미색·빨강인 게임) */
+.ap-paper.t-noir{background:#e6dcc0 linear-gradient(rgba(90,70,40,.06),rgba(90,70,40,.16));color:#16130f}
+.t-noir .ap-mast{background:#16130f;color:#e6dcc0;margin:-12px -14px 0;padding:10px 14px 6px;border:none;position:relative}
+.t-noir .ap-name{font-family:'Noto Serif KR','Noto Serif KR',serif;font-weight:900;letter-spacing:6px}
+.t-noir .ap-line{border-top:1px solid #e6dcc0}
+.t-noir .ap-hoe{position:absolute;left:12px;top:12px;background:#c8102e;color:#fff;font-family:'Noto Serif KR',serif;font-weight:900;font-size:18px;padding:2px 8px;writing-mode:vertical-rl;letter-spacing:4px}
+.t-noir .ap-head{font-family:'Noto Serif KR','Noto Serif KR',serif;font-weight:900}
+.t-noir .ap-sub{border-left-color:#c8102e}
+.t-noir .ap-photo img,.t-noir .ap-photo canvas{filter:contrast(1.2)}
+.t-noir .ap-stats div{background:#16130f;color:#e6dcc0;border-color:#16130f}
+.t-noir .ap-stats b{color:#fff}
+.t-noir .ap-stats b.star{color:#ffcf3a;letter-spacing:2px}
+.t-noir .ap-stamp{color:#c8102e;border-color:#c8102e;background:rgba(230,220,192,.88)}
+
 </style>
 
 <div id="app">
@@ -268,7 +337,6 @@ html[lang=th] .t-small{letter-spacing:2px}
   <div class="card" id="survey" hidden style="text-align:left;display:flex;flex-direction:column;gap:12px">
     <div style="font-size:20px;font-weight:800">한 바퀴 쳐 주셔서 고마워요</div>
     <p class="sub" style="text-align:left">짧게 여섯 가지만 알려 주세요.</p>
-    <label class="label" style="margin:0">부를 별명 (아무거나)<input id="svName" type="text" autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:48px;font:inherit;font-size:18px;font-weight:700;padding:8px 12px;border:2px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg)"></label>
     <div class="label" style="margin:0">지금 기분은</div><div class="row sv" data-q="mood"><button class="opt" style="flex:1 1 80px;min-height:48px">재밌다</button><button class="opt" style="flex:1 1 80px;min-height:48px">편안하다</button><button class="opt" style="flex:1 1 80px;min-height:48px">답답하다</button><button class="opt" style="flex:1 1 80px;min-height:48px">지루하다</button><button class="opt" style="flex:1 1 80px;min-height:48px">어렵다</button></div>
     <div class="label" style="margin:0">제일 헤맨 홀은</div><div class="row sv" data-q="hardest" id="svHoles"></div>
     <div class="label" style="margin:0">공 세 개, 차이가 느껴졌나요</div><div class="row sv" data-q="balls"><button class="opt" style="flex:1 1 90px;min-height:48px">확실히</button><button class="opt" style="flex:1 1 90px;min-height:48px">조금</button><button class="opt" style="flex:1 1 90px;min-height:48px">모르겠다</button><button class="opt" style="flex:1 1 90px;min-height:48px">일반공만 쳤다</button></div>
@@ -280,6 +348,7 @@ html[lang=th] .t-small{letter-spacing:2px}
   </div>
   <button class="btn" id="again">다시 치기</button>
   <button class="btn ghost" id="home">코스 고르기로</button>
+  <button class="btn ghost" id="newsBox" type="button">📰 내 신문 보관함</button>
 </div>
 
 <div class="screen" id="payScreen" hidden>
@@ -908,7 +977,7 @@ function audioWake(){ try{ if(AC && AC.state!=='running' && AC.state!=='closed')
 // 소리 설정(폰에 저장, 처음엔 둘 다 켜짐): 배경 소리 = 새·물·바람, 효과음 = 치는 소리·캐디 목소리
 const SND=(()=>{ try{ return Object.assign({amb:1,sfx:1}, JSON.parse(localStorage.getItem('opg_snd')||'{}')); }catch(e){ return {amb:1,sfx:1}; } })();
 function sndApply(){ if(SFX) SFX.gain.value=SND.sfx?1:0; if(AMBB) AMBB.gain.value=SND.amb?1:0; try{ localStorage.setItem('opg_snd',JSON.stringify(SND)); }catch(e){} sndLabels(); }
-function sndLabels(){ const a=document.getElementById('pAmb'), b=document.getElementById('pSfx'); if(a) a.textContent=tr(SND.amb?'배경 소리 켜짐':'배경 소리 꺼짐'); if(b) b.textContent=tr(SND.sfx?'효과음 켜짐':'효과음 꺼짐'); if(a) a.setAttribute('aria-pressed',SND.amb?'true':'false'); if(b) b.setAttribute('aria-pressed',SND.sfx?'true':'false'); }
+function sndLabels(){ const a=document.getElementById('pAmb'), b=document.getElementById('pSfx'); if(a) a.textContent=(SND.amb?'🔊 ':'🔇 ')+tr(SND.amb?'배경 소리 켜짐':'배경 소리 꺼짐'); if(b) b.textContent=(SND.sfx?'🔊 ':'🔇 ')+tr(SND.sfx?'효과음 켜짐':'효과음 꺼짐'); if(a) a.setAttribute('aria-pressed',SND.amb?'true':'false'); if(b) b.setAttribute('aria-pressed',SND.sfx?'true':'false'); }
 function audioInit(){ if(AC){ audioWake(); loadCupBuf(); voiceLoad(); ambLoad(); return; } try{ AC=new (window.AudioContext||window.webkitAudioContext)(); SFX=AC.createGain(); SFX.connect(AC.destination); AMBB=AC.createGain(); AMBB.connect(AC.destination); sndApply(); const buf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1); const src=AC.createBufferSource(); src.buffer=buf; src.loop=true; const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=600; rollGain=AC.createGain(); rollGain.gain.value=0; src.connect(f); f.connect(rollGain); rollGain.connect(SFX); src.start(); loadCupBuf(); voiceLoad(); ambLoad(); }catch(e){ AC=null; } }
 function tone(freq,dur,type,vol){ if(!AC) return; const o=AC.createOscillator(), g=AC.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(freq,AC.currentTime); g.gain.setValueAtTime(vol||0.2,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur); o.connect(g); g.connect(SFX); o.start(); o.stop(AC.currentTime+dur); }
 function noiseBurst(dur,vol,hp){ if(!AC) return; const n=Math.floor(AC.sampleRate*dur), b=AC.createBuffer(1,n,AC.sampleRate), d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
@@ -1121,6 +1190,7 @@ addEventListener('pagehide',saveResume); document.addEventListener('visibilitych
 // 폰의 뒤로 가기: 치는 중이면 잠깐 쉬기를 열고, 쉬는 중이면 닫는다. 연습·설명 화면에서는 코스 고르기로 돌아간다.
 function guardBack(){ try{ history.pushState({pg:1},''); }catch(e){} }
 function handleBack(){
+  if(ArinPaper.isOpen()){ ArinPaper.back(); guardBack(); return true; }
   if(!$('pause').hidden){ $('pause').hidden=true; guardBack(); return true; }
   if(!$('lessonDone').hidden){ $('lessonDone').hidden=true; showJourney(); guardBack(); return true; }
   if(playing() || !$('holeDone').hidden){ openPause(); guardBack(); return true; }
@@ -1247,8 +1317,168 @@ const NOTI_TEMPLATE='today-parkgolf-newcourse';
 function askNewCourseAlarm(){ const N=AIT&&AIT.Notification&&AIT.Notification.requestAgreement; if(!aitOk(N)) return; try{ if(localStorage.getItem('opg_noti_asked')) return; }catch(e){ return; }
   try{ const off=N({options:{templateCode:NOTI_TEMPLATE}, onEvent:r=>{ try{ localStorage.setItem('opg_noti_asked',r&&r.type||'1'); }catch(e){} PT.event('noti_agree',{r:r&&r.type}); try{ off&&off(); }catch(e){} }, onError:e=>{ PT.event('noti_err',{m:String(e&&e.message||e).slice(0,60)}); try{ off&&off(); }catch(e2){} } }); }catch(e){} }
 function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; $('lessonDone').hidden=false; return; }
-  say(12,0.6); if(S.mode!=='practice') say(13,1.2); if(S.mode==='bonus'){ const b=bonusState()||{date:TODAY,course:COURSE.key}; b.strokes=S.strokes.slice(); b.ball=S.ball; bonusSave(b); } $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); } if(S.mode==='today') setTimeout(askNewCourseAlarm,2500);
+  say(12,0.6); if(S.mode!=='practice') say(13,1.2); if(S.mode==='bonus'){ const b=bonusState()||{date:TODAY,course:COURSE.key}; b.strokes=S.strokes.slice(); b.ball=S.ball; bonusSave(b); } $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); let prevBest=null; if(S.mode==='today'){ const r0=loadRounds(), ds=Object.keys(r0).filter(d=>d!==TODAY&&r0[d]&&r0[d].strokes); if(ds.length) prevBest=Math.min(...ds.map(d=>r0[d].strokes.reduce((a,b)=>a+b,0))); } if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); } if(S.mode==='today'){ const st=S.strokes.slice(), wx=S.wx; setTimeout(()=>{ if(!showNews(st,prevBest,wx,()=>setTimeout(askNewCourseAlarm,600))) setTimeout(askNewCourseAlarm,1600); },900); }
   showCard(S.mode==='today'||S.mode==='bonus'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
+const ArinPaper=(()=>{
+  let ac=null, dst=null, hook=null, layer, paper, press, stampEl, btns, saved, cur=null, pressN=null;
+  const A=()=>{ const h=hook&&hook(); if(h&&h.ctx){ac=h.ctx;dst=h.out||null} if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}} if(ac&&ac.state!=='running'&&ac.state!=='closed'){try{ac.resume()}catch(e){}} return ac };
+  const D=c=>dst||c.destination;
+  const nb=(c,s)=>{const b=c.createBuffer(1,c.sampleRate*s,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b};
+  function pressOn(){const c=A();if(!c)return;const g=c.createGain();g.gain.value=0;g.connect(D(c));g.gain.linearRampToValueAtTime(.5,c.currentTime+.3);
+    const o=c.createOscillator();o.type='sawtooth';o.frequency.value=48;const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=220;const og=c.createGain();og.gain.value=.25;o.connect(lp);lp.connect(og);og.connect(g);o.start();
+    const t0=c.currentTime,cl=[];for(let i=0;i<34;i++){const s=c.createBufferSource();s.buffer=nb(c,.06);const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=i%2?900:1500;bp.Q.value=2;
+      const sg=c.createGain();sg.gain.setValueAtTime(.7,t0+i*.11);sg.gain.exponentialRampToValueAtTime(.001,t0+i*.11+.06);s.connect(bp);bp.connect(sg);sg.connect(g);s.start(t0+i*.11);cl.push(s)}
+    pressN={g,o,cl}}
+  function pressOff(){const c=A();if(!c||!pressN)return;const n=pressN;pressN=null;n.g.gain.cancelScheduledValues(c.currentTime);n.g.gain.setValueAtTime(n.g.gain.value,c.currentTime);n.g.gain.linearRampToValueAtTime(0,c.currentTime+.25);
+    setTimeout(()=>{try{n.o.stop();n.cl.forEach(s=>{try{s.stop()}catch(e){}})}catch(e){}},400)}
+  function thud(){const c=A();if(!c)return;const t=c.currentTime;const o=c.createOscillator();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(40,t+.18);
+    const g=c.createGain();g.gain.setValueAtTime(.9,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.connect(g);g.connect(D(c));o.start(t);o.stop(t+.3)}
+  function stampS(){const c=A();if(!c)return;const t=c.currentTime;const s=c.createBufferSource();s.buffer=nb(c,.08);const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=1200;
+    const g=c.createGain();g.gain.setValueAtTime(1,t);g.gain.exponentialRampToValueAtTime(.001,t+.08);s.connect(f);f.connect(g);g.connect(D(c));s.start(t);
+    const o=c.createOscillator();o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(70,t+.1);const og=c.createGain();og.gain.setValueAtTime(.6,t);og.gain.exponentialRampToValueAtTime(.001,t+.12);o.connect(og);og.connect(D(c));o.start(t);o.stop(t+.15)}
+  const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+  const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const today=()=>{const d=new Date();return d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 '+'일월화수목금토'[d.getDay()]+'요일'};
+
+  function build(){
+    if(layer)return;
+    layer=document.createElement('div');layer.className='ap-layer';
+    layer.innerHTML='<div class="ap-press"></div><div class="ap-paper"></div><div class="ap-btns"><button class="ap-close-b">닫기</button><button class="ap-keep">소장하기</button></div><div class="ap-saved"><img alt=""><p>보관함에 넣었어요<br>사진을 꾹 누르면 폰에 저장됩니다</p><button>확인</button></div>';
+    document.body.appendChild(layer);
+    press=layer.querySelector('.ap-press');paper=layer.querySelector('.ap-paper');btns=layer.querySelector('.ap-btns');saved=layer.querySelector('.ap-saved');
+    layer.querySelector('.ap-close-b').onclick=hide;
+    layer.querySelector('.ap-keep').onclick=keep;
+    saved.querySelector('button').onclick=hide;
+  }
+  function render(d,el){
+    el.innerHTML='<div class="ap-mast">'+(d.theme==='noir'?'<div class="ap-hoe">號外</div>':'')+'<div class="ap-name">'+esc(d.masthead)+'</div><div class="ap-line"><span>'+esc(d.date)+'</span><span>아린플레이 발행</span></div></div>'
+      +'<div class="ap-head">'+esc(d.headline)+'</div>'
+      +(d.sub?'<div class="ap-sub">'+esc(d.sub)+'</div>':'')
+      +'<div class="ap-photo">'+(d.photo?'':'오늘의 한 장면')+'</div>'
+      +(d.body?'<div class="ap-body">'+esc(d.body)+'</div>':'')
+      +(d.card?cardHTML(d.card):'')
+      +(d.stats&&d.stats.length?'<div class="ap-stats">'+d.stats.map(s=>'<div>'+esc(s[0])+'<b'+(/★/.test(s[1])?' class="star"':'')+'>'+esc(s[1])+'</b></div>').join('')+'</div>':'')
+      ;
+    el.classList.toggle('has-card',!!d.card);
+    if(d.stamp){const st=document.createElement('div');st.className='ap-stamp';st.textContent=d.stamp;el.querySelector('.ap-photo').appendChild(st)}
+    if(d.photo){const ph=el.querySelector('.ap-photo');
+      if(typeof d.photo==='string'){const im=new Image();im.src=d.photo;ph.appendChild(im)}else{ph.appendChild(d.photo)}}
+  }
+  function cardHTML(c){
+    const n=c.score.length; let h='<table class="ap-card9"><tr><th>홀</th>';
+    for(let i=0;i<n;i++)h+='<th>'+(i+1)+'</th>'; h+='<th>합</th></tr><tr><th>기준</th>';
+    c.par.forEach(v=>h+='<td>'+v+'</td>'); h+='<td>'+c.par.reduce((a,b)=>a+b,0)+'</td></tr><tr><th>타수</th>';
+    c.score.forEach((v,i)=>h+='<td class="'+(v<c.par[i]?'u':'')+'">'+v+'</td>'); h+='<td>'+c.score.reduce((a,b)=>a+b,0)+'</td></tr></table>';
+    return h }
+  function show(d){
+    build(); A();
+    cur=Object.assign({date:today(),masthead:'아린 일보'},d);
+    render(cur,paper);
+    stampEl=paper.querySelector('.ap-stamp');
+    btns.classList.remove('on');saved.classList.remove('on');
+    layer.classList.add('on');const hc=(cur.card?' has-card':'')+(cur.theme?' t-'+cur.theme:'');paper.className='ap-paper'+hc;void paper.offsetWidth;
+    press.classList.add('on');pressOn();
+    setTimeout(()=>paper.classList.add('spin'),250);
+    setTimeout(()=>{pressOff();press.classList.remove('on');thud();vib(60);
+      paper.className='ap-paper'+hc;void paper.offsetWidth;paper.classList.add('thud');
+      if(stampEl)setTimeout(()=>{stampEl.classList.add('in');stampS();vib(40)},450);
+      setTimeout(()=>btns.classList.add('on'),1100);
+    },2300);
+  }
+  function hide(){if(!layer||!layer.classList.contains('on'))return;layer.classList.remove('on');pressOff();const f=cur&&cur.onClose;if(cur)cur.onClose=null;if(f)try{f()}catch(e){}}
+  function isOpen(){return !!((layer&&layer.classList.contains('on'))||document.querySelector('.ap-box.on'))}
+  function back(){const b=document.querySelector('.ap-box.on');if(b){b.classList.remove('on');return true}if(layer&&layer.classList.contains('on')){hide();return true}return false}
+
+  /* 소장용 그림(1080×1440) — 캔버스로 직접 그림 */
+  function wrap(ctx,text,x,y,maxW,lh,maxLines){const words=[...String(text)];let line='',lines=[];
+    for(const ch of words){const t=line+ch;if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=ch}else line=t}if(line)lines.push(line);
+    lines=lines.slice(0,maxLines);lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lh));return y+lines.length*lh}
+  async function toImage(d){
+    try{await Promise.all(['900 80px "Noto Serif KR"','700 40px "Noto Sans KR"','500 40px "Noto Sans KR"','800 40px "Noto Sans KR"'].map(f=>document.fonts.load(f,'가')));await document.fonts.ready}catch(e){}
+    const W=1080,H=1900,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#efe6cf');g.addColorStop(1,'#e2d4b0');x.fillStyle=g;x.fillRect(0,0,W,H);
+    const noir=d.theme==='noir', INK=noir?'#16130f':'#1d1a15', RED=noir?'#c8102e':'#b3261e';
+    if(noir){x.fillStyle='#e6dcc0';x.fillRect(0,0,W,H);x.fillStyle=INK;x.fillRect(0,0,W,280)}
+    x.fillStyle=noir?'#e6dcc0':INK;x.textAlign='center';x.font=(noir?'900 120px "Noto Serif KR"':'900 120px "Noto Serif KR"');x.fillText(d.masthead,W/2,150);
+    x.fillRect(50,180,W-100,6);x.fillRect(50,194,W-100,2);
+    x.textAlign='left';x.font='700 34px "Noto Sans KR"';x.fillText(d.date,56,245);x.textAlign='right';x.fillText('아린플레이 발행',W-56,245);x.fillRect(50,268,W-100,2);
+    if(noir){x.fillStyle=RED;x.fillRect(40,30,74,140);x.fillStyle='#fff';x.font='900 52px "Noto Serif KR"';x.textAlign='center';x.fillText('號',77,90);x.fillText('外',77,150)}
+    x.fillStyle=INK;
+    x.textAlign='left';x.font=(noir?'900 84px "Noto Serif KR"':'900 84px "Noto Serif KR"');let y=wrap(x,d.headline,56,370,W-112,100,3);
+    if(d.sub){x.fillStyle='#b3261e';x.fillRect(56,y-30,10,60);x.fillStyle='#1d1a15';x.font='700 44px "Noto Sans KR"';y=wrap(x,d.sub,82,y+14,W-140,56,2)+10}
+    const ph={x:56,y:y,w:W-112,h:(W-112)*(d.card?9/21:9/16)};x.fillStyle='#cfc3a3';x.fillRect(ph.x,ph.y,ph.w,ph.h);
+    const src=d.photo;if(src){try{let img=src;if(typeof src==='string'){img=new Image();img.src=src;await img.decode()}
+      x.save();x.filter=noir?'contrast(1.2)':'grayscale(1) contrast(1.15) sepia(.25)';x.drawImage(img,ph.x,ph.y,ph.w,ph.h);x.restore()}catch(e){}}
+    else{x.fillStyle='#5a5140';x.font='700 40px "Noto Sans KR"';x.textAlign='center';x.fillText('오늘의 한 장면',W/2,ph.y+ph.h/2+14);x.textAlign='left'}
+    x.lineWidth=4;x.strokeStyle='#1d1a15';x.strokeRect(ph.x,ph.y,ph.w,ph.h);
+    if(d.stamp){x.save();x.translate(ph.x+ph.w-190,ph.y+ph.h-80);x.rotate(-.21);x.strokeStyle='#b3261e';x.fillStyle='rgba(239,230,207,.8)';x.lineWidth=10;
+      x.font='900 100px "Noto Serif KR"';const tw=x.measureText(d.stamp).width;x.fillRect(-tw/2-24,-88,tw+48,120);x.strokeRect(-tw/2-24,-88,tw+48,120);
+      x.fillStyle='#b3261e';x.textAlign='center';x.fillText(d.stamp,0,8);x.restore();x.textAlign='left'}
+    y=ph.y+ph.h+60;
+    x.fillStyle='#1d1a15';if(d.body){x.font='500 40px "Noto Sans KR"';y=wrap(x,d.body,56,y,W-112,58,3)+10}
+    if(d.card){const c=d.card,n=c.score.length,cw=(W-112)/(n+3),rh=58;x.lineWidth=3;x.textAlign='center';
+      const rows=[['홀',[...Array(n).keys()].map(i=>i+1),'합'],['기준',c.par,c.par.reduce((a,b)=>a+b,0)],['타수',c.score,c.score.reduce((a,b)=>a+b,0)]];
+      rows.forEach((r,ri)=>{const cells=[r[0],...r[1],r[2]];cells.forEach((v,ci)=>{const w=ci===0?cw*2:cw,bx=ci===0?56:56+cw*(ci+1);
+        x.strokeRect(bx,y+ri*rh,w,rh);x.font=(ri===0||ci===0?'700 26px':'800 32px')+' "Noto Sans KR"';
+        x.fillStyle=(ri===2&&ci>0&&ci<=n&&c.score[ci-1]<c.par[ci-1])?'#b3261e':'#1d1a15';x.fillText(String(v),bx+w/2,y+ri*rh+40)})});
+      x.fillStyle='#1d1a15';x.textAlign='left';y+=rh*3+24}
+    if(d.stats&&d.stats.length){const n=d.stats.length,bw=(W-112-(n-1)*16)/n;d.stats.forEach((s,i)=>{const bx=56+i*(bw+16);
+      if(noir){x.fillStyle=INK;x.fillRect(bx,y,bw,130);x.fillStyle='#e6dcc0'}else{x.strokeRect(bx,y,bw,130)}
+      x.textAlign='center';x.font='700 32px "Noto Sans KR"';x.fillText(s[0],bx+bw/2,y+48);
+      x.fillStyle=noir?(/★/.test(s[1])?'#ffcf3a':'#fff'):INK;x.font='800 54px "Noto Sans KR"';x.fillText(s[1],bx+bw/2,y+110);x.fillStyle=INK});x.textAlign='left';y+=150}
+    const Hf=Math.min(H,Math.max(1200,Math.ceil(y+60)));const o=document.createElement('canvas');o.width=W;o.height=Hf;
+    const ox=o.getContext('2d');ox.drawImage(c,0,0);
+    return o.toDataURL('image/jpeg',.9);
+  }
+  const KEY=id=>'arin_paper_box_'+id;
+  function load(id){try{return JSON.parse(localStorage.getItem(KEY(id))||'[]')}catch(e){return[]}}
+  async function keep(){
+    const d=cur;const list=load(d.gameId||'all');
+    list.unshift({date:d.date,masthead:d.masthead,headline:d.headline,sub:d.sub,body:d.body,stats:d.stats,card:d.card,stamp:d.stamp,photo:typeof d.photo==='string'&&d.photo.length<80000?d.photo:null,t:Date.now()});
+    try{localStorage.setItem(KEY(d.gameId||'all'),JSON.stringify(list.slice(0,40)))}catch(e){}
+    stampS();vib(40);
+    saved.querySelector('img').src=await toImage(d);btns.classList.remove('on');saved.classList.add('on');
+  }
+  function openBox(id){
+    A();let box=document.querySelector('.ap-box');
+    if(!box){box=document.createElement('div');box.className='ap-box';box.innerHTML='<h2>📰 내 신문 보관함</h2><div class="ap-list"></div><button class="ap-close">닫기</button>';
+      document.body.appendChild(box);box.querySelector('.ap-close').onclick=()=>box.classList.remove('on')}
+    const list=load(id),el=box.querySelector('.ap-list');
+    el.innerHTML=list.length?list.map((p,i)=>'<div class="ap-card" data-i="'+i+'"><div class="d">'+esc(p.date)+'</div><div class="h">'+esc(p.headline)+'</div>'+(p.stamp?'<div class="s">'+esc(p.stamp)+'</div>':'')+'</div>').join('')
+      +(list.length>4?'<div class="ap-more">아래로 내리면 더 있어요</div>':''):'<div class="ap-empty">아직 소장한 신문이 없어요<br>게임을 마치고 「소장하기」를 눌러 보세요</div>';
+    el.querySelectorAll('.ap-card').forEach(c=>c.onclick=()=>{box.classList.remove('on');show(Object.assign({gameId:id},list[+c.dataset.i]))});
+    box.classList.add('on');
+  }
+  return {show,openBox,toImage,isOpen,back,setAudio:f=>{hook=f}};
+})();
+
+
+// 결과 신문 「파크골프 일보」 — 오늘의 코스를 다 치면 그날 기록을 스포츠면 기사 한 장으로(공용 아린 신문 모듈, 2026-11-14 대표 지시)
+// 홀인원은 특별 취급하지 않음. 「신기록」 도장은 이 코스 개인 최고 기록을 깼을 때만(첫 라운드는 그대로 최고 기록). 태국어판은 아직 건너뜀.
+ArinPaper.setAudio(()=>{ audioInit(); return {ctx:AC, out:SFX}; });
+const NEWS_PH={trophy:['art/news_trophy1.webp','art/news_trophy2.webp','art/news_trophy3.webp'], play:['art/news_play1.webp','art/news_play2.webp']};
+function newsPick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function newsIga(w){ const c=w.charCodeAt(w.length-1)-0xAC00; return w+((c>=0&&c%28)?'이':'가'); }
+function showNews(strokes,prevBest,wx,onClose){
+  if(window.LANG==='th' || !strokes || strokes.length!==HOLES.length || strokes.some(v=>!(v>0))) return false;
+  const par=HOLES.map(h=>h.par), total=strokes.reduce((a,b)=>a+b,0), P=par.reduce((a,b)=>a+b,0), diff=total-P, isBest=prevBest==null||total<prevBest;
+  const nm=COURSE.name, nh=HOLES.length+'홀', dtxt=diff<0?(-diff)+'언더':diff===0?'이븐':diff+'오버';
+  let hb=null; strokes.forEach((v,i)=>{ const g=par[i]-v; if(g>0&&(!hb||g>hb.g)) hb={i,g,v}; });
+  const word=hb?(hb.v===1?'홀인원':hb.g>=3?'알바트로스':hb.g===2?'이글':'버디'):'';
+  const headline = isBest
+    ? newsPick([nm+' '+nh+' '+total+'타… 개인 최고 기록 새로 써', nm+'에서 '+total+'타, 내 최고 기록 갈아 치워', nh+' '+total+'타('+dtxt+') — '+nm+'에서 신기록'])
+    : newsPick([nm+' '+nh+' '+total+'타로 마쳐', nm+' 한 바퀴 '+total+'타, '+dtxt+'로 끝내', '오늘 '+nm+' '+nh+' '+total+'타']);
+  const sub = isBest ? (prevBest==null?'첫 라운드 기록이 그대로 최고 기록으로':'종전 최고 '+prevBest+'타에서 '+(prevBest-total)+'타 줄여') : '최고 기록('+prevBest+'타)까지 '+(total-prevBest)+'타 남아';
+  const WXL={clear:'맑은 하늘 아래 치른 라운드. ',rain:'비 온 뒤 젖은 잔디에서 치른 라운드. ',wind:'바람 부는 날 치른 라운드. ',leaf:'낙엽 깔린 코스에서 치른 라운드. ',frost:'서리 내린 코스에서 치른 라운드. '};
+  const body=(WXL[wx]||'')+(hb?(hb.i+1)+'번 홀 '+newsIga(word)+' 이날의 장면이었다. ':'')
+    +(isBest?'흔들림 없이 타수를 지켜 기록을 새로 썼다.':'큰 실수 없이 '+nh+'을 마쳤다. 다음 라운드가 기대된다.');
+  ArinPaper.show({gameId:'parkgolf', masthead:'파크골프 일보', headline, sub, body,
+    photo:newsPick((strokes.includes(1)||isBest)?NEWS_PH.trophy:NEWS_PH.play), card:{par,score:strokes}, stamp:isBest?'신기록':null, onClose});
+  PT.event('news',{c:COURSE.key, total, best:isBest?1:0});
+  return true; }
+$('newsBox').onclick=()=>{ PT.event('news_box',{}); ArinPaper.openBox('parkgolf'); };
+if(window.LANG==='th') $('newsBox').hidden=true;
+
 function showCard(practice){
   const rounds=loadRounds(); const today=rounds[TODAY], yday=rounds[YDAY]; const dates=Object.keys(rounds).sort();
   const best=HOLES.map((h,i)=> dates.length? Math.min(...dates.map(d=>rounds[d].strokes[i])) : null);
@@ -1544,7 +1774,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v67', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v68', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
@@ -1554,7 +1784,7 @@ const SV={}; let svDone=false;
 function showSurvey(){ if(svDone || window.AIT || !/[?&]survey\b/.test(location.search)) return; $('svHoles').innerHTML=HOLES.map(h=>'<button class="opt" style="flex:1 1 44px;min-height:48px">'+h.n+'</button>').join('')+'<button class="opt" style="flex:1 1 70px;min-height:48px">없음</button>';
   document.querySelectorAll('#survey .sv').forEach(row=>{ row.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ row.querySelectorAll('.opt').forEach(x=>x.classList.remove('on')); b.classList.add('on'); SV[row.dataset.q]=b.dataset.ko||b.textContent; }); });
   $('survey').hidden=false; }
-$('svSend').onclick=()=>{ const ans=Object.assign({name:$('svName').value.trim().slice(0,30), note:$('svNote').value.trim().slice(0,1500), course:COURSE.key}, SV);
+$('svSend').onclick=()=>{ const ans=Object.assign({note:$('svNote').value.trim().slice(0,1500), course:COURSE.key}, SV);
   $('svSend').disabled=true; $('svMsg').textContent='보내는 중…';
   PT.survey('end',ans).then(ok=>{ if(ok){ svDone=true; $('survey').hidden=true; $('svMsg').textContent=''; msg('고마워요. 잘 받았습니다.'); $('endSub').textContent='설문 잘 받았습니다. 고마워요.'; }
     else { $('svSend').disabled=false; const txt='[오늘의 파크골프 설문] '+Object.entries(ans).map(([k,v])=>k+': '+v).join(' / ');
@@ -1574,7 +1804,7 @@ function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; docu
   S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; S.jSel=null; guardBack(); showJourney(); PT.event('title_go',{}); }
 $('title').addEventListener('click',leaveTitle);
 S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loop);
-if(/[?&]sim\b/.test(location.search)) window.__pg={S,askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
+if(/[?&]sim\b/.test(location.search)) window.__pg={S,finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
 })();
 </script>
 
