@@ -1337,7 +1337,7 @@ function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson
   say(12,0.6); if(S.mode!=='practice') say(13,1.2); if(S.mode==='bonus'){ const b=bonusState()||{date:TODAY,course:COURSE.key}; b.strokes=S.strokes.slice(); b.ball=S.ball; bonusSave(b); } $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); let prevBest=null; if(S.mode==='today'){ const r0=loadRounds(), ds=Object.keys(r0).filter(d=>d!==TODAY&&r0[d]&&r0[d].strokes); if(ds.length) prevBest=Math.min(...ds.map(d=>r0[d].strokes.reduce((a,b)=>a+b,0))); } if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); } if(S.mode==='today'){ const st=S.strokes.slice(), wx=S.wx; setTimeout(()=>{ if(!showNews(st,prevBest,wx,()=>setTimeout(askNewCourseAlarm,600))) setTimeout(askNewCourseAlarm,1600); },900); }
   showCard(S.mode==='today'||S.mode==='bonus'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
 const ArinPaper=(()=>{
-  let ac=null, dst=null, hook=null, layer, paper, press, stampEl, btns, saved, cur=null, pressN=null;
+  let ac=null, dst=null, hook=null, saver=null, layer, paper, press, stampEl, btns, saved, cur=null, pressN=null;
   const A=()=>{ const h=hook&&hook(); if(h&&h.ctx){ac=h.ctx;dst=h.out||null} if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}} if(ac&&ac.state!=='running'&&ac.state!=='closed'){try{ac.resume()}catch(e){}} return ac };
   const D=c=>dst||c.destination;
   const nb=(c,s)=>{const b=c.createBuffer(1,c.sampleRate*s,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b};
@@ -1454,7 +1454,9 @@ const ArinPaper=(()=>{
     list.unshift({date:d.date,masthead:d.masthead,headline:d.headline,sub:d.sub,body:d.body,stats:d.stats,card:d.card,stamp:d.stamp,photo:typeof d.photo==='string'&&d.photo.length<80000?d.photo:null,t:Date.now()});
     try{localStorage.setItem(KEY(d.gameId||'all'),JSON.stringify(list.slice(0,40)))}catch(e){}
     stampS();vib(40);
-    saved.querySelector('img').src=await toImage(d);btns.classList.remove('on');saved.classList.add('on');
+    const url=await toImage(d); saved.querySelector('img').src=url; const pEl=saved.querySelector('p'); pEl.innerHTML='보관함에 넣었어요<br>사진을 꾹 누르면 폰에 저장됩니다';
+    if(saver){ try{ const ok=await saver(url,d); if(ok) pEl.innerHTML='보관함에 넣고<br>폰에도 저장했어요'; }catch(e){} }
+    btns.classList.remove('on');saved.classList.add('on');
   }
   function openBox(id){
     A();let box=document.querySelector('.ap-box');
@@ -1466,13 +1468,17 @@ const ArinPaper=(()=>{
     el.querySelectorAll('.ap-card').forEach(c=>c.onclick=()=>{box.classList.remove('on');show(Object.assign({gameId:id},list[+c.dataset.i]))});
     box.classList.add('on');
   }
-  return {show,openBox,toImage,isOpen,back,setAudio:f=>{hook=f}};
+  return {show,openBox,toImage,isOpen,back,setAudio:f=>{hook=f},setSaver:f=>{saver=f}};
 })();
 
 
 // 결과 신문 「파크골프 일보」 — 오늘의 코스를 다 치면 그날 기록을 스포츠면 기사 한 장으로(공용 아린 신문 모듈, 2026-11-14 대표 지시)
 // 홀인원은 특별 취급하지 않음. 「신기록」 도장은 이 코스 개인 최고 기록을 깼을 때만(첫 라운드는 그대로 최고 기록). 태국어판은 아직 건너뜀.
 ArinPaper.setAudio(()=>{ audioInit(); return {ctx:AC, out:SFX}; });
+// 토스 안에서는 사진 꾹 눌러 저장이 막혀 있음(v73) → 소장하기를 누르면 토스 저장 기능(File.saveBase64)으로 폰에 바로 저장
+ArinPaper.setSaver(async (url)=>{ const F=AIT&&AIT.File; if(!F||typeof F.saveBase64!=='function'||(F.saveBase64.isSupported&&!F.saveBase64.isSupported())) return false;
+  const d=new Date(), nm='parkgolf_'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'.jpg';
+  await F.saveBase64({data:url.split(',')[1], fileName:nm, mimeType:'image/jpeg'}); PT.event('news_save',{}); return true; });
 const NEWS_PH={trophy:['art/news_trophy1.webp','art/news_trophy2.webp','art/news_trophy3.webp'], play:['art/news_play1.webp','art/news_play2.webp']};
 function newsPick(a){ return a[Math.floor(Math.random()*a.length)]; }
 function newsIga(w){ const c=w.charCodeAt(w.length-1)-0xAC00; return w+((c>=0&&c%28)?'이':'가'); }
@@ -1799,7 +1805,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v72', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v73', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
