@@ -1139,7 +1139,7 @@ function bounce(p,v,nx,ny,qx,qy,b){ p.x=qx+nx*(R+WALL); p.y=qy+ny*(R+WALL); cons
   if(vn<0){ v.x-=(1+b.e)*vn*nx; v.y-=(1+b.e)*vn*ny; v.x*=0.97; v.y*=0.97; const s2=Math.hypot(v.x,v.y), cap=MAXV*1.15; if(s2>cap){ v.x*=cap/s2; v.y*=cap/s2; }
     if(-vn>40 && S.t-S.lastHit>0.12){ S.lastHit=S.t; S.fx.push({x:p.x,y:p.y,t:S.t,big:S.ball==='rubber'}); sndCurb(S.ball==='rubber'); if(-vn>MAXV*0.55 && S.shot && !S.shot.wall){ S.shot.wall=1; say(9); } } } }
 function shoot(sdx,sdy){ const len=Math.min(Math.hypot(sdx,sdy),MAXDRAG); if(len<16) return false; showHint(''); const k=len/MAXDRAG*MAXV; const gx=sdx, gy=sdy/S.cam.tilt; const ca=Math.cos(S.cam.a), sa=Math.sin(S.cam.a); const wx=gx*ca+gy*sa, wy=-gx*sa+gy*ca; const l=Math.hypot(wx,wy);
-  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
+  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; S.edgeHold=null; lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
 function pulseOnce(key,o){ let d={}; try{ d=JSON.parse(localStorage.getItem('opg_pulse')||'{}')||{}; }catch(e){} if(d[key]) return; if(PT.pulse(key,o)===false) return; d[key]=1; try{ localStorage.setItem('opg_pulse',JSON.stringify(d)); }catch(e){} }
 function holeOut(capped,quiet,voice){ if(S.holeOver) return; S.holeOver=true; S.moving=false; const h=H_(), s=S.strokes[S.hi], diff=s-h.par; if(!capped && !quiet) sndCup();
   if(!quiet||voice){ if(capped) say(8,0.2); else if(s===1) say(4,0.5); else if(diff<=-2) say(3,0.5); else if(diff<0) say(5,0.5); else if(diff===0) say(6,0.5); else say(7,0.5); }
@@ -1172,7 +1172,7 @@ function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0); if(!S.attrac
   else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; guardBack(); loadHole();
   if(res){ if(res.done){ S.intro=null; holeOut(false,true); } else if(res.pos){ S.pos={...res.pos}; S.lastSafe={...res.pos}; S.intro=null; camSnap(); updateHud(); } msg('하던 자리에서 이어 칩니다'); } }
-function loadHole(){ const h=H_(); S.fade={}; if(S.lookT){ S.look={x:0,y:0,z:1}; S.lookT={x:0,y:0,z:1}; } if(COURSE.lesson){ S.ball=h.ball; S.wx=h.wx; S.windDir=h.windDir; } showHint(COURSE.lesson&&!S.attract&&S.hi>0?h.hint:''); S.lastIn=null; S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
+function loadHole(){ const h=H_(); S.fade={}; S.edgeHold=null; if(S.lookT){ S.look={x:0,y:0,z:1}; S.lookT={x:0,y:0,z:1}; } if(COURSE.lesson){ S.ball=h.ball; S.wx=h.wx; S.windDir=h.windDir; } showHint(COURSE.lesson&&!S.attract&&S.hi>0?h.hint:''); S.lastIn=null; S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
   msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); saveResume(); if(!S.attract) PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
 // 남은 거리: 공에서 핀까지. 실제 구장은 티에서 안내판 거리와 같아지도록 맞춘다.
 function remain(){ const h=H_(), c=cup(); const tee=Math.hypot(c[0]-h.tee[0],c[1]-h.tee[1])*M_PER_PX; const k= h.m ? h.m/Math.max(tee,1) : 1; return Math.max(0,Math.round(Math.hypot(c[0]-S.pos.x,c[1]-S.pos.y)*M_PER_PX*k)); }
@@ -1753,14 +1753,22 @@ function render(){ const h=H_(), g=G(); ctx.fillStyle=THEME.rough; ctx.fillRect(
 // ---------- loop ----------
 let last=performance.now(), acc=0;
 // ===== 들어갈까요? (2026-11-09) — 공이 컵 가장자리로 굴러가면 느린 화면 + 카메라가 컵 쪽으로 다가감. 광고는 이 화면을 녹화
+// 카메라 맞추기(v69 고침): 컵이 화면 가운데(가로 한가운데·세로 46%)에 오게. 화면이 돌아가 있어도(퍼팅 카메라) 맞게 돌려서 계산하고,
+// 공이 화면 밖으로 나가지 않을 만큼만 다가간다. 공이 들어간 뒤에도 컵을 붙잡고 있다가 천천히 돌아온다.
+function edgeAim(c){ const a=S.cam.a||0, s=S.cam.s, tl=Math.max(0.3,S.cam.tilt), dx=S.pos.x-c[0], dy=S.pos.y-c[1];
+  const qx=Math.cos(a)*dx-Math.sin(a)*dy, qy=(Math.sin(a)*dx+Math.cos(a)*dy)*tl, dp=Math.max(1e-3,Math.hypot(qx,qy));
+  const Z=Math.max(1.0,Math.min(1.7, 0.4*Math.min(W,H)/(s*dp)));
+  S.edgeHold={c:[c[0],c[1]], z:Z}; }
+function edgePin(){ const h=S.edgeHold; if(!h||!S.lookT) return; const a=S.cam.a||0, tl=Math.max(0.3,S.cam.tilt), vy=(H*0.46-S.cam.sy)/(S.cam.s*h.z*tl);
+  S.lookT.x=h.c[0]-vy*Math.sin(a)-S.cam.x; S.lookT.y=h.c[1]-vy*Math.cos(a)-S.cam.y; S.lookT.z=h.z; S.lookHold=0; }
 function edgeWatch(){ if(!S.lookT) return;
-  if(!S.moving||S.holeOver||S.attract||S.intro){ if(S.edge) edgeEnd(S.holeOver?1300:600); return; }
+  if(!S.moving||S.holeOver||S.attract||S.intro){ if(S.edge) edgeEnd(S.holeOver?1300:600); edgePin(); return; }
   const c=cup(), dx=c[0]-S.pos.x, dy=c[1]-S.pos.y, d=Math.hypot(dx,dy), v=S.vel, sp=Math.hypot(v.x,v.y);
   if(!S.edge && !S.edgeUsed && S.strokes[S.hi]<=2 && d<64 && d>CUP_R*1.3 && sp>10 && sp<CAP_V*2.6){
     const t=Math.max(0,(dx*v.x+dy*v.y)/(sp*sp)), ex=S.pos.x+v.x*t-c[0], ey=S.pos.y+v.y*t-c[1];
     if(t<1.4 && Math.hypot(ex,ey)<CUP_R*1.5){ S.edge={t0:performance.now()}; S.edgeUsed=true; PT.event('edge_moment',{c:COURSE.key,h:S.hi+1,s:S.strokes[S.hi]}); } }
-  if(S.edge){ const Z=1.7, gy=(S.cam.sy-H*0.46)/(S.cam.s*Z*Math.max(0.3,S.cam.tilt)); S.lookT.x=(S.pos.x*0.35+c[0]*0.65)-S.cam.x; S.lookT.y=(S.pos.y*0.35+c[1]*0.65)+gy-S.cam.y; S.lookT.z=Z; S.lookHold=0; if(d>90||performance.now()-S.edge.t0>6000) edgeEnd(500); } }
-function edgeEnd(ms){ S.edge=null; clearTimeout(S.edgeT); S.edgeT=setTimeout(()=>{ if(!S.edge && !S.drag) lookReset(); }, ms||600); }
+  if(S.edge){ edgeAim(c); edgePin(); if(d>90||performance.now()-S.edge.t0>6000) edgeEnd(500); } }
+function edgeEnd(ms){ S.edge=null; clearTimeout(S.edgeT); S.edgeT=setTimeout(()=>{ S.edgeHold=null; if(!S.edge && !S.drag) lookReset(); }, ms||600); }
 function drawEdge(){ if(!S.edge) return; const k=Math.min(1,(performance.now()-S.edge.t0)/300); const g=ctx.createRadialGradient(W/2,H*0.45,Math.min(W,H)*0.25,W/2,H*0.45,Math.max(W,H)*0.7);
   g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,'+(0.5*k)+')'); ctx.save(); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.restore(); }
 function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; edgeWatch(); acc+=dt*(S.edge?0.3:1); const h=H_();
@@ -1786,7 +1794,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v69', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v70', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
