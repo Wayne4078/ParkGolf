@@ -1164,15 +1164,15 @@ function todayWeather(){ return playedDays()<3 ? 'clear' : dailyWeather(TODAY); 
 function todayPins(){ return playedDays()<3 ? HOLES.map(()=>0) : dailyPins(TODAY); }
 function setupToday(){ $('courseSub').textContent=COURSE.sub;
   if(COURSE.lesson){ $('todayLine').textContent='배우는 코스 · 세 단계'; $('todayNote').textContent='치는 법 → 코르크공과 바람 → 고무공'; $('goToday').disabled=false; $('goToday').textContent='배우기 시작'; $('ballRow').hidden=true; $('ballNote').hidden=true; $('goPractice').hidden=true; return; }
-  $('ballRow').hidden=false; $('ballNote').hidden=false; $('goPractice').hidden=false; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins();
+  $('ballRow').hidden=false; $('ballNote').hidden=false; { const bp=S.ballPick||'normal'; document.querySelectorAll('#ballRow .opt').forEach(x=>{ x.classList.toggle('on',x.dataset.ball===bp); if(x.dataset.ball===bp) $('ballNote').textContent=x.dataset.note; }); } $('goPractice').hidden=false; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins();
   const rounds=loadRounds(); const played=rounds[TODAY]; $('todayLine').textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일 · '+WX[S.wx].name;
   if(played){ $('todayNote').textContent='오늘 라운드는 쳤어요 · '+played.strokes.reduce((a,b)=>a+b,0)+'타 ('+BALLS[played.ball].name+')'; $('goToday').disabled=true; $('goToday').textContent='오늘의 라운드 (완료)'; if(bonusAvail()){ $('goToday').disabled=false; $('goToday').textContent='🎬 광고 보고 한 판 더'; $('todayNote').textContent+=' · 세 코스 다 치셨어요! 오늘 한 번 더 칠 수 있어요'; } }
   else { const rs=loadResume(); $('todayNote').textContent= rs ? (rs.hi+1)+'번 홀에서 멈추셨어요 · 지금 '+rs.strokes.reduce((a,b)=>a+b,0)+'타' : WX[S.wx].line;
     if(rs){ $('ballRow').hidden=true; $('ballNote').textContent='처음 고른 '+BALLS[rs.ball].name+'으로 이어 칩니다'; } $('goToday').disabled=false; $('goToday').textContent= rs ? '오늘의 라운드 이어 치기' : '오늘의 라운드'; }
   $('showCard').hidden=Object.keys(rounds).length===0; }
 function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0); if(!S.attract && !COURSE.range){ try{ localStorage.setItem('opg_last_course',COURSE.key); }catch(e){} }
-  let res=null; if(mode==='range'){ S.hi=0; S.pins=HOLES.map(()=>Math.floor(Math.random()*3)); rangeWeather(); } else if(mode==='bonus'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); } else if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } }
-  else { S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
+  let res=null; if(mode==='range'){ S.ball=S.ballPick||'normal'; S.hi=0; S.pins=HOLES.map(()=>Math.floor(Math.random()*3)); rangeWeather(); } else if(mode==='bonus'){ S.ball=S.ballPick||'normal'; S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); } else if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } else if(!COURSE.lesson) S.ball=S.ballPick||'normal'; }
+  else { S.ball=S.ballPick||'normal'; S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; guardBack(); loadHole();
   if(res){ if(res.done){ S.intro=null; holeOut(false,true); } else if(res.pos){ S.pos={...res.pos}; S.lastSafe={...res.pos}; S.intro=null; camSnap(); updateHud(); } msg('하던 자리에서 이어 칩니다'); } }
 function loadHole(){ const h=H_(); S.fade={}; S.edgeHold=null; if(S.lookT){ S.look={x:0,y:0,z:1}; S.lookT={x:0,y:0,z:1}; } if(COURSE.lesson){ S.ball=h.ball; S.wx=h.wx; S.windDir=h.windDir; } showHint(COURSE.lesson&&!S.attract&&S.hi>0?h.hint:''); S.lastIn=null; S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
@@ -1538,7 +1538,7 @@ const pick=(sel,attr,fn)=>{ for(const b of document.querySelectorAll(sel)) b.onc
 function buildHoleRow(){ $('holeRow').innerHTML=HOLES.map((h,i)=>'<button class="opt'+(i===0?' on':'')+'" data-hole="'+i+'" style="flex:1 1 60px;min-height:48px">'+h.n+'번</button>').join(''); S.startHole=0; pick('#holeRow .opt','hole',v=>S.startHole=+v); }
 function setCourse(k){ applySeason(k); COURSE=COURSES[k]; HOLES=COURSE.holes; PAR=HOLES.reduce((a,h)=>a+h.par,0); buildHoleRow(); setupToday(); S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; }
 buildHoleRow();
-pick('#wxRow .opt','wx',v=>S.wx=v); pick('#pinRow .opt','pin',v=>S.pinChoice=+v); pick('#ballRow .opt','ball',v=>S.ball=v); pick('#courseRow .opt','course',v=>setCourse(v));
+pick('#wxRow .opt','wx',v=>S.wx=v); pick('#pinRow .opt','pin',v=>S.pinChoice=+v); pick('#ballRow .opt','ball',v=>{ S.ballPick=v; S.ball=v; }); pick('#courseRow .opt','course',v=>setCourse(v));
 
 // ---------- input ----------
 function pt(ev){ const r=cv.getBoundingClientRect(); return {x:(ev.clientX-r.left)*W/r.width, y:(ev.clientY-r.top)*H/r.height}; }
@@ -1805,7 +1805,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v73', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v74', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
@@ -1835,7 +1835,7 @@ function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; docu
   S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; S.jSel=null; guardBack(); showJourney(); PT.event('title_go',{}); }
 $('title').addEventListener('click',leaveTitle);
 S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loop);
-if(/[?&]sim\b/.test(location.search)) window.__pg={S,finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
+if(/[?&]sim\b/.test(location.search)) window.__pg={S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
 })();
 </script>
 
