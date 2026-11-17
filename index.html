@@ -215,6 +215,16 @@ html[lang=th] .t-small{letter-spacing:2px}
 .t-noir .ap-stats b.star{color:#ffcf3a;letter-spacing:2px}
 .t-noir .ap-stamp{color:#c8102e;border-color:#c8102e;background:rgba(230,220,192,.88)}
 
+
+/* 등급 표시(v75, 게임산업법 시행령 별표 3): 켤 때마다 3초 이상 — 이용등급(+부연설명) 화면 1/4 이상·오른쪽 위, 내용정보, 제명·상호·등급분류번호·제작연월일 */
+#rating{position:fixed;inset:0;z-index:9800;background:#16231a;color:#f3efe2;display:flex;flex-direction:column;padding:calc(var(--top) + 14px) 18px calc(env(safe-area-inset-bottom,0px) + 22px);box-sizing:border-box;font-family:'Noto Sans KR',sans-serif;transition:opacity .35s}
+#rating.off{opacity:0;pointer-events:none}
+#rating .rt-box{align-self:flex-end;width:min(76vw,360px);min-height:34vh;border:4px solid #f3efe2;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px 14px;text-align:center}
+#rating .rt-all{width:min(34vw,150px);height:min(34vw,150px);border-radius:50%;background:#2f9e4f;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:min(9vw,40px);letter-spacing:-1px}
+#rating .rt-grade{font-weight:800;font-size:min(8.5vw,36px)}
+#rating .rt-desc{font-weight:700;font-size:min(5vw,21px);line-height:1.4}
+#rating .rt-info{margin-top:auto;font-size:min(4.6vw,19px);line-height:1.7;font-weight:500}
+#rating .rt-info b{font-weight:800}
 </style>
 
 <div id="app">
@@ -224,6 +234,10 @@ html[lang=th] .t-small{letter-spacing:2px}
   <div class="hint" id="hint" hidden></div>
 </div>
 
+<div id="rating" role="dialog" aria-label="게임물 이용등급 안내">
+  <div class="rt-box"><div class="rt-all">전체</div><div class="rt-grade">전체이용가</div><div class="rt-desc">이 게임물은 누구나<br>이용할 수 있습니다</div></div>
+  <div class="rt-info"><b>내용정보</b> · 해당 없음 (선정성·폭력성·공포·언어·약물·범죄·사행성 없음)<br><b>제명</b> · 오늘의 파크골프<br><b>상호</b> · 아린게임즈<br><b>등급분류번호</b> · GC-SC-NM-261117-007<br><b>제작연월일</b> · 2026년 11월 17일</div>
+</div>
 <div id="title" hidden>
   <div class="t-top">
     <svg class="t-emblem" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#fff" stroke-width="2.5"/><ellipse cx="30" cy="47" rx="11" ry="3.6" fill="#fff" opacity=".9"/><ellipse cx="30" cy="47" rx="6" ry="2" fill="#1b2a16"/><path d="M30 47V14" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M31 14l15 5.5L31 25z" fill="#e23b2e"/></svg>
@@ -1805,7 +1819,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v74', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v75', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
@@ -1835,6 +1849,8 @@ function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; docu
   S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; S.jSel=null; guardBack(); showJourney(); PT.event('title_go',{}); }
 $('title').addEventListener('click',leaveTitle);
 S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loop);
+// 등급 표시: 켤 때마다 3초 이상 보여 준 뒤 사라짐(그 전에는 눌러도 안 넘어감)
+setTimeout(()=>{ const r=document.getElementById('rating'); if(r){ r.classList.add('off'); setTimeout(()=>r.remove(),400); } }, 3200);
 if(/[?&]sim\b/.test(location.search)) window.__pg={S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
 })();
 </script>
