@@ -28,6 +28,25 @@ html.ait{--top:calc(max(env(safe-area-inset-top,0px),var(--sat,0px)) + 40px)}
 .hudBtn:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .hud #hudL{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 #pause,#lessonDone,#adScreen,#payScreen{background:rgba(12,20,10,.62);z-index:8}
+/* 오늘의 슈퍼샷 (v78) */
+.btn.ss-go{background:#ffcf3a;color:#1d1a15;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2}
+.btn.ss-go small{font-size:16px;font-weight:700;opacity:.8}
+#ss{position:fixed;inset:0;z-index:7;background:var(--bg);display:flex;flex-direction:column;gap:8px;max-width:520px;margin:0 auto;box-sizing:border-box;touch-action:none;
+  padding:calc(var(--top) + 10px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(16px,env(safe-area-inset-left,0px))}
+#ss .hud{align-items:center}
+#ssName{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+#ssName small{font-size:17px;font-weight:700;color:var(--muted);margin-left:6px}
+#ssName .dot{display:inline-block;width:13px;height:13px;border-radius:50%;margin-right:4px;vertical-align:-1px;border:1.5px solid rgba(0,0,0,.35)}
+#ssTries{display:flex;gap:5px;align-items:center;font-size:17px;font-weight:700;color:var(--muted)}
+#ssTries i{width:14px;height:14px;border-radius:50%;background:var(--accent);display:block}
+#ssTries i.off{background:var(--line)}
+#ssStage{flex:1;min-height:0;position:relative}
+#ssCv{position:absolute;inset:0;width:100%;height:100%;border-radius:12px;touch-action:none;background:#f3f1ea}
+#ssHint{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(29,26,21,.78);color:#f3f1ea;font-size:19px;font-weight:700;padding:8px 16px;border-radius:10px;white-space:nowrap;pointer-events:none}
+#ssToast{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:var(--panel);color:var(--fg);border:2px solid var(--accent);font-size:21px;font-weight:800;padding:12px 20px;border-radius:16px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#ssToast.on{opacity:1}
+#ssEnd{background:rgba(12,20,10,.62);z-index:8}
+
 /* 소리 끄고 켜기 */ .sndRow{display:flex;gap:10px;width:min(92vw,420px)} .sndRow .btn{flex:1 1 0;min-width:0;font-size:18px;padding-left:6px;padding-right:6px} .sndRow .btn[aria-pressed=false]{opacity:.65;text-decoration:line-through}
 #lessonDone .pauseCard{display:flex;flex-direction:column;gap:6px}
 #pause .pauseCard{display:flex;flex-direction:column;gap:6px}
@@ -285,6 +304,7 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
   </div>
   <div class="ball-note" id="ballNote">늘 치던 그 공</div>
   <button class="btn" id="goToday">오늘의 라운드</button>
+  <button class="btn ss-go" id="ssStartBtn" type="button" hidden>⛳ 오늘의 슈퍼샷<small>딱 한 번에 넣는 묘기 한 판</small></button>
   <div class="two">
     <button class="btn ghost" id="goPractice">연습</button>
     <button class="btn ghost" id="showCard">스코어 카드</button>
@@ -363,9 +383,24 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
     <button class="btn" id="svSend">보내기</button>
     <p class="sub" id="svMsg" style="text-align:left"></p>
   </div>
+  <button class="btn ss-go" id="ssEndBtn" type="button" hidden>⛳ 오늘의 슈퍼샷<small>딱 한 번에 넣는 묘기 한 판</small></button>
   <button class="btn" id="again">다시 치기</button>
   <button class="btn ghost" id="home">코스 고르기로</button>
   <button class="btn ghost" id="newsBox" type="button">📰 내 신문 보관함</button>
+</div>
+
+<div id="ss" hidden>
+  <div class="hud"><button class="hudBtn" id="ssClose" type="button">나가기</button><div id="ssName">오늘의 슈퍼샷</div><div id="ssTries"></div></div>
+  <div id="ssStage"><canvas id="ssCv"></canvas><div id="ssHint"></div><div id="ssToast"></div></div>
+</div>
+<div class="screen" id="ssEnd" hidden>
+  <div class="card pauseCard" style="display:flex;flex-direction:column;gap:12px;text-align:center">
+    <h2 id="ssEndT" style="margin:0">오늘의 슈퍼샷</h2>
+    <p class="sub" id="ssEndP" style="margin:0"></p>
+    <div id="ssAsk" style="display:flex;flex-direction:column;gap:10px"><div style="font-size:20px;font-weight:800">이런 판, 또 하고 싶으세요?</div>
+      <div class="two"><button class="btn" id="ssUp" type="button">👍 또 할래요</button><button class="btn ghost" id="ssDown" type="button">👎 그냥 그래요</button></div></div>
+    <button class="btn ghost" id="ssBack" type="button">돌아가기</button>
+  </div>
 </div>
 
 <div class="screen" id="payScreen" hidden>
@@ -1204,7 +1239,7 @@ function resumeKey(){ return COURSE.store+'_resume'; }
 function loadResume(){ try{ const r=JSON.parse(localStorage.getItem(resumeKey())||'null'); return r && r.date===TODAY && (r.hi>0 || (r.strokes||[]).some(x=>x>0)) ? r : null; }catch(e){ return null; } } // 한 타도 안 친 '자리'는 이어 치기가 아님(고르는 화면만 거쳐도 저장되던 빈 기록 무시)
 function saveResume(){ if(S.mode!=='today' || S.attract || COURSE.lesson) return; try{ localStorage.setItem(resumeKey(), JSON.stringify({date:TODAY, hi:S.hi, strokes:S.strokes.slice(), ball:S.ball, pos:S.holeOver?null:{x:S.pos.x,y:S.pos.y}, done:S.holeOver})); }catch(e){} }
 function clearResume(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
-function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause','lessonDone','adScreen','payScreen'].every(id=>!$(id) || $(id).hidden); }
+function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause','lessonDone','adScreen','payScreen','ss','ssEnd'].every(id=>!$(id) || $(id).hidden); }
 function openPause(){ if(!playing() && $('holeDone').hidden) return; const h=H_(), tot=S.strokes.reduce((a,b)=>a+b,0);
   $('pauseSub').textContent = S.mode==='today' ? h.n+'번 홀 · 지금까지 '+tot+'타 · 나갔다 와도 이 자리에서 이어 칩니다' : COURSE.lesson ? h.n+'단계 배우는 중' : h.n+'번 홀 · 연습 (기록 안 남음)';
   $('pRetry').hidden = S.mode==='today'; saveResume(); $('pause').hidden=false; PT.event('pause',{c:COURSE.key,mode:S.mode,n:h.n}); }
@@ -1221,6 +1256,7 @@ addEventListener('pagehide',saveResume); document.addEventListener('visibilitych
 function guardBack(){ try{ history.pushState({pg:1},''); }catch(e){} }
 function handleBack(){
   if(ArinPaper.isOpen()){ ArinPaper.back(); guardBack(); return true; }
+  if(typeof SSUI!=='undefined' && SSUI.back()){ guardBack(); return true; }
   if(!$('pause').hidden){ $('pause').hidden=true; guardBack(); return true; }
   if(!$('lessonDone').hidden){ $('lessonDone').hidden=true; showJourney(); guardBack(); return true; }
   if(playing() || !$('holeDone').hidden){ openPause(); guardBack(); return true; }
@@ -1349,7 +1385,7 @@ const NOTI_TEMPLATE='today-parkgolf-newcourse';
 function askNewCourseAlarm(){ const N=AIT&&AIT.Notification&&AIT.Notification.requestAgreement; if(!aitOk(N)) return; try{ if(localStorage.getItem('opg_noti_asked')) return; }catch(e){ return; }
   try{ const off=N({options:{templateCode:NOTI_TEMPLATE}, onEvent:r=>{ try{ localStorage.setItem('opg_noti_asked',r&&r.type||'1'); }catch(e){} PT.event('noti_agree',{r:r&&r.type}); try{ off&&off(); }catch(e){} }, onError:e=>{ PT.event('noti_err',{m:String(e&&e.message||e).slice(0,60)}); try{ off&&off(); }catch(e2){} } }); }catch(e){} }
 function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; $('lessonDone').hidden=false; return; }
-  say(12,0.6); if(S.mode!=='practice') say(13,1.2); if(S.mode==='bonus'){ const b=bonusState()||{date:TODAY,course:COURSE.key}; b.strokes=S.strokes.slice(); b.ball=S.ball; bonusSave(b); } $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); let prevBest=null; if(S.mode==='today'){ const r0=loadRounds(), ds=Object.keys(r0).filter(d=>d!==TODAY&&r0[d]&&r0[d].strokes); if(ds.length) prevBest=Math.min(...ds.map(d=>r0[d].strokes.reduce((a,b)=>a+b,0))); } if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); } if(S.mode==='today'){ const st=S.strokes.slice(), wx=S.wx; setTimeout(()=>{ if(!showNews(st,prevBest,wx,()=>setTimeout(askNewCourseAlarm,600))) setTimeout(askNewCourseAlarm,1600); },900); }
+  say(12,0.6); if(S.mode!=='practice') say(13,1.2); if(S.mode==='bonus'){ const b=bonusState()||{date:TODAY,course:COURSE.key}; b.strokes=S.strokes.slice(); b.ball=S.ball; bonusSave(b); } $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); showSurvey(); let prevBest=null; if(S.mode==='today'){ const r0=loadRounds(), ds=Object.keys(r0).filter(d=>d!==TODAY&&r0[d]&&r0[d].strokes); if(ds.length) prevBest=Math.min(...ds.map(d=>r0[d].strokes.reduce((a,b)=>a+b,0))); } if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); try{ SSUI.unlock(); SSUI.refresh(); }catch(e){} } if(S.mode==='today'){ const st=S.strokes.slice(), wx=S.wx; setTimeout(()=>{ if(!showNews(st,prevBest,wx,()=>setTimeout(askNewCourseAlarm,600))) setTimeout(askNewCourseAlarm,1600); },900); }
   showCard(S.mode==='today'||S.mode==='bonus'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
 const ArinPaper=(()=>{
   let ac=null, dst=null, hook=null, saver=null, layer, paper, press, stampEl, btns, saved, cur=null, pressN=null;
@@ -1516,6 +1552,246 @@ function showNews(strokes,prevBest,wx,onClose){
   return true; }
 $('newsBox').onclick=()=>{ PT.event('news_box',{}); ArinPaper.openBox('parkgolf'); };
 if(window.LANG==='th') $('newsBox').hidden=true;
+const SS=(()=>{
+const W=600,H=1000,R=16,G=1500,MAXV=1400,WY=892;
+const BALL={
+  normal:{e:0.38,fr:240},
+  rubber:{e:0.80,fr:170},
+  cork:{e:0.12,fr:420},
+};
+function box(x1,y1,x2,y2){return [[x1,y1,x2,y1],[x2,y1,x2,y2],[x2,y2,x1,y2],[x1,y2,x1,y1]]}
+function build(L){
+  const s=L.surf,segs=[];const c=L.cup;
+  for(let i=0;i<s.length-1;i++){const a=s[i],b=s[i+1];
+    if(a[1]===b[1]&&a[0]<=c[0]&&b[0]>=c[1]){const y=a[1];L.cupY=y;segs.push([a[0],y,c[0],y],[c[0],y,c[0],y+48],[c[0],y+48,c[1],y+48],[c[1],y+48,c[1],y],[c[1],y,b[0],y])}
+    else segs.push([a[0],a[1],b[0],b[1]])}
+  const f=s[0],l=s[s.length-1];segs.push([f[0],f[1],f[0],H],[l[0],l[1],l[0],H]);
+  for(const p of L.props||[]){if(p.k==='rail'||p.k==='fence')segs.push(...box(p.x-6,p.top,p.x+6,p.bot));else segs.push(...box(p.x1,p.y1,p.x2,p.y2))}
+  if(L.ball==='cork')for(const w of L.water||[])segs.push([w[0],WY,w[1],WY,2]);
+  L.segs=segs;
+  L.cupR=L.cupRect||[c[0],L.cupY-18,c[1],L.cupY+50];
+  return L}
+function closest(px,py,s){const x1=s[0],y1=s[1],x2=s[2],y2=s[3];const dx=x2-x1,dy=y2-y1;const LL=dx*dx+dy*dy;let t=LL?((px-x1)*dx+(py-y1)*dy)/LL:0;t=t<0?0:t>1?1:t;return [x1+dx*t,y1+dy*t]}
+function inSand(L,b){for(const z of L.sand||[])if(b.x>z[0]&&b.x<z[1]&&b.y>z[2]-R-4)return true;return false}
+function newBall(L){return {x:L.tee[0],y:L.tee[1],vx:0,vy:0,rest:0,sink:0,t:0,state:'aim'}}
+function launch(b,ang,pow){const v=MAXV*pow;b.vx=Math.cos(ang)*v;b.vy=Math.sin(ang)*v;b.state='fly';b.rest=0;b.sink=0;b.t=0}
+function step(b,L,dt){
+  const P=BALL[L.ball];const sand=inSand(L,b);
+  b.vy+=G*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.t+=dt;
+  let contact=false,bounce=0;
+  for(let it=0;it<2;it++)for(const s of L.segs){
+    const c=closest(b.x,b.y,s);const dx=b.x-c[0],dy=b.y-c[1];const d=Math.hypot(dx,dy);
+    if(d<R&&d>1e-6){const nx=dx/d,ny=dy/d;b.x=c[0]+nx*R;b.y=c[1]+ny*R;
+      const water=s[4]===2, e=water?0.05:sand?P.e*0.25:P.e;
+      const vn=b.vx*nx+b.vy*ny;
+      if(vn<0){ if(-vn>110){b.vx-=(1+e)*vn*nx;b.vy-=(1+e)*vn*ny;bounce=Math.max(bounce,-vn)} else {b.vx-=vn*nx;b.vy-=vn*ny} }
+      contact=true;
+      if(ny<-0.3){const fr=water?90:sand?P.fr*6:P.fr;const tx=-ny,ty=nx;const vt=b.vx*tx+b.vy*ty;const dec=fr*dt/2;const nvt=Math.abs(vt)<=dec?0:vt-Math.sign(vt)*dec;b.vx+=(nvt-vt)*tx;b.vy+=(nvt-vt)*ty}
+    }
+  }
+  const sp=Math.hypot(b.vx,b.vy),c=L.cupR;
+  if(b.x>c[0]&&b.x<c[2]&&b.y>c[1]&&b.y<c[3]&&sp<300){b.sink+=dt;if(b.sink>0.15){b.state='in';return bounce}}else b.sink=0;
+  if(L.ball!=='cork')for(const w of L.water||[])if(b.x>w[0]&&b.x<w[1]&&b.y>WY+4){b.state='water';return bounce}
+  if(b.x<-40||b.x>W+40||b.y>H+80){b.state='ob';return bounce}
+  if(contact&&sp<10){b.rest+=dt;if(b.rest>0.4)b.state='stop'}else b.rest=0;
+  if(b.t>14)b.state='stop';
+  return bounce;
+}
+function simulate(L,ang,pow){const b=newBall(L);launch(b,ang,pow);const dt=1/480;for(let i=0;i<480*15&&b.state==='fly';i++)step(b,L,dt);return b.state==='in'}
+const T=140,GY=880;
+const rail=(x,top,bot)=>({k:'rail',x,top,bot:bot||GY});
+const LV=[
+ {name:'언덕 내리막 한 번에',ball:'normal',tee:[T,640-R],surf:[[20,640],[200,640],[380,GY],[580,GY]],cup:[440,480],
+  props:[rail(20,600,640),rail(580,840)],
+  head:'언덕 위에서 한 번에 쏙! 내리막 묘기샷',lead:'티 언덕에서 친 공이 내리막을 타고 내려가 그대로 컵에 들어갔다.'},
+ {name:'연못 건너 한 번에',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[250,GY],[250,960],[420,960],[420,GY],[580,GY]],cup:[480,520],water:[[250,420]],
+  props:[rail(20,840),rail(580,820)],
+  head:'연못 훌쩍 건너 한 번에 쏙! 물 건너기 묘기샷',lead:'연못 앞에서 망설임 없이 띄운 공이 물을 넘어 그대로 컵에 들어갔다.'},
+ {name:'울타리 맞고 돌아와 쏙',ball:'rubber',tee:[T,GY-R],surf:[[20,GY],[580,GY]],cup:[350,392],
+  props:[rail(20,840),{k:'rock',x1:220,y1:720,x2:290,y2:GY},{k:'roof',x1:290,y1:640,x2:490,y2:662},{k:'fence',x:580,top:380,bot:GY}],
+  head:'정자 넘어 울타리 맞고 돌아와 쏙! 고무공 묘기샷',lead:'통통 튀는 고무공이 정자 지붕을 넘어 울타리를 맞고 돌아와 정자 밑 컵에 들어갔다.'},
+ {name:'바위 사이 골짜기',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[580,GY]],cup:[372,412],
+  props:[rail(20,840),{k:'rock',x1:270,y1:760,x2:330,y2:GY},{k:'rock',x1:456,y1:700,x2:526,y2:GY},rail(580,840)],
+  head:'바위 두 개 사이 골짜기에 쏙! 정밀 묘기샷',lead:'두 바위 사이 좁은 골짜기를 노린 공이 꼭 그 자리에 떨어져 컵에 들어갔다.'},
+ {name:'물 위를 미끄러져',ball:'cork',tee:[T,GY-R],surf:[[20,GY],[200,GY],[200,960],[470,960],[470,GY],[580,GY]],cup:[500,540],water:[[200,470]],
+  props:[rail(20,840),rail(580,840)],
+  head:'코르크공, 연못 위를 미끄러져 쏙! 물 위 묘기샷',lead:'물에 뜨는 코르크공이 연못 위를 스르르 미끄러져 건너편 컵에 들어갔다.'},
+ {name:'언덕 위 컵',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[300,GY],[360,740],[580,740]],cup:[470,510],
+  props:[rail(20,840),rail(580,700,740)],
+  head:'가파른 언덕 위 컵에 한 번에 쏙! 오르막 묘기샷',lead:'언덕 아래에서 친 공이 오르막을 단숨에 올라 언덕 위 컵에 들어갔다.'},
+ {name:'돌담 넘어 말뚝 사이 쏙',ball:'cork',tee:[T,GY-R],surf:[[20,GY],[580,GY]],cup:[478,512],cupRect:[458,780,532,930],
+  props:[rail(20,840),{k:'wall',x1:250,y1:630,x2:320,y2:GY},{k:'post',x1:448,y1:770,x2:458,y2:GY},{k:'post',x1:532,y1:770,x2:542,y2:GY},rail(580,840)],
+  head:'돌담 훌쩍 넘어 말뚝 사이로 쏙! 코르크공 묘기샷',lead:'잘 튀지 않는 코르크공이 높은 돌담을 넘어 말뚝 사이 컵에 얌전히 떨어졌다.'},
+ {name:'벙커 넘겨 굴리기',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[580,GY]],cup:[500,540],sand:[[240,460,GY]],
+  props:[rail(20,840),rail(580,840)],
+  head:'긴 벙커 훌쩍 넘겨 쏙! 모래 피하기 묘기샷',lead:'모래밭에 빠지면 끝인 자리, 공은 벙커를 넘겨 떨어진 뒤 굴러 컵에 들어갔다.'},
+ {name:'통통 튀어 언덕 위로',ball:'rubber',tee:[T,GY-R],surf:[[20,GY],[400,GY],[400,720],[580,720]],cup:[480,520],
+  props:[rail(20,840),rail(580,680,720)],
+  head:'고무공 통통 튀어 언덕 위로 쏙! 튕기기 묘기샷',lead:'땅을 한 번 튕긴 고무공이 높이 솟아 언덕 위 컵에 들어갔다.'},
+ {name:'정자 지붕 밑으로',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[580,GY]],cup:[420,460],
+  props:[rail(20,840),{k:'roof',x1:330,y1:760,x2:540,y2:782},rail(580,840)],
+  head:'낮은 정자 지붕 밑으로 쏙! 낮게 깔아 친 묘기샷',lead:'낮게 깔린 공이 정자 지붕 아래를 빠져나가 그대로 컵에 들어갔다.'},
+ {name:'말뚝 넘고 연못 넘고',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[300,GY],[300,960],[430,960],[430,GY],[580,GY]],cup:[480,520],water:[[300,430]],
+  props:[rail(20,840),{k:'post',x1:250,y1:780,x2:262,y2:GY},rail(580,820)],
+  head:'말뚝 넘고 연못 넘어 쏙! 두 고개 묘기샷',lead:'말뚝을 넘긴 공이 연못까지 건너 건너편 컵에 그대로 들어갔다.'},
+ {name:'높은 돌담 너머',ball:'cork',tee:[T,GY-R],surf:[[20,GY],[580,GY]],cup:[440,480],
+  props:[rail(20,840),{k:'wall',x1:330,y1:560,x2:390,y2:GY},rail(580,820)],
+  head:'높은 돌담 너머 바로 뒤 컵에 쏙! 코르크공 묘기샷',lead:'높은 돌담 바로 뒤에 숨은 컵, 코르크공이 담을 넘자마자 툭 떨어져 들어갔다.'},
+ {name:'돌담 넘겨 거꾸로',ball:'rubber',tee:[470,GY-R],surf:[[20,GY],[580,GY]],cup:[150,190],
+  props:[{k:'fence',x:20,top:380,bot:GY},{k:'wall',x1:300,y1:640,x2:360,y2:GY},{k:'fence',x:580,top:380,bot:GY}],
+  head:'돌담 넘겨 거꾸로 쏙! 고무공 묘기샷',lead:'통통 튀는 고무공이 높은 돌담을 넘어 반대편 울타리 앞 컵에 들어갔다.'},
+ {name:'일요일 왕중왕',ball:'rubber',tee:[T,GY-R],surf:[[20,GY],[230,GY],[230,960],[330,960],[330,GY],[580,GY]],cup:[400,440],water:[[230,330]],
+  props:[rail(20,840),{k:'roof',x1:350,y1:650,x2:500,y2:672},{k:'fence',x:580,top:380,bot:GY}],
+  head:'연못 넘고 울타리 맞고 정자 밑으로 쏙! 왕중왕 묘기샷',lead:'연못을 넘긴 고무공이 울타리를 맞고 돌아와 정자 밑 컵에 들어갔다. 이번 주 최고의 한 방이었다.'},
+];
+LV.forEach((L,i)=>{L.id=i+1;build(L)});
+return {W,H,R,G,MAXV,WY,BALL,LV,closest,newBall,launch,step,simulate};
+})();
+// ================= 오늘의 슈퍼샷 (v78): 하루 한 판, 옆에서 본 묘기 퍼즐. 기회 5번, 성공하면 파크골프 일보 호외 =================
+const SSUI=(()=>{
+  const {W,H,R,G,MAXV,WY,LV}=SS;
+  const TRIES=5, KEY='opg_ss', COL={normal:'#f4f4ee',rubber:'#d9382b',cork:'#c99a5b'}, NAME={normal:'일반공',rubber:'고무공',cork:'코르크공'},
+    TIP={normal:'화면 어디서든 아래로 당겼다 놓으세요',rubber:'고무공은 통통 튀어요',cork:'코르크공은 잘 안 튀고 물에 떠요'};
+  // 2주 순서: 월요일은 쉽게, 일요일은 왕중왕
+  const ORDER=[[1,10,2,5,4,3,14],[8,6,11,7,12,9,13]];
+  function todayLevel(){ const d=new Date(); const day=Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(2026,0,5))/864e5); const wk=Math.floor(day/7), wd=((day%7)+7)%7;
+    return LV[ORDER[((wk%2)+2)%2][wd]-1]; }
+  function st(){ try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o.date===TODAY) return o; }catch(e){} return {date:TODAY,used:0,won:0}; }
+  function put(o){ try{ localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }
+  const unlocked=()=>{ try{ return localStorage.getItem('opg_ss_unlock')===TODAY; }catch(e){ return false; } };
+  function unlock(){ try{ localStorage.setItem('opg_ss_unlock',TODAY); }catch(e){} }
+  const available=()=>window.LANG!=='th' && unlocked() && (()=>{ const o=st(); return !o.won && o.used<TRIES; })();
+  function refresh(){ const a=available(), o=st(); ['ssEndBtn','ssStartBtn'].forEach(id=>{ const b=$(id); if(!b) return; b.hidden=!a;
+    const sm=b.querySelector('small'); if(sm) sm.textContent=o.used?('남은 기회 '+(TRIES-o.used)+'번'):'딱 한 번에 넣는 묘기 한 판'; }); }
+
+  let L=null,b=null,o=null,cv,ctx,sc=1,ox=0,oy=0,drag=null,trail=[],TS=0,raf=0,last=0,acc=0,back=null,
+    club={mode:'aim',th:0,dir:1,t:0};
+  const X=x=>ox+x*sc, Y=y=>oy+y*sc;
+  function T(){ const t=(typeof THEME!=='undefined'&&THEME)||{}; return {
+    fairway:t.fairway||'#a3b273', green:t.green||'#c2cf8f', soil:t.soil||['#5d6a36','#7a5b3c','#9b7b57','#b9a283','#8b8578'],
+    wall:t.wall||'#c8975f', wallTop:t.wallTop||'#e8c792', wallBase:t.wallBase||'#8e6439', treeDark:t.treeDark||'#5f7a3a', treeLight:t.treeLight||'#7c9650',
+    autumn:t.autumn||'#c98a3a', autumnLight:t.autumnLight||'#e0ad5a', trunk:t.trunk||'#4a3626', roof:t.roof||'#2f3338', roofEdge:t.roofEdge||'#4b5157', post:t.post||'#6b4a2e',
+    wood:t.wood||'#a87b4f', stone:t.stoneWall||'#a9a49a', stoneDark:t.stoneWallDark||'#7d786f', rock:t.stone||'#8c8a83', water:t.water||'#86aebd', waterDeep:t.waterDeep||'#6b98aa', sand:t.sand||'#e2cf98', paper:t.paper||'#efe8d6' }; }
+
+  /* 소리: 본편 소리 그래프(AC·SFX)를 그대로 씀 */
+  function tone(f,d,type,vol,when){ try{ if(!AC||!SFX) return; const t=AC.currentTime+(when||0),os=AC.createOscillator(),g=AC.createGain(); os.type=type||'sine'; os.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(vol||.2,t); g.gain.exponentialRampToValueAtTime(.001,t+d); os.connect(g).connect(SFX); os.start(t); os.stop(t+d); }catch(e){} }
+  function thock(v){ try{ if(!AC||!SFX) return; const n=AC.createBufferSource(),bf=AC.createBuffer(1,AC.sampleRate*.06,AC.sampleRate),a=bf.getChannelData(0); for(let i=0;i<a.length;i++) a[i]=(Math.random()*2-1)*Math.pow(1-i/a.length,3); n.buffer=bf; const f=AC.createBiquadFilter(); f.type='bandpass'; f.frequency.value=900; const g=AC.createGain(); g.gain.value=Math.min(.5,v); n.connect(f).connect(g).connect(SFX); n.start(); }catch(e){} }
+  const cupS=()=>{ tone(1320,.25,'sine',.18); tone(1760,.35,'sine',.14,.07); tone(990,.5,'triangle',.1,.14); };
+  const splash=()=>{ tone(300,.3,'sine',.12); tone(180,.4,'sine',.1,.05); };
+
+  function resize(){ const r=$('ssStage').getBoundingClientRect(), dp=Math.min(2,window.devicePixelRatio||1); cv.width=Math.max(1,r.width*dp); cv.height=Math.max(1,r.height*dp);
+    sc=Math.min(cv.width/W,cv.height/(H-60)); ox=(cv.width-W*sc)/2; oy=cv.height-H*sc; }
+  function dots(){ const t=$('ssTries'); t.innerHTML='기회 '; for(let i=0;i<TRIES;i++){ const e=document.createElement('i'); if(i>=TRIES-o.used) e.className='off'; t.appendChild(e); } }
+  function hint(s){ $('ssHint').textContent=s||''; $('ssHint').hidden=!s; }
+  function toast(s){ const e=$('ssToast'); e.textContent=s; e.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>e.classList.remove('on'),1600); }
+  function fresh(){ b=SS.newBall(L); club.mode='aim'; club.th=0; club.dir=L.tee[0]>W/2?-1:1; trail=[]; }
+
+  function open(from){ if(!available()) return; back=from; o=st(); L=todayLevel(); cv=$('ssCv'); ctx=cv.getContext('2d');
+    $('ssName').innerHTML='슈퍼샷<small><i class="dot" style="background:'+COL[L.ball]+'"></i>'+NAME[L.ball]+'</small>';
+    ['end','start'].forEach(id=>$(id).hidden=true); $('ss').hidden=false; $('ssEnd').hidden=true; resize(); fresh(); dots(); hint(TIP[L.ball]);
+    try{ if(typeof audioWake==='function') audioWake(); }catch(e){}
+    PT.event('ss_open',{lv:L.id,used:o.used,from}); last=performance.now(); acc=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); if(typeof guardBack==='function') guardBack(); }
+  function close(){ cancelAnimationFrame(raf); raf=0; drag=null; $('ss').hidden=true; $('ssEnd').hidden=true; refresh();
+    if(back==='end') $('end').hidden=false; else { setupToday(); $('start').hidden=false; } }
+  const isOpen=()=>!$('ss').hidden||!$('ssEnd').hidden;
+
+  /* 화면 어디서나 당기기: 손가락 110px = 최대 힘, 더 당기면 시작점이 따라옴 */
+  const PULL=110, pt=e=>[e.clientX,e.clientY];
+  function aimOf(d){ const dx=d.s[0]-d.c[0], dy=d.s[1]-d.c[1]; return {ang:Math.atan2(dy,dx), pow:Math.min(1,Math.hypot(dx,dy)/PULL)}; }
+  function bind(){ const el=$('ss');
+    el.addEventListener('pointerdown',e=>{ if(e.target.closest('button')) return; try{ if(typeof audioWake==='function') audioWake(e); }catch(_){}
+      if(!b||b.state!=='aim'||club.mode!=='aim'||o.used>=TRIES) return; try{ el.setPointerCapture(e.pointerId); }catch(_){} drag={s:pt(e),c:pt(e)}; hint(''); });
+    el.addEventListener('pointermove',e=>{ if(!drag) return; drag.c=pt(e); const dx=drag.s[0]-drag.c[0], dy=drag.s[1]-drag.c[1], l=Math.hypot(dx,dy); if(l>PULL) drag.s=[drag.c[0]+dx/l*PULL, drag.c[1]+dy/l*PULL]; });
+    el.addEventListener('pointerup',()=>{ if(!drag) return; const a=aimOf(drag); drag=null; if(a.pow<.05){ hint('조금 더 길게 당겨 보세요'); return; }
+      club.mode='swing'; club.t=0; club.from=club.th; club.dur=.2-.08*a.pow; club.shot=a; o.used++; put(o); dots();
+      PT.event('ss_shot',{lv:L.id,n:o.used,ang:+a.ang.toFixed(3),pow:+a.pow.toFixed(3)}); });
+    el.addEventListener('pointercancel',()=>{ drag=null; });
+    $('ssClose').onclick=close; $('ssBack').onclick=close;
+    $('ssUp').onclick=()=>react('up'); $('ssDown').onclick=()=>react('down');
+    $('ssEndBtn').onclick=()=>open('end'); $('ssStartBtn').onclick=()=>open('start');
+    addEventListener('resize',()=>{ if(!$('ss').hidden) resize(); }); }
+
+  function clubTick(d){
+    if(club.mode==='aim'){ if(drag&&b&&b.state==='aim'){ const a=aimOf(drag), c=Math.cos(a.ang); if(Math.abs(c)>.08) club.dir=c>0?1:-1; club.th=-club.dir*(a.pow<.05?0:(.12+a.pow*.85)); } else club.th*=.7; }
+    else if(club.mode==='swing'){ club.t+=d; const k=Math.min(1,club.t/club.dur); club.th=club.from*(1-k*k); if(k>=1){ club.th=0; SS.launch(b,club.shot.ang,club.shot.pow); trail=[]; thock(.3+club.shot.pow*.35); club.mode='follow'; club.t=0; } }
+    else if(club.mode==='follow'){ club.t+=d; const k=Math.min(1,club.t/.16); club.th=club.dir*Math.sin(k*Math.PI/2); if(club.t>.75) club.mode='gone'; } }
+
+  /* 그리기 — 본편 블록 모형을 옆에서 자른 모습, 본편 계절 색을 그대로 */
+  function rr(x1,y1,x2,y2,col,rad){ ctx.fillStyle=col; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(X(x1),Y(y1),(x2-x1)*sc,(y2-y1)*sc,(rad||0)*sc); else ctx.rect(X(x1),Y(y1),(x2-x1)*sc,(y2-y1)*sc); ctx.fill(); }
+  function tree(x,base,h,c1,c2,tc){ rr(x-5,base-h*.45,x+5,base,tc); ctx.fillStyle=c1; ctx.beginPath(); ctx.arc(X(x),Y(base-h*.62),h*.34*sc,0,7); ctx.fill(); ctx.fillStyle=c2; ctx.beginPath(); ctx.arc(X(x-h*.1),Y(base-h*.7),h*.2*sc,0,7); ctx.fill(); }
+  function scene(){ const t=T(), s=L.surf;
+    const g=ctx.createLinearGradient(0,0,0,cv.height); g.addColorStop(0,'#f3f1ea'); g.addColorStop(1,t.paper); ctx.fillStyle=g; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.globalAlpha=.35; ctx.fillStyle=t.treeLight; ctx.beginPath(); ctx.moveTo(0,Y(760)); for(let x=0;x<=W;x+=60) ctx.quadraticCurveTo(X(x+30),Y(700+((x*7)%50)),X(x+60),Y(760)); ctx.lineTo(cv.width,Y(H)); ctx.lineTo(0,Y(H)); ctx.fill();
+    ctx.globalAlpha=.55; [[60,800,150,t.autumn,t.autumnLight],[160,800,190,t.treeDark,t.treeLight],[420,800,170,t.autumn,t.autumnLight],[530,800,140,t.treeDark,t.treeLight]].forEach(q=>tree(q[0],q[1],q[2],q[3],q[4],t.trunk)); ctx.globalAlpha=1;
+    // 물(연못): 땅보다 먼저
+    for(const w of L.water||[]){ rr(w[0],WY,w[1],960,t.water); rr(w[0],WY+22,w[1],960,t.waterDeep); ctx.fillStyle='rgba(255,255,255,.5)'; for(let x=w[0]+20;x<w[1]-20;x+=46) ctx.fillRect(X(x),Y(WY+8),20*sc,3*sc); }
+    // 땅 덩어리(지층)
+    ctx.save(); ctx.beginPath(); ctx.moveTo(X(s[0][0]),Y(H)); for(const p of s) ctx.lineTo(X(p[0]),Y(p[1])); ctx.lineTo(X(s[s.length-1][0]),Y(H)); ctx.closePath(); ctx.clip();
+    ctx.fillStyle=t.soil[1]; ctx.fillRect(0,0,cv.width,cv.height); [[900,t.soil[2]],[930,t.soil[1]],[948,t.soil[3]],[972,t.soil[4]]].forEach(q=>{ ctx.fillStyle=q[1]; ctx.fillRect(0,Y(q[0]),cv.width,cv.height); });
+    ctx.restore();
+    // 잔디 윗면(물 웅덩이 바닥은 빼고)
+    ctx.lineJoin='round'; ctx.strokeStyle=t.fairway; ctx.lineWidth=18*sc;
+    for(let i=0;i<s.length-1;i++){ const a=s[i],c=s[i+1]; if(a[1]>=950&&c[1]>=950) continue; if(a[0]===c[0]) continue; ctx.beginPath(); ctx.moveTo(X(a[0]),Y(a[1]+9)); ctx.lineTo(X(c[0]),Y(c[1]+9)); ctx.stroke(); }
+    for(const z of L.sand||[]){ rr(z[0],z[2],z[1],z[2]+18,t.sand,4); ctx.fillStyle='rgba(120,90,40,.25)'; for(let x=z[0]+8;x<z[1];x+=17) ctx.fillRect(X(x),Y(z[2]+6+(x%3)*3),3*sc,3*sc); }
+    const c=L.cup, cy=L.cupY; rr(c[0]-60,cy,c[1]+60,cy+17,t.green); rr(c[0],cy,c[1],cy+48,'#1d1a15'); rr(c[0]-4,cy,c[1]+4,cy+4,'rgba(255,255,255,.5)');
+    for(const p of L.props){
+      if(p.k==='rail'||p.k==='fence'){ rr(p.x-6,p.top,p.x+6,p.bot,t.wall,3); rr(p.x-6,p.top,p.x+6,p.top+6,t.wallTop,3); rr(p.x-6,p.bot-6,p.x+6,p.bot,t.wallBase); if(p.k==='fence') for(let y=p.top+40;y<p.bot;y+=70) rr(p.x-14,y,p.x+14,y+10,t.wood,2); }
+      if(p.k==='rock'){ ctx.fillStyle=t.rock; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(X(p.x1),Y(p.y1),(p.x2-p.x1)*sc,(p.y2-p.y1)*sc,[24*sc,30*sc,4*sc,4*sc]); else ctx.rect(X(p.x1),Y(p.y1),(p.x2-p.x1)*sc,(p.y2-p.y1)*sc); ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(X(p.x1+22),Y(p.y1+26),11*sc,18*sc,-.3,0,7); ctx.fill(); }
+      if(p.k==='roof'){ rr(p.x1+14,p.y2,p.x1+24,cy,t.post); rr(p.x2-24,p.y2,p.x2-14,cy,t.post); ctx.fillStyle=t.roof; ctx.beginPath(); ctx.moveTo(X(p.x1-14),Y(p.y2)); ctx.quadraticCurveTo(X((p.x1+p.x2)/2),Y(p.y1-70),X(p.x2+14),Y(p.y2)); ctx.fill();
+        rr(p.x1,p.y1,p.x2,p.y2,t.roofEdge,4); }
+      if(p.k==='wall'){ rr(p.x1,p.y1,p.x2,p.y2,t.stone,6); ctx.strokeStyle=t.stoneDark; ctx.lineWidth=2*sc; for(let y=p.y1+34,r=0;y<p.y2;y+=34,r++){ ctx.beginPath(); ctx.moveTo(X(p.x1),Y(y)); ctx.lineTo(X(p.x2),Y(y)); ctx.stroke(); const mx=p.x1+(r%2?(p.x2-p.x1)*.35:(p.x2-p.x1)*.65); ctx.beginPath(); ctx.moveTo(X(mx),Y(y-34)); ctx.lineTo(X(mx),Y(y)); ctx.stroke(); } }
+      if(p.k==='post'){ rr(p.x1,p.y1,p.x2,p.y2,t.wall,3); rr(p.x1,p.y1,p.x2,p.y1+6,t.wallTop,3); } }
+    // 깃발
+    const fx=(c[0]+c[1])/2, ft=Math.min(cy-90, L.cupRect?L.cupRect[1]-80:cy-90); ctx.strokeStyle='#fff'; ctx.lineWidth=3.5*sc; ctx.beginPath(); ctx.moveTo(X(fx),Y(cy)); ctx.lineTo(X(fx),Y(ft)); ctx.stroke();
+    ctx.fillStyle='#e23b2e'; ctx.beginPath(); ctx.moveTo(X(fx),Y(ft)); ctx.lineTo(X(fx+40),Y(ft+13)); ctx.lineTo(X(fx),Y(ft+28)); ctx.fill();
+    rr(L.tee[0]-26,L.tee[1]+R-2,L.tee[0]+26,L.tee[1]+R+6,'#3d4a35',2); }
+  function drawClub(){ if(!b||club.mode==='gone') return; const Lc=135, live=club.mode==='aim'||club.mode==='swing', bx=live?b.x:club.bx, by=live?b.y:club.by; if(live){ club.bx=bx; club.by=by; }
+    const px=bx-club.dir*(R+16), py=by-Lc+R-2, th=club.th, hx=px+Math.sin(th)*Lc, hy=py+Math.cos(th)*Lc;
+    ctx.save(); ctx.globalAlpha=club.mode==='follow'?Math.max(0,1-(club.t-.4)/.35):1; ctx.lineCap='round';
+    ctx.strokeStyle='#b8bcc0'; ctx.lineWidth=5*sc; ctx.beginPath(); ctx.moveTo(X(px),Y(py)); ctx.lineTo(X(hx),Y(hy)); ctx.stroke();
+    ctx.strokeStyle='#22201c'; ctx.lineWidth=8*sc; ctx.beginPath(); ctx.moveTo(X(px),Y(py)); ctx.lineTo(X(px+Math.sin(th)*44),Y(py+Math.cos(th)*44)); ctx.stroke();
+    ctx.translate(X(hx),Y(hy)); ctx.rotate(-th); ctx.fillStyle='#8e5a2b'; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(-20*sc,-12*sc,40*sc,24*sc,7*sc); else ctx.rect(-20*sc,-12*sc,40*sc,24*sc); ctx.fill();
+    ctx.fillStyle='#b07a43'; ctx.fillRect(-20*sc,-12*sc,40*sc,6*sc); ctx.fillStyle='#22201c'; ctx.fillRect((club.dir>0?14:-20)*sc,-12*sc,6*sc,24*sc); ctx.restore(); }
+  function preview(a){ const pts=[]; let x=L.tee[0],y=L.tee[1],vx=Math.cos(a.ang)*MAXV*a.pow,vy=Math.sin(a.ang)*MAXV*a.pow; const dt=1/120;
+    for(let i=1;i<=70;i++){ vy+=G*dt; x+=vx*dt; y+=vy*dt; let hit=false; for(const s of L.segs){ const c=SS.closest(x,y,s); if(Math.hypot(x-c[0],y-c[1])<R){ hit=true; break; } } if(hit) break; if(i%5===0) pts.push([x,y]); } return pts; }
+  function frame(){ scene(); if(!b) return;
+    ctx.fillStyle='rgba(255,255,255,.55)'; for(const p of trail){ ctx.beginPath(); ctx.arc(X(p[0]),Y(p[1]),3.5*sc,0,7); ctx.fill(); }
+    if(drag&&b.state==='aim'){ const a=aimOf(drag); if(a.pow>=.05){ ctx.lineWidth=1.5*sc; for(const p of preview(a)){ ctx.fillStyle='rgba(255,255,255,.95)'; ctx.strokeStyle='rgba(29,26,21,.45)'; ctx.beginPath(); ctx.arc(X(p[0]),Y(p[1]),5*sc,0,7); ctx.fill(); ctx.stroke(); }
+      const bw=220,bx=W/2-bw/2,by=130; rr(bx,by,bx+bw,by+18,'rgba(29,26,21,.55)',9); rr(bx+3,by+3,bx+3+(bw-6)*a.pow,by+15,a.pow>.9?'#e23b2e':'#ffcf3a',7); } }
+    drawClub(); const x=b.x,y=b.y; ctx.fillStyle='rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(X(x+3),Y(y+5),R*sc,R*.75*sc,0,0,7); ctx.fill();
+    ctx.fillStyle=COL[L.ball]; ctx.beginPath(); ctx.arc(X(x),Y(y),R*sc,0,7); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=1.5*sc; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.65)'; ctx.beginPath(); ctx.arc(X(x-5),Y(y-5),4*sc,0,7); ctx.fill(); }
+  function loop(now){ const d=Math.min(.05,(now-last)/1000); last=now; clubTick(d);
+    if(b&&b.state==='fly'){ acc+=d; while(acc>=1/480&&b.state==='fly'){ acc-=1/480; const bo=SS.step(b,L,1/480); if(bo>200) thock(Math.min(.35,bo/3000)); if(++TS%16===0) trail.push([b.x,b.y]); }
+      if(trail.length>160) trail.shift(); if(b.state==='in') win(); else if(b.state==='stop'||b.state==='ob'||b.state==='water') miss(b.state); } else acc=0;
+    frame(); raf=requestAnimationFrame(loop); }
+  function miss(why){ b.state='wait'; const left=TRIES-o.used; if(why==='water') splash(); PT.event('ss_miss',{lv:L.id,why,left});
+    toast((why==='water'?'풍덩! ':why==='ob'?'밖으로 나갔어요! ':'아깝다! ')+(left>0?'기회 '+left+'번 남았어요':''));
+    setTimeout(()=>{ if(left<=0){ PT.event('ss_fail',{lv:L.id}); endCard(false); } else { fresh(); hint('다시 한 번! 아래로 당겼다 놓으세요'); } },1100); }
+  function win(){ b.state='done'; cupS(); o.won=1; o.shots=o.used; put(o); PT.event('ss_clear',{lv:L.id,shots:o.used}); setTimeout(hoe,900); }
+  function photo(){ const c=document.createElement('canvas'); c.width=640; c.height=360; const g=c.getContext('2d'), s2=Math.min(c.width/W,c.height/560);
+    g.fillStyle='#e9e0c8'; g.fillRect(0,0,c.width,c.height); g.save(); g.translate((c.width-W*s2)/2,c.height-960*s2); g.scale(s2,s2);
+    g.fillStyle='#6b6152'; g.beginPath(); const sf=L.surf; g.moveTo(sf[0][0],H); for(const q of sf) g.lineTo(q[0],q[1]); g.lineTo(sf[sf.length-1][0],H); g.fill();
+    g.fillStyle='#9a9384'; for(const w of L.water||[]) g.fillRect(w[0],WY,w[1]-w[0],960-WY);
+    g.fillStyle='#4a4237'; for(const p of L.props){ if(p.k==='rail'||p.k==='fence') g.fillRect(p.x-6,p.top,12,p.bot-p.top); else g.fillRect(p.x1,p.y1,p.x2-p.x1,p.y2-p.y1); }
+    g.fillStyle='#b3261e'; for(const q of trail){ g.beginPath(); g.arc(q[0],q[1],7,0,7); g.fill(); }
+    g.fillStyle='#1d1a15'; g.beginPath(); g.arc(b.x,b.y,R*1.2,0,7); g.fill(); g.restore(); return c.toDataURL('image/jpeg',.72); }
+  function hoe(){ const n=o.used; try{ tone(523,.35,'triangle',.16); tone(659,.35,'triangle',.16,.12); tone(784,.35,'triangle',.16,.24); tone(1047,.45,'triangle',.16,.36); }catch(e){}
+    ArinPaper.show({gameId:'parkgolf', masthead:'파크골프 일보', theme:'noir', headline:L.head, sub:L.lead,
+      body:'오늘의 슈퍼샷 「'+L.name+'」, '+(n===1?'단 한 번 만에 성공했다.':n+'번째 도전 끝에 성공했다.')+' 내일은 또 다른 묘기가 기다린다.',
+      photo:photo(), stamp:n===1?'한 방':'성공', onClose:()=>endCard(true)});
+    PT.event('ss_news',{lv:L.id,shots:n}); }
+  function endCard(won){ cancelAnimationFrame(raf); raf=0; frame();
+    $('ssEndT').textContent=won?'오늘의 슈퍼샷 성공!':'오늘의 슈퍼샷은 여기까지';
+    $('ssEndP').textContent=won?'호외는 「내 신문 보관함」에서 다시 볼 수 있어요. 내일은 또 다른 묘기가 기다려요.':'아깝게 놓쳤어요. 내일 새 슈퍼샷이 기다리고 있어요.';
+    const r=st().react; $('ssAsk').hidden=!!r; $('ssEnd').hidden=false; refresh(); }
+  function react(v){ const s=st(); s.react=v; put(s); o=s; PT.event('ss_react',{lv:L.id,v,won:s.won?1:0}); $('ssAsk').hidden=true; toast2(); }
+  function toast2(){ $('ssEndP').textContent='고맙습니다! 알려 주신 대로 더 재밌게 만들어 볼게요.'; }
+  function back_(){ if(!$('ssEnd').hidden||!$('ss').hidden){ close(); return true; } return false; }
+  return {bind,refresh,unlock,open,close,isOpen,back:back_,available,todayLevel};
+})();
+SSUI.bind(); SSUI.refresh();
 
 function showCard(practice){
   const rounds=loadRounds(); const today=rounds[TODAY], yday=rounds[YDAY]; const dates=Object.keys(rounds).sort();
@@ -1820,7 +2096,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v77', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v78', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
@@ -1853,7 +2129,7 @@ S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loo
 // 등급 표시: 켤 때마다 3초 이상 보여 준 뒤 사라짐(그 전에는 눌러도 안 넘어감)
 if(AIT){ const r=document.getElementById('rating'); if(r) r.remove(); }
 else setTimeout(()=>{ const r=document.getElementById('rating'); if(r){ r.classList.add('off'); setTimeout(()=>r.remove(),400); } }, 3200);
-if(/[?&]sim\b/.test(location.search)) window.__pg={S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
+if(/[?&]sim\b/.test(location.search)) window.__pg={SSUI,TODAY,S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
 })();
 </script>
 
