@@ -46,6 +46,16 @@ html.ait{--top:calc(max(env(safe-area-inset-top,0px),var(--sat,0px)) + 40px)}
 #ssToast{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:var(--panel);color:var(--fg);border:2px solid var(--accent);font-size:21px;font-weight:800;padding:12px 20px;border-radius:16px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 #ssToast.on{opacity:1}
 #ssEnd{background:rgba(12,20,10,.62);z-index:8}
+#ssCal .calH{display:flex;justify-content:space-between;align-items:baseline;font-weight:800;font-size:19px;margin-bottom:6px}
+#ssCal .calH b{color:var(--accent)}
+#ssCal .calG{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;width:100%;font-variant-numeric:tabular-nums}
+#ssCal .calG span{height:34px;min-width:0;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;font-weight:700;color:var(--muted)}
+#ssCal .calG .wd{height:22px;font-size:14px}
+#ssCal .calG .try{background:var(--accent);color:var(--accent-fg)}
+#ssCal .calG .win{background:#ffcf3a;color:#1d1a15;font-weight:900}
+#ssCal .calG .today{box-shadow:0 0 0 2.5px var(--fg) inset}
+#ssCal .calK{display:flex;gap:14px;justify-content:center;font-size:15px;color:var(--muted);margin-top:6px}
+#ssCal .calK i{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:-1px;margin-right:4px}
 
 /* 소리 끄고 켜기 */ .sndRow{display:flex;gap:10px;width:min(92vw,420px)} .sndRow .btn{flex:1 1 0;min-width:0;font-size:18px;padding-left:6px;padding-right:6px} .sndRow .btn[aria-pressed=false]{opacity:.65;text-decoration:line-through}
 #lessonDone .pauseCard{display:flex;flex-direction:column;gap:6px}
@@ -397,6 +407,7 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
   <div class="card pauseCard" style="display:flex;flex-direction:column;gap:12px;text-align:center">
     <h2 id="ssEndT" style="margin:0">오늘의 슈퍼샷</h2>
     <p class="sub" id="ssEndP" style="margin:0"></p>
+    <div id="ssCal"></div>
     <div id="ssAsk" style="display:flex;flex-direction:column;gap:10px"><div style="font-size:20px;font-weight:800">이런 판, 또 하고 싶으세요?</div>
       <div class="two"><button class="btn" id="ssUp" type="button">👍 또 할래요</button><button class="btn ghost" id="ssDown" type="button">👎 그냥 그래요</button></div></div>
     <button class="btn ghost" id="ssBack" type="button">돌아가기</button>
@@ -1601,8 +1612,8 @@ function simulate(L,ang,pow){const b=newBall(L);launch(b,ang,pow);const dt=1/480
 const T=140,GY=880;
 const rail=(x,top,bot)=>({k:'rail',x,top,bot:bot||GY});
 const LV=[
- {name:'언덕 내리막 한 번에',ball:'normal',tee:[T,640-R],surf:[[20,640],[200,640],[380,GY],[580,GY]],cup:[440,480],
-  props:[rail(20,600,640),rail(580,840)],
+ {name:'언덕 내리막 한 번에',ball:'normal',tee:[T,640-R],surf:[[20,640],[200,640],[380,GY],[580,GY]],cup:[500,540],
+  props:[rail(20,600,640),{k:'rock',x1:420,y1:830,x2:460,y2:GY},rail(580,840)],
   head:'언덕 위에서 한 번에 쏙! 내리막 묘기샷',lead:'티 언덕에서 친 공이 내리막을 타고 내려가 그대로 컵에 들어갔다.'},
  {name:'연못 건너 한 번에',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[250,GY],[250,960],[420,960],[420,GY],[580,GY]],cup:[480,520],water:[[250,420]],
   props:[rail(20,840),rail(580,820)],
@@ -1628,8 +1639,8 @@ const LV=[
  {name:'통통 튀어 언덕 위로',ball:'rubber',tee:[T,GY-R],surf:[[20,GY],[400,GY],[400,720],[580,720]],cup:[480,520],
   props:[rail(20,840),rail(580,680,720)],
   head:'고무공 통통 튀어 언덕 위로 쏙! 튕기기 묘기샷',lead:'땅을 한 번 튕긴 고무공이 높이 솟아 언덕 위 컵에 들어갔다.'},
- {name:'정자 지붕 밑으로',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[580,GY]],cup:[420,460],
-  props:[rail(20,840),{k:'roof',x1:330,y1:760,x2:540,y2:782},rail(580,840)],
+ {name:'정자 지붕 밑으로',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[490,GY],[490,960],[580,960],[580,GY]],cup:[420,460],water:[[490,580]],
+  props:[rail(20,840),{k:'roof',x1:330,y1:800,x2:560,y2:822},rail(580,840)],
   head:'낮은 정자 지붕 밑으로 쏙! 낮게 깔아 친 묘기샷',lead:'낮게 깔린 공이 정자 지붕 아래를 빠져나가 그대로 컵에 들어갔다.'},
  {name:'말뚝 넘고 연못 넘고',ball:'normal',tee:[T,GY-R],surf:[[20,GY],[300,GY],[300,960],[430,960],[430,GY],[580,GY]],cup:[480,520],water:[[300,430]],
   props:[rail(20,840),{k:'post',x1:250,y1:780,x2:262,y2:GY},rail(580,820)],
@@ -1653,16 +1664,33 @@ const SSUI=(()=>{
   const TRIES=5, KEY='opg_ss', COL={normal:'#f4f4ee',rubber:'#d9382b',cork:'#c99a5b'}, NAME={normal:'일반공',rubber:'고무공',cork:'코르크공'},
     TIP={normal:'화면 어디서든 아래로 당겼다 놓으세요',rubber:'고무공은 통통 튀어요',cork:'코르크공은 잘 안 튀고 물에 떠요'};
   // 2주 순서: 월요일은 쉽게, 일요일은 왕중왕
-  const ORDER=[[1,10,2,5,4,3,14],[8,6,11,7,12,9,13]];
+  const ORDER=[[10,1,2,5,4,3,14],[8,6,11,7,12,9,13]];
   function todayLevel(){ const d=new Date(); const day=Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(2026,0,5))/864e5); const wk=Math.floor(day/7), wd=((day%7)+7)%7;
     return LV[ORDER[((wk%2)+2)%2][wd]-1]; }
   function st(){ try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o.date===TODAY) return o; }catch(e){} return {date:TODAY,used:0,won:0}; }
   function put(o){ try{ localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }
   const unlocked=()=>{ try{ return localStorage.getItem('opg_ss_unlock')===TODAY; }catch(e){ return false; } };
   function unlock(){ try{ localStorage.setItem('opg_ss_unlock',TODAY); }catch(e){} }
-  const available=()=>window.LANG!=='th' && unlocked() && (()=>{ const o=st(); return !o.won && o.used<TRIES; })();
-  function refresh(){ const a=available(), o=st(); ['ssEndBtn','ssStartBtn'].forEach(id=>{ const b=$(id); if(!b) return; b.hidden=!a;
-    const sm=b.querySelector('small'); if(sm) sm.textContent=o.used?('남은 기회 '+(TRIES-o.used)+'번'):'딱 한 번에 넣는 묘기 한 판'; }); }
+  const doneToday=()=>{ const o=st(); return !!o.won || o.used>=TRIES; };
+  const available=()=>window.LANG!=='th' && !doneToday();
+  /* 출석: 한 번이라도 치면 'try'(파란 도장), 넣으면 'win'(금 도장) */
+  const LOG='opg_ss_log';
+  function logGet(){ try{ return JSON.parse(localStorage.getItem(LOG)||'{}'); }catch(e){ return {}; } }
+  function logMark(v){ const g=logGet(); if(v==='win'||!g[TODAY]){ g[TODAY]=v; try{ localStorage.setItem(LOG,JSON.stringify(g)); }catch(e){} } return g; }
+  const dkey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  function streak(){ const g=logGet(); const d=new Date(); if(!g[dkey(d)]) d.setDate(d.getDate()-1); let n=0; while(g[dkey(d)]){ n++; d.setDate(d.getDate()-1); } return n; }
+  function calHTML(){ const g=logGet(), d=new Date(), y=d.getFullYear(), m=d.getMonth(), first=new Date(y,m,1).getDay(), last=new Date(y,m+1,0).getDate();
+    let h='<div class="calH"><span>'+(m+1)+'월 슈퍼샷 출석부</span><b>연속 '+streak()+'일</b></div><div class="calG">';
+    '일월화수목금토'.split('').forEach(w=>h+='<span class="wd">'+w+'</span>'); for(let i=0;i<first;i++) h+='<span></span>';
+    for(let n=1;n<=last;n++){ const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(n).padStart(2,'0'), v=g[k]; h+='<span class="'+(v||'')+(k===TODAY?' today':'')+'">'+(v==='win'?'★':n)+'</span>'; }
+    return h+'</div><div class="calK"><span><i style="background:var(--accent)"></i>도전</span><span><i style="background:#ffcf3a"></i>성공</span></div>'; }
+  function book(from){ back=from; $('ss').hidden=true;
+    $('ssEndT').textContent='슈퍼샷 출석부'; $('ssEndP').textContent=st().won?'오늘은 성공했어요! 내일 새 슈퍼샷이 열려요.':'오늘 기회는 다 썼어요. 내일 새 슈퍼샷이 열려요.';
+    $('ssCal').innerHTML=calHTML(); $('ssAsk').hidden=true; $('ssEnd').hidden=false; PT.event('ss_book',{from,streak:streak()}); if(typeof guardBack==='function') guardBack(); }
+  function refresh(){ const th=window.LANG==='th', done=doneToday(), o=st(), n=streak();
+    ['ssEndBtn','ssStartBtn'].forEach(id=>{ const b=$(id); if(!b) return; b.hidden=th||(done&&id==='ssEndBtn');
+      b.innerHTML=done?('📅 슈퍼샷 출석부<small>'+(n?'연속 '+n+'일 출석':'오늘 출석 완료')+'</small>')
+        :('⛳ 오늘의 슈퍼샷<small>'+(o.used?'남은 기회 '+(TRIES-o.used)+'번':n?'연속 '+n+'일 출석 중 · 오늘도 도장 받기':'매일 한 판 · 치기만 해도 출석 도장')+'</small>'); }); }
 
   let L=null,b=null,o=null,cv,ctx,sc=1,ox=0,oy=0,drag=null,trail=[],TS=0,raf=0,last=0,acc=0,back=null,
     club={mode:'aim',th:0,dir:1,t:0};
@@ -1704,11 +1732,11 @@ const SSUI=(()=>{
     el.addEventListener('pointermove',e=>{ if(!drag) return; drag.c=pt(e); const dx=drag.s[0]-drag.c[0], dy=drag.s[1]-drag.c[1], l=Math.hypot(dx,dy); if(l>PULL) drag.s=[drag.c[0]+dx/l*PULL, drag.c[1]+dy/l*PULL]; });
     el.addEventListener('pointerup',()=>{ if(!drag) return; const a=aimOf(drag); drag=null; if(a.pow<.05){ hint('조금 더 길게 당겨 보세요'); return; }
       club.mode='swing'; club.t=0; club.from=club.th; club.dur=.2-.08*a.pow; club.shot=a; o.used++; put(o); dots();
-      PT.event('ss_shot',{lv:L.id,n:o.used,ang:+a.ang.toFixed(3),pow:+a.pow.toFixed(3)}); });
+      PT.event('ss_shot',{lv:L.id,n:o.used,ang:+a.ang.toFixed(3),pow:+a.pow.toFixed(3)}); if(o.used===1){ logMark('try'); PT.event('ss_attend',{lv:L.id,streak:streak()}); } });
     el.addEventListener('pointercancel',()=>{ drag=null; });
     $('ssClose').onclick=close; $('ssBack').onclick=close;
     $('ssUp').onclick=()=>react('up'); $('ssDown').onclick=()=>react('down');
-    $('ssEndBtn').onclick=()=>open('end'); $('ssStartBtn').onclick=()=>open('start');
+    $('ssEndBtn').onclick=()=>doneToday()?book('end'):open('end'); $('ssStartBtn').onclick=()=>doneToday()?book('start'):open('start');
     addEventListener('resize',()=>{ if(!$('ss').hidden) resize(); }); }
 
   function clubTick(d){
@@ -1769,7 +1797,7 @@ const SSUI=(()=>{
   function miss(why){ b.state='wait'; const left=TRIES-o.used; if(why==='water') splash(); PT.event('ss_miss',{lv:L.id,why,left});
     toast((why==='water'?'풍덩! ':why==='ob'?'밖으로 나갔어요! ':'아깝다! ')+(left>0?'기회 '+left+'번 남았어요':''));
     setTimeout(()=>{ if(left<=0){ PT.event('ss_fail',{lv:L.id}); endCard(false); } else { fresh(); hint('다시 한 번! 아래로 당겼다 놓으세요'); } },1100); }
-  function win(){ b.state='done'; cupS(); o.won=1; o.shots=o.used; put(o); PT.event('ss_clear',{lv:L.id,shots:o.used}); setTimeout(hoe,900); }
+  function win(){ b.state='done'; cupS(); o.won=1; o.shots=o.used; put(o); logMark('win'); PT.event('ss_clear',{lv:L.id,shots:o.used}); setTimeout(hoe,900); }
   function photo(){ const c=document.createElement('canvas'); c.width=640; c.height=360; const g=c.getContext('2d'), s2=Math.min(c.width/W,c.height/560);
     g.fillStyle='#e9e0c8'; g.fillRect(0,0,c.width,c.height); g.save(); g.translate((c.width-W*s2)/2,c.height-960*s2); g.scale(s2,s2);
     g.fillStyle='#6b6152'; g.beginPath(); const sf=L.surf; g.moveTo(sf[0][0],H); for(const q of sf) g.lineTo(q[0],q[1]); g.lineTo(sf[sf.length-1][0],H); g.fill();
@@ -1784,8 +1812,8 @@ const SSUI=(()=>{
     PT.event('ss_news',{lv:L.id,shots:n}); }
   function endCard(won){ cancelAnimationFrame(raf); raf=0; frame();
     $('ssEndT').textContent=won?'오늘의 슈퍼샷 성공!':'오늘의 슈퍼샷은 여기까지';
-    $('ssEndP').textContent=won?'호외는 「내 신문 보관함」에서 다시 볼 수 있어요. 내일은 또 다른 묘기가 기다려요.':'아깝게 놓쳤어요. 내일 새 슈퍼샷이 기다리고 있어요.';
-    const r=st().react; $('ssAsk').hidden=!!r; $('ssEnd').hidden=false; refresh(); }
+    $('ssEndP').textContent=won?'금 도장을 받았어요. 호외는 「내 신문 보관함」에 있어요.':'아깝게 놓쳤지만 출석 도장은 받았어요. 내일 새 슈퍼샷이 열려요.';
+    $('ssCal').innerHTML=calHTML(); const r=st().react; $('ssAsk').hidden=!!r; $('ssEnd').hidden=false; refresh(); }
   function react(v){ const s=st(); s.react=v; put(s); o=s; PT.event('ss_react',{lv:L.id,v,won:s.won?1:0}); $('ssAsk').hidden=true; toast2(); }
   function toast2(){ $('ssEndP').textContent='고맙습니다! 알려 주신 대로 더 재밌게 만들어 볼게요.'; }
   function back_(){ if(!$('ssEnd').hidden||!$('ss').hidden){ close(); return true; } return false; }
@@ -2096,7 +2124,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v78', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v79', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
