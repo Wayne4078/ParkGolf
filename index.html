@@ -39,13 +39,19 @@ html.ait{--top:calc(max(env(safe-area-inset-top,0px),var(--sat,0px)) + 40px)}
 #ssName .dot{display:inline-block;width:13px;height:13px;border-radius:50%;margin-right:4px;vertical-align:-1px;border:1.5px solid rgba(0,0,0,.35)}
 #ssTries{display:flex;gap:5px;align-items:center;font-size:17px;font-weight:700;color:var(--muted)}
 #ssTries i{width:14px;height:14px;border-radius:50%;background:var(--accent);display:block}
-#ssTries i.off{background:var(--line)}
+#ssTries i.off{background:var(--line)!important}
+#ssTries .ch{margin-left:6px;padding:2px 8px;border-radius:8px;background:#e23b2e;color:#fff;font-size:15px;font-weight:900}
+#ssTries .ch.off{background:var(--line);color:var(--muted)}
+#ssBanner{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%) scale(.7);background:#1d1a15;color:#ffcf3a;font-family:var(--serif,serif);font-weight:900;font-size:34px;padding:16px 26px;border-radius:16px;text-align:center;white-space:nowrap;pointer-events:none;opacity:0;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+#ssBanner small{display:block;font-family:var(--font);font-size:18px;color:#f3f1ea;margin-top:4px;font-weight:700}
+#ssBanner.on{animation:ssBan 2.2s ease both}
+@keyframes ssBan{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
 #ssStage{flex:1;min-height:0;position:relative}
 #ssCv{position:absolute;inset:0;width:100%;height:100%;border-radius:12px;touch-action:none;background:#f3f1ea}
 #ssHint{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(29,26,21,.78);color:#f3f1ea;font-size:19px;font-weight:700;padding:8px 16px;border-radius:10px;white-space:nowrap;pointer-events:none}
 #ssToast{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:var(--panel);color:var(--fg);border:2px solid var(--accent);font-size:21px;font-weight:800;padding:12px 20px;border-radius:16px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 #ssToast.on{opacity:1}
-#ssEnd{background:rgba(12,20,10,.62);z-index:8}
+#ssEnd,#ssMid{background:rgba(12,20,10,.62);z-index:8}
 #ssCal .calH{display:flex;justify-content:space-between;align-items:baseline;font-weight:800;font-size:19px;margin-bottom:6px}
 #ssCal .calH b{color:var(--accent)}
 #ssCal .calG{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;width:100%;font-variant-numeric:tabular-nums}
@@ -401,7 +407,15 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
 
 <div id="ss" hidden>
   <div class="hud"><button class="hudBtn" id="ssClose" type="button">나가기</button><div id="ssName">오늘의 슈퍼샷</div><div id="ssTries"></div></div>
-  <div id="ssStage"><canvas id="ssCv"></canvas><div id="ssHint"></div><div id="ssToast"></div></div>
+  <div id="ssStage"><canvas id="ssCv"></canvas><div id="ssHint"></div><div id="ssToast"></div><div id="ssBanner"></div></div>
+</div>
+<div class="screen" id="ssMid" hidden>
+  <div class="card pauseCard" style="display:flex;flex-direction:column;gap:12px;text-align:center">
+    <h2 id="ssMidT" style="margin:0"></h2>
+    <p class="sub" id="ssMidP" style="margin:0"></p>
+    <button class="btn" id="ssMore" type="button">📺 광고 보고 한 번 더 시도</button>
+    <button class="btn" id="ssNext" type="button">다음 판으로</button>
+  </div>
 </div>
 <div class="screen" id="ssEnd" hidden>
   <div class="card pauseCard" style="display:flex;flex-direction:column;gap:12px;text-align:center">
@@ -1250,7 +1264,7 @@ function resumeKey(){ return COURSE.store+'_resume'; }
 function loadResume(){ try{ const r=JSON.parse(localStorage.getItem(resumeKey())||'null'); return r && r.date===TODAY && (r.hi>0 || (r.strokes||[]).some(x=>x>0)) ? r : null; }catch(e){ return null; } } // 한 타도 안 친 '자리'는 이어 치기가 아님(고르는 화면만 거쳐도 저장되던 빈 기록 무시)
 function saveResume(){ if(S.mode!=='today' || S.attract || COURSE.lesson) return; try{ localStorage.setItem(resumeKey(), JSON.stringify({date:TODAY, hi:S.hi, strokes:S.strokes.slice(), ball:S.ball, pos:S.holeOver?null:{x:S.pos.x,y:S.pos.y}, done:S.holeOver})); }catch(e){} }
 function clearResume(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
-function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause','lessonDone','adScreen','payScreen','ss','ssEnd'].every(id=>!$(id) || $(id).hidden); }
+function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause','lessonDone','adScreen','payScreen','ss','ssEnd','ssMid'].every(id=>!$(id) || $(id).hidden); }
 function openPause(){ if(!playing() && $('holeDone').hidden) return; const h=H_(), tot=S.strokes.reduce((a,b)=>a+b,0);
   $('pauseSub').textContent = S.mode==='today' ? h.n+'번 홀 · 지금까지 '+tot+'타 · 나갔다 와도 이 자리에서 이어 칩니다' : COURSE.lesson ? h.n+'단계 배우는 중' : h.n+'번 홀 · 연습 (기록 안 남음)';
   $('pRetry').hidden = S.mode==='today'; saveResume(); $('pause').hidden=false; PT.event('pause',{c:COURSE.key,mode:S.mode,n:h.n}); }
@@ -1380,7 +1394,8 @@ function bonusAvail(){ return !COURSE.lesson && allTodayDone() && !bonusState();
 function showAd(cb){ // 토스 앱이면 보상형 광고, 아니면 3초짜리 시험 화면
   PT.event('bonus_ad',{c:COURSE.key});
   if(AIT_CFG.ad && aitOk(AIT.loadFullScreenAd)){ tossAd(cb); return; }
-  if(AIT){ cb(); return; } // 토스 앱인데 광고 번호가 아직 없으면 시험 화면 없이 바로 $('adScreen').hidden=false; $('adDone').disabled=true; let n=3; $('adCount').textContent=n;
+  if(AIT){ cb(); return; } // 토스 앱인데 광고 번호가 아직 없으면 시험 화면 없이 바로
+  $('adScreen').hidden=false; $('adDone').disabled=true; let n=3; $('adCount').textContent=n;
   const t=setInterval(()=>{ n--; $('adCount').textContent=n>0?n:'끝!'; if(n<=0){ clearInterval(t); $('adDone').disabled=false; } },1000);
   $('adDone').onclick=()=>{ $('adScreen').hidden=true; cb(); }; }
 function tossAd(cb){ let earned=false, done=false; msg('광고를 불러오고 있어요');
@@ -1654,24 +1669,54 @@ const LV=[
  {name:'일요일 왕중왕',ball:'rubber',tee:[T,GY-R],surf:[[20,GY],[230,GY],[230,960],[330,960],[330,GY],[580,GY]],cup:[400,440],water:[[230,330]],
   props:[rail(20,840),{k:'roof',x1:350,y1:650,x2:500,y2:672},{k:'fence',x:580,top:380,bot:GY}],
   head:'연못 넘고 울타리 맞고 정자 밑으로 쏙! 왕중왕 묘기샷',lead:'연못을 넘긴 고무공이 울타리를 맞고 돌아와 정자 밑 컵에 들어갔다. 이번 주 최고의 한 방이었다.'},
+ {"name":"높은 단 위로","ball":"normal","tee":[140,864],"surf":[[20,880],[359,880],[359,738],[580,738]],"cup":[415,455],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rail","x":580,"top":698,"bot":738}],"head":"언덕 위 높은 단 컵에 한 번에 쏙! 오르막 묘기샷","lead":"언덕 아래에서 띄운 공이 높은 단 위에 사뿐히 내려앉아 컵에 들어갔다."},
+ {"name":"높은 단 끝 컵","ball":"normal","tee":[140,864],"surf":[[20,880],[308,880],[308,742],[580,742]],"cup":[511,551],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rail","x":580,"top":702,"bot":742}],"head":"높은 단 맨 끝 컵에 쏙! 정밀 오르막샷","lead":"단 위 끝자락 컵, 공은 멈출 듯 말 듯 굴러 끝내 들어갔다."},
+ {"name":"고무공 계단 오르기","ball":"rubber","tee":[140,864],"surf":[[20,880],[338,880],[338,769],[580,769]],"cup":[405,445],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rail","x":580,"top":729,"bot":769}],"head":"고무공 통통 튀어 높은 단 위로 쏙!","lead":"땅을 한 번 튕긴 고무공이 높은 단을 뛰어올라 컵에 들어갔다."},
+ {"name":"바위 넘어 언덕 위","ball":"normal","tee":[140,864],"surf":[[20,880],[306,880],[306,800],[580,800]],"cup":[452,492],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rock","x1":281,"y1":765,"x2":297,"y2":880},{"k":"rail","x":580,"top":760,"bot":800}],"head":"바위 넘고 언덕 올라 쏙! 두 고개 묘기샷","lead":"작은 바위를 넘긴 공이 그대로 언덕 위 컵까지 올라갔다."},
+ {"name":"높은 티에서 내려치기","ball":"cork","tee":[140,743],"surf":[[20,759],[373,759],[373,880],[580,880]],"cup":[466,506],"props":[{"k":"rail","x":20,"top":719,"bot":759},{"k":"rail","x":580,"top":840,"bot":880}],"head":"높은 티에서 내려친 코르크공, 한 번에 쏙!","lead":"높은 단 위에서 친 코르크공이 아래 컵에 툭 떨어져 그대로 멈췄다."},
+ {"name":"넓은 연못 건너기","ball":"normal","tee":[140,864],"surf":[[20,880],[262,880],[262,960],[439,960],[439,880],[580,880]],"cup":[477,517],"water":[[262,439]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rail","x":580,"top":815,"bot":880}],"head":"넓은 연못 단숨에 건너 쏙! 물 건너기 묘기샷","lead":"넓은 연못 앞에서 띄운 공이 물을 훌쩍 넘어 건너편 컵에 들어갔다."},
+ {"name":"코르크공 물수제비","ball":"cork","tee":[140,864],"surf":[[20,880],[228,880],[228,960],[428,960],[428,880],[580,880]],"cup":[502,542],"water":[[228,428]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rail","x":580,"top":813,"bot":880}],"head":"코르크공, 연못 위를 스르르 미끄러져 쏙!","lead":"물에 뜨는 코르크공이 연못을 미끄러지듯 건너 컵에 들어갔다."},
+ {"name":"고무공 연못 넘기","ball":"rubber","tee":[140,864],"surf":[[20,880],[242,880],[242,960],[342,960],[342,880],[580,880]],"cup":[462,502],"water":[[242,342]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rail","x":580,"top":764,"bot":880}],"head":"통통 튀는 고무공, 연못 넘어 쏙!","lead":"잘 튀는 고무공을 달래듯 띄워 연못 건너편 컵에 멈춰 세웠다."},
+ {"name":"바위 지나 연못 건너","ball":"normal","tee":[140,864],"surf":[[20,880],[273,880],[273,960],[394,960],[394,880],[580,880]],"cup":[448,488],"water":[[273,394]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rock","x1":215,"y1":806,"x2":229,"y2":880},{"k":"rail","x":580,"top":780,"bot":880}],"head":"바위 지나 연못 건너 쏙! 두 고개 묘기샷","lead":"바위를 넘긴 공이 연못까지 단숨에 건너 컵에 들어갔다."},
+ {"name":"말뚝 앞 연못","ball":"normal","tee":[140,864],"surf":[[20,880],[294,880],[294,960],[408,960],[408,880],[580,880]],"cup":[481,521],"water":[[294,408]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"post","x1":217,"y1":805,"x2":253,"y2":880},{"k":"rail","x":580,"top":788,"bot":880}],"head":"말뚝 넘고 연못 넘어 쏙! 깔끔한 한 방","lead":"말뚝과 연못을 차례로 넘긴 공이 건너편 컵에 그대로 들어갔다."},
+ {"name":"긴 모래밭 넘기","ball":"normal","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[515,555],"sand":[[279,480,880]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rail","x":580,"top":840,"bot":880}],"head":"긴 모래밭 훌쩍 넘겨 쏙! 모래 피하기 묘기샷","lead":"길게 깔린 모래밭을 한 번에 넘긴 공이 굴러 컵에 들어갔다."},
+ {"name":"고무공과 모래밭","ball":"rubber","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[511,551],"sand":[[286,461,880]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rail","x":580,"top":840,"bot":880}],"head":"고무공, 모래밭을 피해 튀어 넘어 쏙!","lead":"통통 튀는 고무공이 모래밭을 피해 튀어 넘어 컵에 들어갔다."},
+ {"name":"바위 뒤 벙커","ball":"normal","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[509,549],"sand":[[265,419,880]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rock","x1":341,"y1":772,"x2":381,"y2":880},{"k":"rail","x":580,"top":840,"bot":880}],"head":"바위 넘고 벙커 피해 쏙! 정밀 묘기샷","lead":"바위를 넘기자 바로 모래밭, 공은 모래를 피해 컵까지 굴러갔다."},
+ {"name":"말뚝 옆 모래밭","ball":"normal","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[459,499],"sand":[[254,380,880]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"post","x1":362,"y1":820,"x2":399,"y2":880},{"k":"rail","x":580,"top":840,"bot":880}],"head":"말뚝 넘어 모래밭 지나 쏙!","lead":"말뚝을 넘긴 공이 모래밭을 건너뛰어 컵에 들어갔다."},
+ {"name":"고무공 모래 건너기","ball":"rubber","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[500,540],"sand":[[288,439,880]],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rock","x1":354,"y1":817,"x2":381,"y2":880},{"k":"rail","x":580,"top":840,"bot":880}],"head":"고무공, 바위와 모래밭을 넘어 쏙! 어려운 묘기샷","lead":"잘 튀는 고무공을 바위와 모래 사이로 정확히 떨어뜨려 넣었다."},
+ {"name":"정자 앞 바위","ball":"normal","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[405,445],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rock","x1":301,"y1":787,"x2":318,"y2":880},{"k":"roof","x1":306,"y1":704,"x2":480,"y2":726},{"k":"rail","x":580,"top":840,"bot":880}],"head":"바위 넘어 정자 밑으로 쏙! 낮게 깔아 친 묘기샷","lead":"바위를 살짝 넘긴 공이 정자 지붕 아래 컵으로 굴러들어 갔다."},
+ {"name":"정자 그늘 아래","ball":"normal","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[391,431],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rock","x1":270,"y1":830,"x2":302,"y2":880},{"k":"roof","x1":357,"y1":709,"x2":542,"y2":731},{"k":"rail","x":580,"top":840,"bot":880}],"head":"정자 그늘 아래 컵에 쏙!","lead":"정자 지붕을 피해 낮게 친 공이 그늘 아래 컵에 들어갔다."},
+ {"name":"코르크공 정자 밑","ball":"cork","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[393,433],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"roof","x1":355,"y1":738,"x2":535,"y2":760},{"k":"rail","x":580,"top":840,"bot":880}],"head":"코르크공, 정자 지붕 밑으로 쏙!","lead":"잘 안 튀는 코르크공이 정자 지붕 아래로 굴러 컵에 멈췄다."},
+ {"name":"울타리 맞고 정자 밑","ball":"rubber","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[379,419],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"post","x1":203,"y1":760,"x2":232,"y2":880},{"k":"roof","x1":348,"y1":737,"x2":518,"y2":759},{"k":"fence","x":580,"top":380,"bot":880}],"head":"말뚝 넘고 울타리 맞고 정자 밑으로 쏙!","lead":"고무공이 말뚝을 넘어 울타리를 맞고 되돌아와 정자 밑 컵에 들어갔다."},
+ {"name":"되돌아오는 고무공","ball":"rubber","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[340,380],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rock","x1":235,"y1":770,"x2":263,"y2":880},{"k":"roof","x1":304,"y1":688,"x2":456,"y2":710},{"k":"fence","x":580,"top":380,"bot":880}],"head":"울타리 맞고 되돌아와 정자 밑 쏙! 고무공 묘기샷","lead":"울타리에 맞고 돌아온 고무공이 정자 아래 컵으로 쏙 들어갔다."},
+ {"name":"큰 바위 넘기","ball":"normal","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[445,485],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"post","x1":376,"y1":828,"x2":400,"y2":880},{"k":"rock","x1":235,"y1":624,"x2":311,"y2":880},{"k":"rail","x":580,"top":715,"bot":880}],"head":"큰 바위 훌쩍 넘어 쏙! 높이 띄운 묘기샷","lead":"키 큰 바위를 높이 넘긴 공이 말뚝 뒤 컵에 떨어져 들어갔다."},
+ {"name":"말뚝과 큰 바위","ball":"normal","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[493,533],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"post","x1":240,"y1":796,"x2":260,"y2":880},{"k":"rock","x1":345,"y1":686,"x2":386,"y2":880},{"k":"rail","x":580,"top":833,"bot":880}],"head":"말뚝 넘고 큰 바위 넘어 쏙!","lead":"말뚝과 큰 바위를 한꺼번에 넘긴 높은 공이 컵에 내려앉았다."},
+ {"name":"말뚝 두 개","ball":"normal","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[396,436],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"post","x1":331,"y1":817,"x2":363,"y2":880},{"k":"post","x1":267,"y1":786,"x2":279,"y2":880},{"k":"rail","x":580,"top":716,"bot":880}],"head":"말뚝 두 개 넘어 쏙! 정밀 묘기샷","lead":"나란히 선 말뚝 두 개를 넘긴 공이 그 뒤 컵에 들어갔다."},
+ {"name":"긴 말뚝 넘기","ball":"cork","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[455,495],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"post","x1":248,"y1":739,"x2":260,"y2":880},{"k":"rail","x":580,"top":828,"bot":880}],"head":"코르크공, 긴 말뚝 넘어 툭 쏙!","lead":"높은 말뚝을 넘긴 코르크공이 튀지 않고 떨어져 컵으로 굴러 들어갔다."},
+ {"name":"큰 바위 바로 뒤","ball":"cork","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[449,489],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rock","x1":306,"y1":645,"x2":346,"y2":880},{"k":"rail","x":580,"top":727,"bot":880}],"head":"코르크공, 큰 바위 넘어 바로 뒤 컵에 쏙!","lead":"큰 바위 바로 뒤에 숨은 컵, 코르크공이 넘자마자 툭 떨어져 들어갔다."},
+ {"name":"바위와 말뚝 사이","ball":"cork","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[421,461],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"rock","x1":278,"y1":810,"x2":292,"y2":880},{"k":"post","x1":334,"y1":758,"x2":346,"y2":880},{"k":"rail","x":580,"top":768,"bot":880}],"head":"바위 넘고 말뚝 넘어 코르크공 쏙!","lead":"잘 안 튀는 코르크공이 바위와 말뚝을 차례로 넘어 컵에 들어갔다."},
+ {"name":"돌담 뒤 컵","ball":"rubber","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[489,529],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"wall","x1":365,"y1":716,"x2":415,"y2":880},{"k":"fence","x":580,"top":380,"bot":880}],"head":"울타리 맞고 돌담 뒤로 쏙! 고무공 튕기기 묘기샷","lead":"돌담 뒤에 숨은 컵, 고무공이 울타리를 맞고 튕겨 들어갔다."},
+ {"name":"높은 말뚝 고무공","ball":"rubber","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[485,525],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"post","x1":314,"y1":677,"x2":326,"y2":880},{"k":"rail","x":580,"top":731,"bot":880}],"head":"고무공, 높은 말뚝 넘어 쏙!","lead":"잘 튀는 고무공을 높은 말뚝 너머로 띄워 컵에 멈춰 세웠다."},
 ];
 LV.forEach((L,i)=>{L.id=i+1;build(L)});
 return {W,H,R,G,MAXV,WY,BALL,LV,closest,newBall,launch,step,simulate};
 })();
-// ================= 오늘의 슈퍼샷 (v78): 하루 한 판, 옆에서 본 묘기 퍼즐. 기회 5번, 성공하면 파크골프 일보 호외 =================
+// ================= 오늘의 슈퍼샷 (v80): 하루 3판(난이도 구분 없음), 판마다 연습 3번 + 진짜 도전 1번, 도전 실패 시 광고 한 편으로 한 번 더. 매일 출석 도장, 성공하면 하루 끝에 호외 =================
 const SSUI=(()=>{
   const {W,H,R,G,MAXV,WY,LV}=SS;
-  const TRIES=5, KEY='opg_ss', COL={normal:'#f4f4ee',rubber:'#d9382b',cork:'#c99a5b'}, NAME={normal:'일반공',rubber:'고무공',cork:'코르크공'},
+  const PRAC=3, TRIES=4, KEY='opg_ss', PCOL=['#3f7fc4','#8e5bb5','#d9822b'], COL={normal:'#f4f4ee',rubber:'#d9382b',cork:'#c99a5b'}, NAME={normal:'일반공',rubber:'고무공',cork:'코르크공'},
     TIP={normal:'화면 어디서든 아래로 당겼다 놓으세요',rubber:'고무공은 통통 튀어요',cork:'코르크공은 잘 안 튀고 물에 떠요'};
-  // 2주 순서: 월요일은 쉽게, 일요일은 왕중왕
-  const ORDER=[[10,1,2,5,4,3,14],[8,6,11,7,12,9,13]];
-  function todayLevel(){ const d=new Date(); const day=Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(2026,0,5))/864e5); const wk=Math.floor(day/7), wd=((day%7)+7)%7;
-    return LV[ORDER[((wk%2)+2)%2][wd]-1]; }
-  function st(){ try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o.date===TODAY) return o; }catch(e){} return {date:TODAY,used:0,won:0}; }
-  function put(o){ try{ localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }
-  const unlocked=()=>{ try{ return localStorage.getItem('opg_ss_unlock')===TODAY; }catch(e){ return false; } };
-  function unlock(){ try{ localStorage.setItem('opg_ss_unlock',TODAY); }catch(e){} }
-  const doneToday=()=>{ const o=st(); return !!o.won || o.used>=TRIES; };
+  const N=3;  // 하루 판 수
+  // 판 전체를 날마다 3개씩 차례로 돌림(난이도 구분 없음)
+  function dayNo(){ const d=new Date(); return Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(2026,0,5))/864e5); }
+  function todayLevels(){ const k=dayNo(), n=LV.length; return [0,1,2].map(i=>LV[(((k*N+i)%n)+n)%n]); }
+  const todayLevel=()=>todayLevels()[Math.min(N-1,day().cur)];
+  function day(){ try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o.date===TODAY&&o.s) return o; }catch(e){} return {date:TODAY,cur:0,s:[{used:0},{used:0},{used:0}]}; }
+  let D=null; const st=()=>D.s[Math.min(N-1,D.cur)];
+  function put(){ try{ localStorage.setItem(KEY,JSON.stringify(D)); }catch(e){} }
+  const tries=s=>PRAC+1+(s.more?1:0);
+  function unlock(){}
+  const doneToday=()=>day().cur>=N;
   const available=()=>window.LANG!=='th' && !doneToday();
   /* 출석: 한 번이라도 치면 'try'(파란 도장), 넣으면 'win'(금 도장) */
   const LOG='opg_ss_log';
@@ -1685,12 +1730,12 @@ const SSUI=(()=>{
     for(let n=1;n<=last;n++){ const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(n).padStart(2,'0'), v=g[k]; h+='<span class="'+(v||'')+(k===TODAY?' today':'')+'">'+(v==='win'?'★':n)+'</span>'; }
     return h+'</div><div class="calK"><span><i style="background:var(--accent)"></i>도전</span><span><i style="background:#ffcf3a"></i>성공</span></div>'; }
   function book(from){ back=from; $('ss').hidden=true;
-    $('ssEndT').textContent='슈퍼샷 출석부'; $('ssEndP').textContent=st().won?'오늘은 성공했어요! 내일 새 슈퍼샷이 열려요.':'오늘 기회는 다 썼어요. 내일 새 슈퍼샷이 열려요.';
+    const w=day().s.filter(x=>x.won).length; $('ssEndT').textContent='슈퍼샷 출석부'; $('ssEndP').textContent='오늘 '+N+'판 중 '+w+'판 성공. 내일 새 슈퍼샷 '+N+'판이 열려요.';
     $('ssCal').innerHTML=calHTML(); $('ssAsk').hidden=true; $('ssEnd').hidden=false; PT.event('ss_book',{from,streak:streak()}); if(typeof guardBack==='function') guardBack(); }
-  function refresh(){ const th=window.LANG==='th', done=doneToday(), o=st(), n=streak();
+  function refresh(){ const th=window.LANG==='th', dd=day(), done=dd.cur>=N, o=dd.s[Math.min(N-1,dd.cur)], n=streak();
     ['ssEndBtn','ssStartBtn'].forEach(id=>{ const b=$(id); if(!b) return; b.hidden=th||(done&&id==='ssEndBtn');
       b.innerHTML=done?('📅 슈퍼샷 출석부<small>'+(n?'연속 '+n+'일 출석':'오늘 출석 완료')+'</small>')
-        :('⛳ 오늘의 슈퍼샷<small>'+(o.used?'남은 기회 '+(TRIES-o.used)+'번':n?'연속 '+n+'일 출석 중 · 오늘도 도장 받기':'매일 한 판 · 치기만 해도 출석 도장')+'</small>'); }); }
+        :('⛳ 오늘의 슈퍼샷<small>'+((dd.cur||o.used)?(dd.cur+1)+'번째 판 · '+(o.used<PRAC?'연습 '+(PRAC-o.used)+'번 남음':'진짜 도전 차례'):n?'연속 '+n+'일 출석 중 · 오늘도 '+N+'판':'하루 '+N+'판 · 연습 세 번, 진짜 도전 한 번')+'</small>'); }); }
 
   let L=null,b=null,o=null,cv,ctx,sc=1,ox=0,oy=0,drag=null,trail=[],TS=0,raf=0,last=0,acc=0,back=null,
     club={mode:'aim',th:0,dir:1,t:0};
@@ -1709,32 +1754,38 @@ const SSUI=(()=>{
 
   function resize(){ const r=$('ssStage').getBoundingClientRect(), dp=Math.min(2,window.devicePixelRatio||1); cv.width=Math.max(1,r.width*dp); cv.height=Math.max(1,r.height*dp);
     sc=Math.min(cv.width/W,cv.height/(H-60)); ox=(cv.width-W*sc)/2; oy=cv.height-H*sc; }
-  function dots(){ const t=$('ssTries'); t.innerHTML='기회 '; for(let i=0;i<TRIES;i++){ const e=document.createElement('i'); if(i>=TRIES-o.used) e.className='off'; t.appendChild(e); } }
+  function dots(){ const t=$('ssTries'); t.innerHTML=''; for(let i=0;i<PRAC;i++){ const e=document.createElement('i'); if(i<o.used) e.className='off'; else e.style.background=PCOL[i]; t.appendChild(e); }
+    const c=document.createElement('b'); c.className='ch'+(o.used>=tries(o)?' off':''); c.textContent=o.more?'한 번 더':'도전'; t.appendChild(c); }
+  function title(){ $('ssName').innerHTML='슈퍼샷 '+(D.cur+1)+'/'+N+' <i class="dot" style="background:'+COL[L.ball]+'" title="'+NAME[L.ball]+'"></i>'; }
+  function banner(s,sub){ const e=$('ssBanner'); e.innerHTML=s+(sub?'<small>'+sub+'</small>':''); e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
+  function drum(){ for(let i=0;i<8;i++) tone(90+i*6,.12,'triangle',.14,i*.09); tone(180,.5,'sawtooth',.06,.75); }
   function hint(s){ $('ssHint').textContent=s||''; $('ssHint').hidden=!s; }
   function toast(s){ const e=$('ssToast'); e.textContent=s; e.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>e.classList.remove('on'),1600); }
   function fresh(){ b=SS.newBall(L); club.mode='aim'; club.th=0; club.dir=L.tee[0]>W/2?-1:1; trail=[]; }
 
-  function open(from){ if(!available()) return; back=from; o=st(); L=todayLevel(); cv=$('ssCv'); ctx=cv.getContext('2d');
-    $('ssName').innerHTML='슈퍼샷<small><i class="dot" style="background:'+COL[L.ball]+'"></i>'+NAME[L.ball]+'</small>';
-    ['end','start'].forEach(id=>$(id).hidden=true); $('ss').hidden=false; $('ssEnd').hidden=true; resize(); fresh(); dots(); hint(TIP[L.ball]);
+  function stage(){ o=st(); L=todayLevels()[D.cur]; title(); fresh(); dots(); $('ssMid').hidden=true;
+    if(o.used>=PRAC){ hint(''); setTimeout(()=>{ banner(o.more?'한 번 더 도전!':'이제 진짜 도전!','단 한 번 · 연습한 길을 보세요'); drum(); },300); }
+    else hint(o.used?'연습 '+(PRAC-o.used)+'번 남았어요':(D.cur===0?'먼저 연습 세 번! ':(D.cur+1)+'번째 판 · 연습 세 번! ')+TIP[L.ball]); }
+  function open(from){ if(!available()) return; back=from; D=day(); cv=$('ssCv'); ctx=cv.getContext('2d');
+    ['end','start'].forEach(id=>$(id).hidden=true); $('ss').hidden=false; $('ssEnd').hidden=true; resize(); stage();
     try{ if(typeof audioWake==='function') audioWake(); }catch(e){}
-    PT.event('ss_open',{lv:L.id,used:o.used,from}); last=performance.now(); acc=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); if(typeof guardBack==='function') guardBack(); }
-  function close(){ cancelAnimationFrame(raf); raf=0; drag=null; $('ss').hidden=true; $('ssEnd').hidden=true; refresh();
+    PT.event('ss_open',{lv:L.id,cur:D.cur,used:o.used,from}); last=performance.now(); acc=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); if(typeof guardBack==='function') guardBack(); }
+  function close(){ cancelAnimationFrame(raf); raf=0; drag=null; $('ss').hidden=true; $('ssEnd').hidden=true; $('ssMid').hidden=true; refresh();
     if(back==='end') $('end').hidden=false; else { setupToday(); $('start').hidden=false; } }
-  const isOpen=()=>!$('ss').hidden||!$('ssEnd').hidden;
+  const isOpen=()=>!$('ss').hidden||!$('ssEnd').hidden||!$('ssMid').hidden;
 
   /* 화면 어디서나 당기기: 손가락 110px = 최대 힘, 더 당기면 시작점이 따라옴 */
   const PULL=110, pt=e=>[e.clientX,e.clientY];
   function aimOf(d){ const dx=d.s[0]-d.c[0], dy=d.s[1]-d.c[1]; return {ang:Math.atan2(dy,dx), pow:Math.min(1,Math.hypot(dx,dy)/PULL)}; }
   function bind(){ const el=$('ss');
     el.addEventListener('pointerdown',e=>{ if(e.target.closest('button')) return; try{ if(typeof audioWake==='function') audioWake(e); }catch(_){}
-      if(!b||b.state!=='aim'||club.mode!=='aim'||o.used>=TRIES) return; try{ el.setPointerCapture(e.pointerId); }catch(_){} drag={s:pt(e),c:pt(e)}; hint(''); });
+      if(!b||b.state!=='aim'||club.mode!=='aim'||!$('ssMid').hidden||o.used>=tries(o)) return; try{ el.setPointerCapture(e.pointerId); }catch(_){} drag={s:pt(e),c:pt(e)}; hint(''); });
     el.addEventListener('pointermove',e=>{ if(!drag) return; drag.c=pt(e); const dx=drag.s[0]-drag.c[0], dy=drag.s[1]-drag.c[1], l=Math.hypot(dx,dy); if(l>PULL) drag.s=[drag.c[0]+dx/l*PULL, drag.c[1]+dy/l*PULL]; });
     el.addEventListener('pointerup',()=>{ if(!drag) return; const a=aimOf(drag); drag=null; if(a.pow<.05){ hint('조금 더 길게 당겨 보세요'); return; }
-      club.mode='swing'; club.t=0; club.from=club.th; club.dur=.2-.08*a.pow; club.shot=a; o.used++; put(o); dots();
-      PT.event('ss_shot',{lv:L.id,n:o.used,ang:+a.ang.toFixed(3),pow:+a.pow.toFixed(3)}); if(o.used===1){ logMark('try'); PT.event('ss_attend',{lv:L.id,streak:streak()}); } });
+      club.mode='swing'; club.t=0; club.from=club.th; club.dur=.2-.08*a.pow; club.shot=a; o.used++; put(); dots();
+      PT.event('ss_shot',{lv:L.id,cur:D.cur,n:o.used,ang:+a.ang.toFixed(3),pow:+a.pow.toFixed(3)}); if(!logGet()[TODAY]){ logMark('try'); PT.event('ss_attend',{lv:L.id,streak:streak()}); } });
     el.addEventListener('pointercancel',()=>{ drag=null; });
-    $('ssClose').onclick=close; $('ssBack').onclick=close;
+    $('ssClose').onclick=close; $('ssBack').onclick=close; $('ssNext').onclick=next; $('ssMore').onclick=more;
     $('ssUp').onclick=()=>react('up'); $('ssDown').onclick=()=>react('down');
     $('ssEndBtn').onclick=()=>doneToday()?book('end'):open('end'); $('ssStartBtn').onclick=()=>doneToday()?book('start'):open('start');
     addEventListener('resize',()=>{ if(!$('ss').hidden) resize(); }); }
@@ -1784,6 +1835,8 @@ const SSUI=(()=>{
   function preview(a){ const pts=[]; let x=L.tee[0],y=L.tee[1],vx=Math.cos(a.ang)*MAXV*a.pow,vy=Math.sin(a.ang)*MAXV*a.pow; const dt=1/120;
     for(let i=1;i<=70;i++){ vy+=G*dt; x+=vx*dt; y+=vy*dt; let hit=false; for(const s of L.segs){ const c=SS.closest(x,y,s); if(Math.hypot(x-c[0],y-c[1])<R){ hit=true; break; } } if(hit) break; if(i%5===0) pts.push([x,y]); } return pts; }
   function frame(){ scene(); if(!b) return;
+    (o.paths||[]).forEach((pa,i)=>{ ctx.fillStyle=PCOL[i]; ctx.globalAlpha=.75; for(let j=0;j<pa.length;j+=2){ ctx.beginPath(); ctx.arc(X(pa[j][0]),Y(pa[j][1]),3.2*sc,0,7); ctx.fill(); } ctx.globalAlpha=1;
+      const e=pa[pa.length-1]; if(!e) return; ctx.beginPath(); ctx.arc(X(e[0]),Y(e[1]-26),13*sc,0,7); ctx.fillStyle=PCOL[i]; ctx.fill(); ctx.fillStyle='#fff'; ctx.font='900 '+(16*sc)+'px '+getComputedStyle(document.body).fontFamily; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(i+1),X(e[0]),Y(e[1]-25)); });
     ctx.fillStyle='rgba(255,255,255,.55)'; for(const p of trail){ ctx.beginPath(); ctx.arc(X(p[0]),Y(p[1]),3.5*sc,0,7); ctx.fill(); }
     if(drag&&b.state==='aim'){ const a=aimOf(drag); if(a.pow>=.05){ ctx.lineWidth=1.5*sc; for(const p of preview(a)){ ctx.fillStyle='rgba(255,255,255,.95)'; ctx.strokeStyle='rgba(29,26,21,.45)'; ctx.beginPath(); ctx.arc(X(p[0]),Y(p[1]),5*sc,0,7); ctx.fill(); ctx.stroke(); }
       const bw=220,bx=W/2-bw/2,by=130; rr(bx,by,bx+bw,by+18,'rgba(29,26,21,.55)',9); rr(bx+3,by+3,bx+3+(bw-6)*a.pow,by+15,a.pow>.9?'#e23b2e':'#ffcf3a',7); } }
@@ -1792,32 +1845,52 @@ const SSUI=(()=>{
     ctx.fillStyle='rgba(255,255,255,.65)'; ctx.beginPath(); ctx.arc(X(x-5),Y(y-5),4*sc,0,7); ctx.fill(); }
   function loop(now){ const d=Math.min(.05,(now-last)/1000); last=now; clubTick(d);
     if(b&&b.state==='fly'){ acc+=d; while(acc>=1/480&&b.state==='fly'){ acc-=1/480; const bo=SS.step(b,L,1/480); if(bo>200) thock(Math.min(.35,bo/3000)); if(++TS%16===0) trail.push([b.x,b.y]); }
-      if(trail.length>160) trail.shift(); if(b.state==='in') win(); else if(b.state==='stop'||b.state==='ob'||b.state==='water') miss(b.state); } else acc=0;
+      if(trail.length>160) trail.shift(); if(b.state==='in'||b.state==='stop'||b.state==='ob'||b.state==='water') settle(b.state); } else acc=0;
     frame(); raf=requestAnimationFrame(loop); }
-  function miss(why){ b.state='wait'; const left=TRIES-o.used; if(why==='water') splash(); PT.event('ss_miss',{lv:L.id,why,left});
-    toast((why==='water'?'풍덩! ':why==='ob'?'밖으로 나갔어요! ':'아깝다! ')+(left>0?'기회 '+left+'번 남았어요':''));
-    setTimeout(()=>{ if(left<=0){ PT.event('ss_fail',{lv:L.id}); endCard(false); } else { fresh(); hint('다시 한 번! 아래로 당겼다 놓으세요'); } },1100); }
-  function win(){ b.state='done'; cupS(); o.won=1; o.shots=o.used; put(o); logMark('win'); PT.event('ss_clear',{lv:L.id,shots:o.used}); setTimeout(hoe,900); }
+  function settle(why){ const chal=o.used>PRAC; if(why==='water') splash();
+    if(chal){ if(why==='in') return win(); b.state='wait'; PT.event('ss_miss',{lv:L.id,why,chal:1,more:o.more?1:0}); toast(why==='water'?'풍덩! 아깝다…':why==='ob'?'밖으로 나갔어요…':'아깝다…');
+      setTimeout(()=>mid(false),1300); return; }
+    b.state='wait'; const pth=trail.filter((_,i)=>i%2===0).map(q=>[Math.round(q[0]),Math.round(q[1])]); pth.push([Math.round(b.x),Math.round(b.y)]);
+    o.paths=(o.paths||[]).concat([pth]).slice(0,PRAC); put(); const n=o.used;
+    if(why==='in'){ tone(1320,.2,'sine',.1); toast('연습에서 쏙! 이 길을 기억해 두세요'); } else toast((why==='water'?'풍덩! ':why==='ob'?'밖으로 나갔어요! ':'')+'연습 '+n+'번 끝');
+    PT.event('ss_prac',{lv:L.id,n,why});
+    setTimeout(()=>{ fresh(); dots(); if(n>=PRAC){ banner('이제 진짜 도전!','단 한 번 · 연습한 길을 보세요'); drum(); hint(''); } else hint('연습 '+(PRAC-n)+'번 남았어요 · 친 길이 화면에 남아요'); },1300); }
+  function win(){ b.state='done'; cupS(); o.won=1; o.wp=trail.filter((_,i)=>i%2===0).map(q=>[Math.round(q[0]),Math.round(q[1])]).concat([[Math.round(b.x),Math.round(b.y)]]); put(); logMark('win');
+    PT.event('ss_clear',{lv:L.id,cur:D.cur,more:o.more?1:0}); banner('쏙! 성공',''); setTimeout(()=>mid(true),1400); }
+  /* 판 사이 카드: 성공이면 다음 판, 실패면 광고 한 편으로 한 번 더(판마다 한 번, 이용권이면 광고 없이) */
+  function mid(won){ const last=D.cur>=N-1;
+    const canMore=!won&&!o.more;
+    $('ssMidT').textContent=won?(D.cur+1)+'번째 판 성공!':'아깝다! 도전 실패';
+    $('ssMidP').textContent=won?(last?'오늘의 슈퍼샷 끝! 결과를 볼까요?':'다음 판으로 가 볼까요?'):(canMore?'아쉬우시죠? 한 번 더 시도해 보시겠어요?':'아쉽지만 여기까지예요.');
+    $('ssMore').hidden=!canMore; $('ssMore').textContent=hasPass()?'한 번 더 시도하기 (이용권)':'📺 광고 보고 한 번 더 시도';
+    $('ssNext').textContent=canMore?(last?'괜찮아요, 결과 보기':'괜찮아요, 다음 판으로'):(last?'오늘 결과 보기':'다음 판으로'); $('ssNext').className='btn'+(canMore?' ghost':''); $('ssMid').hidden=false; }
+  function more(){ const go=()=>{ o.more=1; put(); PT.event('ss_more',{lv:L.id,cur:D.cur,pass:hasPass()?1:0}); $('ssMid').hidden=true; fresh(); dots(); banner('한 번 더 도전!','연습한 길을 다시 보세요'); drum(); };
+    if(hasPass()) return go(); PT.event('ss_ad',{lv:L.id,cur:D.cur}); const t=$('adDone').textContent; $('adDone').textContent='한 번 더 도전하러 가기'; showAd(()=>{ $('adDone').textContent=t; go(); }); }
+  function next(){ $('ssMid').hidden=true; D.cur++; put(); refresh(); if(D.cur>=N) return finish(); stage(); }
+  function finish(){ cancelAnimationFrame(raf); raf=0; const lv=todayLevels(); let k=-1; D.s.forEach((x,i)=>{ if(x.won) k=i; }); PT.event('ss_day',{won:D.s.filter(x=>x.won).length});
+    if(k<0) return endCard(false); L=lv[k]; hoe(k); }
   function photo(){ const c=document.createElement('canvas'); c.width=640; c.height=360; const g=c.getContext('2d'), s2=Math.min(c.width/W,c.height/560);
     g.fillStyle='#e9e0c8'; g.fillRect(0,0,c.width,c.height); g.save(); g.translate((c.width-W*s2)/2,c.height-960*s2); g.scale(s2,s2);
     g.fillStyle='#6b6152'; g.beginPath(); const sf=L.surf; g.moveTo(sf[0][0],H); for(const q of sf) g.lineTo(q[0],q[1]); g.lineTo(sf[sf.length-1][0],H); g.fill();
     g.fillStyle='#9a9384'; for(const w of L.water||[]) g.fillRect(w[0],WY,w[1]-w[0],960-WY);
     g.fillStyle='#4a4237'; for(const p of L.props){ if(p.k==='rail'||p.k==='fence') g.fillRect(p.x-6,p.top,12,p.bot-p.top); else g.fillRect(p.x1,p.y1,p.x2-p.x1,p.y2-p.y1); }
-    g.fillStyle='#b3261e'; for(const q of trail){ g.beginPath(); g.arc(q[0],q[1],7,0,7); g.fill(); }
-    g.fillStyle='#1d1a15'; g.beginPath(); g.arc(b.x,b.y,R*1.2,0,7); g.fill(); g.restore(); return c.toDataURL('image/jpeg',.72); }
-  function hoe(){ const n=o.used; try{ tone(523,.35,'triangle',.16); tone(659,.35,'triangle',.16,.12); tone(784,.35,'triangle',.16,.24); tone(1047,.45,'triangle',.16,.36); }catch(e){}
+    const wp=st0.wp||[], e=wp[wp.length-1]||[0,0]; g.fillStyle='#b3261e'; for(const q of wp){ g.beginPath(); g.arc(q[0],q[1],7,0,7); g.fill(); }
+    g.fillStyle='#1d1a15'; g.beginPath(); g.arc(e[0],e[1],R*1.2,0,7); g.fill(); g.restore(); return c.toDataURL('image/jpeg',.72); }
+  let st0={};
+  function hoe(k){ st0=D.s[k]; const w=D.s.filter(x=>x.won).length; try{ tone(523,.35,'triangle',.16); tone(659,.35,'triangle',.16,.12); tone(784,.35,'triangle',.16,.24); tone(1047,.45,'triangle',.16,.36); }catch(e){}
     ArinPaper.show({gameId:'parkgolf', masthead:'파크골프 일보', theme:'noir', headline:L.head, sub:L.lead,
-      body:'오늘의 슈퍼샷 「'+L.name+'」, '+(n===1?'단 한 번 만에 성공했다.':n+'번째 도전 끝에 성공했다.')+' 내일은 또 다른 묘기가 기다린다.',
-      photo:photo(), stamp:n===1?'한 방':'성공', onClose:()=>endCard(true)});
-    PT.event('ss_news',{lv:L.id,shots:n}); }
-  function endCard(won){ cancelAnimationFrame(raf); raf=0; frame();
-    $('ssEndT').textContent=won?'오늘의 슈퍼샷 성공!':'오늘의 슈퍼샷은 여기까지';
+      body:'오늘의 슈퍼샷 '+N+'판 중 '+w+'판 성공. 「'+L.name+'」에서는 연습 세 번으로 길을 읽고 '+(st0.more?'한 번 더 주어진 기회에서':'단 한 번의 진짜 도전에서')+' 넣었다. 내일은 또 다른 묘기가 기다린다.',
+      photo:photo(), stamp:w===N?'전판 성공':'한 방', onClose:()=>endCard(true)});
+    PT.event('ss_news',{lv:L.id,won:w}); }
+  function endCard(won){ cancelAnimationFrame(raf); raf=0; const w=D.s.filter(x=>x.won).length;
+    $('ssEndT').textContent=won?'오늘 '+N+'판 중 '+w+'판 성공!':'오늘의 슈퍼샷은 여기까지';
     $('ssEndP').textContent=won?'금 도장을 받았어요. 호외는 「내 신문 보관함」에 있어요.':'아깝게 놓쳤지만 출석 도장은 받았어요. 내일 새 슈퍼샷이 열려요.';
-    $('ssCal').innerHTML=calHTML(); const r=st().react; $('ssAsk').hidden=!!r; $('ssEnd').hidden=false; refresh(); }
-  function react(v){ const s=st(); s.react=v; put(s); o=s; PT.event('ss_react',{lv:L.id,v,won:s.won?1:0}); $('ssAsk').hidden=true; toast2(); }
+    $('ssCal').innerHTML=calHTML(); $('ssAsk').hidden=!!D.react; $('ssEnd').hidden=false; refresh(); }
+  function react(v){ D.react=v; put(); PT.event('ss_react',{v,won:D.s.filter(x=>x.won).length}); $('ssAsk').hidden=true; toast2(); }
   function toast2(){ $('ssEndP').textContent='고맙습니다! 알려 주신 대로 더 재밌게 만들어 볼게요.'; }
-  function back_(){ if(!$('ssEnd').hidden||!$('ss').hidden){ close(); return true; } return false; }
-  return {bind,refresh,unlock,open,close,isOpen,back:back_,available,todayLevel};
+  function back_(){ if(!$('ssEnd').hidden||!$('ss').hidden||!$('ssMid').hidden){ close(); return true; } return false; }
+  function peek(id){ L=LV[id-1]; o={used:0}; title(); fresh(); dots(); hint(''); frame(); }
+  return {bind,refresh,unlock,open,close,isOpen,back:back_,available,todayLevel,todayLevels,peek};
 })();
 SSUI.bind(); SSUI.refresh();
 
@@ -2124,7 +2197,7 @@ const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environm
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
     const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
   }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v79', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+PT.init({game:'parkgolf', build:'v80', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
