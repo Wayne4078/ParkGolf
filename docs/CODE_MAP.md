@@ -1,0 +1,68 @@
+# 오늘의 파크골프 — 코드 지도 (코드 리뷰용)
+
+기준: v82 (2026-11-22, 커밋 03b4e7b 위). 토스 미니앱 ID 98747. 라이브는 v77(첫 출시 심사판).
+
+## 1. 파일
+
+| 위치 | 무엇 |
+|---|---|
+| `index.html` | 게임 전부(HTML·CSS·JS 한 파일, 약 2,230줄). 웹·토스가 같은 파일을 씀 |
+| `toss/src/bridge.js` | 토스 SDK 연결부. `window.AIT`(광고·결제·뒤로 가기·저장 등)와 `window.AIT_CFG`(광고 그룹·상품 sku)를 만듦. 토스 빌드에만 들어감 |
+| `toss/build.sh` | 토스 묶음 만들기: index.html의 `<!--AIT-->` 자리에 bridge를 끼우고 `ait build` → `today-parkgolf.ait` |
+| `web/worker.js` | 클라우드플레어 Worker(play.arinplay.app/ParkGolf/). 정적 파일 + `/config.json` 원격 설정(공지·긴급 정지·코스 여는 날) |
+| `art/` `voice/` `amb/` `fonts/` | 그림·캐디 목소리(ko/th)·주변 소리·서브셋 글꼴. 글꼴은 게임 글자만 잘라 넣음 — 새 글자를 넣으면 다시 뽑아야 함 |
+| `tools/` | 검사 도구(아래 4번) |
+
+## 2. index.html 구역 (줄 번호는 v82 기준)
+
+| 줄 | 구역 |
+|---|---|
+| 7–266 | CSS. `:root` 토큰, 토스 캡슐 여백 `--top`(html.ait면 SafeAreaInsets.top+40px) |
+| 268–439 | HTML 화면들: `#app`(플레이) 위에 `.screen` 덮개들 — `#rating` 276, `#title` 280, `#journey`(코스 고르기) 293, `#start` 305, `#end`(결과) 390, `#ss`·`#ssMid`·`#ssEnd`(슈퍼샷) 399–, `#payScreen` 420, `#pause`·`#adScreen` 등 |
+| 440–713 | 스크립트 ① 태국어 덧씌우기(`window.tr`, LANG==='th'일 때 글자 바꿈) |
+| 714–813 | 스크립트 ② 공용 기록 키트 `PT`(이벤트 기록 → api.arinplay.app 중계 → Supabase playtest_log). 말풍선 질문(pulse)·설문 함수가 키트에 남아 있으나 v82부터 게임에서 부르지 않음 |
+| 815– | 스크립트 ③ 게임 본체(IIFE 하나) |
+| 815–831 | 상수: 화면 W·H, 공 종류 `BALLS`, 날씨 `WX`, 마찰·최대 속도 |
+| 832–862 | 색 테마 `THEME`(블록 모형) + 계절 `SEASONS`/`applySeason` |
+| 863–954 | 홀 데이터(코스별 poly·green·pins·water·sand·slopes…), `COURSES`, 날짜 `TODAY`, 하루 고정 날씨·핀 |
+| 955–1116 | 상태 `S`, 바람, 카메라, 소리판(`audioGraph`/`audioRebuild`/`audioWake` — 아이폰 웹뷰에서 끊기면 새로 만듦), 캐디 목소리, 주변 소리 |
+| 1117–1210 | 물리 `step(h)`: 벽 튕김·물·모래·경사·컵 빨려 들기, 축하 연출 |
+| 1209–1230 | `shoot`(치기), `holeOut`(홀 끝: 기록·캐디·홀 결과 카드) |
+| 1231–1262 | 라운드 시작·홀 불러오기·HUD·이어 치기(resume, 날짜 키)·잠깐 쉬기 |
+| 1262 | `dayRoll`: 자정 넘겨 다시 열면 치는 중이 아닐 때 새로 불러옴(v82) |
+| 1267 | `handleBack`: 폰·토스 뒤로 가기 순서(신문 → 슈퍼샷 → 쉬기 → … → 첫 화면이면 앱 닫기) |
+| 1280– | 토스 연결: `AIT`, 캡슐 여백, 뒤로 가기 이벤트 |
+| 1287–1371 | 코스 고르기(여정 길), 코스 여는 조건, 결제(`createOneTimePurchaseOrder`)·구매 복원(`restorePass`)·대기 주문 |
+| 1372–1397 | 「한 판 더」 광고(`showAd`→토스면 `tossAd`, 웹이면 3초 시험 화면) |
+| 1398– | `finishRound`(라운드 끝: 기록·신문·알림 동의) |
+| 1401–1565 | 공용 신문 모듈 `ArinPaper`(파크골프 일보·호외·보관함·폰 저장) + `showNews` |
+| 1566–1688 | 슈퍼샷 코어 `SS`: 옆보기 물리, 판 42개 `LV`(부품: rail·fence·rock·wall·post·roof, water·sand) |
+| 1690–1940 | 슈퍼샷 화면 `SSUI`: 하루 3판·연습 3번+도전 1번, 실패 시 광고 한 번 더(미리 불러 둠), 출석부, 호외 |
+| 2151 | 큰 그리기 `render()` |
+| 2159– | 「들어갈까요?」 컵 가장자리 느린 화면 |
+| 2185– | 유입 경로(토스애즈 referrer·utm) 기록 |
+| 2183 | 메인 루프 `loop` |
+| 2225 | `?sim`일 때만 `window.__pg` 시험용 손잡이 |
+
+## 3. 손님 기록이 사는 곳 (서버 없음, 전부 폰 localStorage)
+
+`opg_rounds*`(코스별 하루 기록) · `*_resume`(이어 치기) · `opg_pass`(이용권 — 토스 주문으로 복원) · `opg_bonus`(한 판 더) · `opg_ss`·`opg_ss_log`(슈퍼샷 오늘 상태·출석) · `opg_snd`(소리) · `opg_noti_asked` · `opg_early_*` · `opg_last_course` · `opg_first_src`(첫 유입)
+
+## 4. 검사 도구 (`tools/`)
+
+| 명령 | 무엇을 봄 | 통과 기준 |
+|---|---|---|
+| `bash tools/lint.sh` | eslint: 없는 이름 부르기·죽은 코드 (줄 번호 = index.html) | Error 0개 (지금 0, Warning 7개는 안 쓰는 옛 코드) |
+| `python3 tools/ids_check.py` | HTML id 중복, 코드가 부르는데 없는 id | 둘 다 빈 목록 |
+| `bash tools/smoke.sh` | 7개 코스를 처음부터 끝까지 실제 물리로 자동 플레이 + 뒤로 가기, 웹·가짜 토스 두 번 | `errors none`, 모두 true |
+| `node tools/ss_check.js` | 슈퍼샷 42판 전부 각도·힘을 다 쳐 보고 들어가는 비율 | 0%인 판 없음 |
+
+검사기 검증: lint는 v79(웹 광고 시험 화면이 주석에 먹혀 `n` 미정의) 판에 돌려 그 버그를 잡는 것을 확인함.
+
+## 5. 리뷰 때 봐 주셨으면 하는 곳 (파크골프 PD 메모)
+
+1. **웹판 결제 버튼**: 토스가 아니면 「3,300원에 지금 바로 열기」가 돈 없이 바로 열어 줌(`$('payOk').onclick`, `!TOSS_PAY`면 `grantPass(true)`). 웹을 맛보기로 둘지 대표 결정 대기. 원스토어처럼 웹 기반으로 다른 곳에 낼 땐 반드시 막아야 함.
+2. **한 파일 2,200줄**: 슈퍼샷(`SS`·`SSUI`)·신문(`ArinPaper`)은 IIFE로 떼어 놨지만 본체는 전역 `S` 하나를 여기저기서 고침. 나눌지 판단 부탁.
+3. **안 쓰는 옛 코드**: `obStakes`·`drawStake`(말뚝)·`sndHit`·`bands` — 동작 영향 없음, 지우지 않음.
+4. **기존 「한 판 더」 광고**(`tossAd`)는 누를 때 불러오기 시작해 두 번 눌러야 뜨는 느낌일 수 있음 — 슈퍼샷 쪽만 미리 불러 두기로 고침(대표가 기존 BM은 건드리지 말라 해서).
+5. **v82에서 고친 것**: 덮개 화면 위 안내가 가려지던 것(`msg` → `#gtoast`), 자정 넘김(`dayRoll`), 손님과 주고받는 기능 삭제(끝 설문·라운드 중 질문 3개·슈퍼샷 👍/👎).
