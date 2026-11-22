@@ -712,23 +712,21 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
 })();
 </script>
 <script>
-/* playtest-kit.js v1 (아린 플레이 공용) + plain #name tester tag */
+/* playtest-kit v2 (2026-11-22 Codex 검수 반영): 행동 기록만 — 말풍선·설문 없음, 테스터는 ?t=숫자(1~6자리)만, 기기 정보·referrer 안 보냄 */
 (function(){
-  var C = null, Q = [], timer = null, sess = Math.random().toString(36).slice(2, 10), t0 = Date.now();
-  var pulsesShown = 0, lastPulse = -1e9, asked = {}, lastKey = "", lastData = null, bubble = null, hideT = null;
+  var C = null, Q = [], timer = null, sess = Math.random().toString(36).slice(2, 10), t0 = Date.now(), lastKey = "", lastData = null;
   function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
   function tester(){
-    var m = /[?&#]t=([^&#]+)/.exec(location.search + location.hash), t;
-    if(m){ t = decodeURIComponent(m[1]).slice(0, 30); ls("pt_tester", t); }
-    var hm = /^#([A-Za-z0-9-]{1,30})$/.exec(location.hash); if(!t && hm && hm[1] !== "dev"){ t = hm[1]; ls("pt_tester", t); }
+    var s = location.search + location.hash, m = /[?&#]t=(\d{1,6})(?=[&#]|$)/.exec(s), t;
+    if(m){ t = "t" + m[1]; ls("pt_tester", t); }
     t = t || ls("pt_tester");
-    if(!t){ t = "anon-" + Math.random().toString(36).slice(2, 7); ls("pt_tester", t); }
-    if(/[?&#]dev\b/.test(location.search + location.hash) || document.documentElement.classList.contains("dev")) t = "dev:" + t;
+    if(!t || !/^(t\d{1,6}|anon-[a-z0-9]{5})$/.test(t)){ t = "anon-" + Math.random().toString(36).slice(2, 7); ls("pt_tester", t); }
+    if(/[?&#]dev\b/.test(s)) t = "dev:" + t;
     return t;
   }
   function row(kind, key, data){
-    return {game:C.game, build:C.build, lang:C.lang, tester:C.tester, session:sess, kind:kind,
-            key:(key || "").slice(0, 60), t_ms:Date.now() - t0, data:data || null};
+    var d = data || null; try{ if(d && JSON.stringify(d).length > 8000) d = {truncated:1}; }catch(e){ d = null; }
+    return {game:C.game, build:C.build, lang:C.lang, tester:C.tester, session:sess, kind:kind, key:(key || "").slice(0, 60), t_ms:Date.now() - t0, data:d};
   }
   function push(r){ Q.push(r); if(!timer) timer = setTimeout(flush, 8000); }
   function send(rows, beacon){
@@ -740,35 +738,19 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
         body:body}).then(function(r){ return r.ok; }, function(){ return false; });
     }catch(e){ return Promise.resolve(false); }
   }
-  function stash(rows){ try{ var o = JSON.parse(ls("pt_outbox") || "[]"); ls("pt_outbox", JSON.stringify(o.concat(rows).slice(-300))); }catch(e){} }
+  function stash(rows){ try{ var o = JSON.parse(ls("pt_outbox") || "[]"); if(!Array.isArray(o)) o = []; ls("pt_outbox", JSON.stringify(o.concat(rows).slice(-300))); }catch(e){} }
   function flush(beacon){
     clearTimeout(timer); timer = null;
     var rows = Q.splice(0);
-    try{ var o = JSON.parse(ls("pt_outbox") || "[]"); if(o.length){ rows = o.concat(rows); ls("pt_outbox", "[]"); } }catch(e){}
+    try{ var o = JSON.parse(ls("pt_outbox") || "[]"); if(Array.isArray(o) && o.length){ rows = o.concat(rows); ls("pt_outbox", "[]"); } }catch(e){}
     if(!rows.length) return Promise.resolve(true);
     return send(rows, beacon).then(function(ok){ if(!ok) stash(rows); return ok; });
   }
-  function css(){
-    if(document.getElementById("pt-css")) return;
-    var s = document.createElement("style"); s.id = "pt-css";
-    s.textContent = ".pt-bub{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));translate:-50% 12px;width:min(92vw,400px);box-sizing:border-box;z-index:9000;"
-      + "background:var(--pt-bg,#F3ECDD);color:var(--pt-ink,#2A241C);border-radius:18px;padding:14px 16px 12px;box-shadow:0 10px 34px rgba(0,0,0,.45);opacity:0;transition:opacity .45s ease,translate .45s ease;font:inherit}"
-      + ".pt-bub.on{opacity:1;translate:-50% 0}.pt-q{margin:0 26px 10px 0;font-size:18px;font-weight:800;line-height:1.4}"
-      + ".pt-x{position:absolute;right:8px;top:6px;width:40px;height:40px;border:0;background:none;color:inherit;opacity:.6;font-size:20px;cursor:pointer}"
-      + ".pt-opts{display:flex;flex-wrap:wrap;gap:7px}.pt-o{border:2px solid rgba(42,36,28,.35);background:transparent;color:inherit;border-radius:999px;padding:9px 14px;font:inherit;font-size:16px;font-weight:700;cursor:pointer;min-height:44px}"
-      + ".pt-o:active{background:rgba(42,36,28,.12)}.pt-thx{margin:0;font-size:16px;font-weight:700;opacity:.85}"
-      + "@media (prefers-reduced-motion:reduce){.pt-bub{transition:none}}";
-    document.head.appendChild(s);
-  }
-  var openKey = null, openCtx = null;
-  function close(){ if(bubble && openKey){ push(row("pulse", openKey, {closed:1, ctx:openCtx})); openKey = null; } if(!bubble) return; var b = bubble; bubble = null; clearTimeout(hideT); b.classList.remove("on"); setTimeout(function(){ b.remove(); }, 500); }
   var PT = {
     init:function(o){
-      C = {game:o.game, build:o.build || "", lang:o.lang || document.documentElement.lang || "", endpoint:o.endpoint, key:o.key,
-           maxPulses:o.maxPulses || 3, gapMs:o.gapMs === undefined ? 180000 : o.gapMs, linger:o.linger || 14000,
-           S:Object.assign({skip:"×", thanks:"고마워요."}, o.strings || {})};
+      C = {game:o.game, build:o.build || "", lang:o.lang || document.documentElement.lang || "", endpoint:o.endpoint, key:o.key};
       C.tester = tester();
-      push(row("start", "start", {ua:navigator.userAgent.slice(0, 120), w:innerWidth, h:innerHeight, ref:document.referrer.slice(0, 80)}));
+      push(row("start", "start", {w:innerWidth, h:innerHeight}));
       flush();
       var leave = function(){ Q.push(row("exit", lastKey, {last:lastData, visible_s:Math.round((Date.now() - t0) / 1000)})); flush(true); };
       document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "hidden") leave(); });
@@ -776,37 +758,9 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
       return C.tester;
     },
     event:function(key, data){ if(!C) return; lastKey = key; lastData = data || null; push(row("event", key, data)); },
-    pulse:function(key, o){
-      if(!C || asked[key] || pulsesShown >= C.maxPulses || Date.now() - lastPulse < C.gapMs) return false;
-      asked[key] = 1;
-      setTimeout(function(){
-        if(bubble || document.visibilityState === "hidden") return;
-        css(); pulsesShown++; lastPulse = Date.now();
-        var b = document.createElement("div"); b.className = "pt-bub"; b.setAttribute("role", "dialog"); b.setAttribute("aria-live", "polite");
-        var q = document.createElement("p"); q.className = "pt-q"; q.textContent = o.q; b.appendChild(q);
-        var x = document.createElement("button"); x.type = "button"; x.className = "pt-x"; x.textContent = C.S.skip; x.setAttribute("aria-label", "skip");
-        x.onclick = function(){ openKey = null; push(row("pulse", key, {skipped:1, ctx:o.ctx || null})); close(); }; b.appendChild(x);
-        var w = document.createElement("div"); w.className = "pt-opts";
-        o.opts.forEach(function(t, i){
-          var btn = document.createElement("button"); btn.type = "button"; btn.className = "pt-o"; btn.textContent = t;
-          btn.onclick = function(ev){
-            ev.stopPropagation();
-            openKey = null; push(row("pulse", key, {a:t, i:i, ms:Date.now() - lastPulse, ctx:o.ctx || null})); flush();
-            b.innerHTML = ""; var th = document.createElement("p"); th.className = "pt-thx"; th.textContent = C.S.thanks; b.appendChild(th);
-            clearTimeout(hideT); hideT = setTimeout(close, 900);
-          };
-          w.appendChild(btn);
-        });
-        b.appendChild(w); document.body.appendChild(b); bubble = b; openKey = key; openCtx = o.ctx || null;
-        requestAnimationFrame(function(){ b.classList.add("on"); });
-        hideT = setTimeout(function(){ openKey = null; push(row("pulse", key, {ignored:1, ctx:o.ctx || null})); close(); }, C.linger);
-      }, o.delay || 0);
-      return true;
-    },
-    survey:function(key, answers){ if(!C) return Promise.resolve(false); Q.push(row("survey", key, answers)); return flush(); },
     flush:flush,
     tester:function(){ return C && C.tester; },
-    closeBubble:close
+    closeBubble:function(){}
   };
   window.PT = PT;
 })();
@@ -944,7 +898,9 @@ function dailyWeather(date){ const m=now.getMonth()+1; const h=hash(date+'wx');
   const pool=['clear','clear','rain','wind','wind', (m>=10&&m<=11)?'leaf':'clear', (m===12||m<=2)?'frost':'clear']; return pool[h%pool.length]; }
 function dailyPins(date){ return HOLES.map(h=>hash(date+'pin'+h.n)%3); }
 function dailyWindDir(date){ return hash(date+'wd')%2===0 ? -1 : 1; }
-function loadRounds(){ try{ return JSON.parse(localStorage.getItem(COURSE.store)||'{}'); }catch(e){ return {}; } }
+// 저장값 검증(2026-11-22): 깨진 값·옛 형식은 그 항목만 버리고 나머지는 살림
+function cleanRounds(o,holes){ const out={}; if(!o||typeof o!=='object'||Array.isArray(o)) return out; for(const d of Object.keys(o)){ const r=o[d]; if(!/^\d{4}-\d\d-\d\d$/.test(d)||!r||typeof r!=='object'||!Array.isArray(r.strokes)||r.strokes.length!==holes.length||!r.strokes.every(x=>Number.isInteger(x)&&x>=0&&x<99)) continue; out[d]=r; } return out; }
+function loadRounds(){ try{ return cleanRounds(JSON.parse(localStorage.getItem(COURSE.store)||'{}'),HOLES); }catch(e){ return {}; } }
 function saveRound(date,rec){ try{ const r=loadRounds(); r[date]=rec; localStorage.setItem(COURSE.store,JSON.stringify(r)); }catch(e){} }
 
 // ---------- state ----------
@@ -1207,7 +1163,7 @@ function bounce(p,v,nx,ny,qx,qy,b){ p.x=qx+nx*(R+WALL); p.y=qy+ny*(R+WALL); cons
   if(vn<0){ v.x-=(1+b.e)*vn*nx; v.y-=(1+b.e)*vn*ny; v.x*=0.97; v.y*=0.97; const s2=Math.hypot(v.x,v.y), cap=MAXV*1.15; if(s2>cap){ v.x*=cap/s2; v.y*=cap/s2; }
     if(-vn>40 && S.t-S.lastHit>0.12){ S.lastHit=S.t; S.fx.push({x:p.x,y:p.y,t:S.t,big:S.ball==='rubber'}); sndCurb(S.ball==='rubber'); if(-vn>MAXV*0.55 && S.shot && !S.shot.wall){ S.shot.wall=1; say(9); } } } }
 function shoot(sdx,sdy){ const len=Math.min(Math.hypot(sdx,sdy),MAXDRAG); if(len<16) return false; showHint(''); const k=len/MAXDRAG*MAXV; const gx=sdx, gy=sdy/S.cam.tilt; const ca=Math.cos(S.cam.a), sa=Math.sin(S.cam.a); const wx=gx*ca+gy*sa, wy=-gx*sa+gy*ca; const l=Math.hypot(wx,wy);
-  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; S.edgeHold=null; S.sandIn=inSand(H_(),S.pos); lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
+  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; S.edgeHold=null; S.sandIn=inSand(H_(),S.pos); lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; saveResume(); sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
 function holeOut(capped,quiet,voice){ if(S.holeOver) return; S.holeOver=true; S.moving=false; const h=H_(), s=S.strokes[S.hi], diff=s-h.par; if(!capped && !quiet) sndCup();
   if(!quiet||voice){ if(capped) say(8,0.2); else if(s===1) say(4,0.5); else if(diff<=-2) say(3,0.5); else if(diff<0) say(5,0.5); else if(diff===0) say(6,0.5); else say(7,0.5); }
   PT.event('hole_end',{c:COURSE.key,mode:S.mode,n:h.n,par:h.par,s:s,capped:!!capped,ball:S.ball,wx:S.wx});
@@ -1228,11 +1184,13 @@ function setupToday(){ $('courseSub').textContent=COURSE.sub;
   else { const rs=loadResume(); $('todayNote').textContent= rs ? (rs.hi+1)+'번 홀에서 멈추셨어요 · 지금 '+rs.strokes.reduce((a,b)=>a+b,0)+'타' : WX[S.wx].line;
     if(rs){ $('ballRow').hidden=true; $('ballNote').textContent='처음 고른 '+BALLS[rs.ball].name+'으로 이어 칩니다'; } $('goToday').disabled=false; $('goToday').textContent= rs ? '오늘의 라운드 이어 치기' : '오늘의 라운드'; }
   $('showCard').hidden=Object.keys(rounds).length===0; }
-function startRound(mode){ S.mode=mode; S.strokes=HOLES.map(()=>0); if(!S.attract && !COURSE.range){ try{ localStorage.setItem('opg_last_course',COURSE.key); }catch(e){} }
+function startRound(mode){ if(window.STOPPED) return; S.live=false; S.mode=mode; S.strokes=HOLES.map(()=>0); if(!S.attract && !COURSE.range){ try{ localStorage.setItem('opg_last_course',COURSE.key); }catch(e){} }
   let res=null; if(mode==='range'){ S.ball=S.ballPick||'normal'; S.hi=0; S.pins=HOLES.map(()=>Math.floor(Math.random()*3)); rangeWeather(); } else if(mode==='bonus'){ S.ball=S.ballPick||'normal'; S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); } else if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } else if(!COURSE.lesson) S.ball=S.ballPick||'normal'; }
   else { S.ball=S.ballPick||'normal'; S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; guardBack(); loadHole();
-  if(res){ if(res.done){ S.intro=null; holeOut(false,true); } else if(res.pos){ S.pos={...res.pos}; S.lastSafe={...res.pos}; S.intro=null; camSnap(); updateHud(); } msg('하던 자리에서 이어 칩니다'); } }
+  S.live=true;
+  if(res){ if(res.done){ S.intro=null; holeOut(false,true); } else if(res.pos){ S.pos={...res.pos}; S.lastSafe={...res.pos}; S.intro=null; camSnap(); updateHud(); } msg('하던 자리에서 이어 칩니다'); }
+  saveResume(); }
 function loadHole(){ const h=H_(); S.fade={}; S.edgeHold=null; if(S.lookT){ S.look={x:0,y:0,z:1}; S.lookT={x:0,y:0,z:1}; } if(COURSE.lesson){ S.ball=h.ball; S.wx=h.wx; S.windDir=h.windDir; } showHint(COURSE.lesson&&!S.attract&&S.hi>0?h.hint:''); S.lastIn=null; S.sink=null; S.pop=null; S.lip=0; S.pos={x:h.tee[0],y:h.tee[1]}; S.vel={x:0,y:0}; S.moving=false; S.holeOver=false; S.lastSafe={...S.pos}; S.drag=null; S.fx=[]; camSnap(); updateHud();
   msg(h.name+' · 파 '+h.par+' · '+dist()+'m'); $('holeDone').hidden=true; startIntro(); saveResume(); if(!S.attract) PT.event('hole',{c:COURSE.key,mode:S.mode,n:h.n,ball:S.ball,wx:S.wx}); }
 // 남은 거리: 공에서 핀까지. 실제 구장은 티에서 안내판 거리와 같아지도록 맞춘다.
@@ -1244,14 +1202,17 @@ function drawRemain(){ if(S.moving||S.drag||S.holeOver||S.intro||S.sink) return;
 // 잠깐 쉬기 · 이어 치기 · 뒤로 가기
 // 오늘의 기록 라운드는 하루 한 번이라, 나갔다 와도 같은 홀·같은 타수·같은 공 자리에서 이어 친다 (나갔다 다시 들어와 기록을 새로 굴리지 못하게)
 function resumeKey(){ return COURSE.store+'_resume'; }
-function loadResume(){ try{ const r=JSON.parse(localStorage.getItem(resumeKey())||'null'); return r && r.date===TODAY && (r.hi>0 || (r.strokes||[]).some(x=>x>0)) ? r : null; }catch(e){ return null; } } // 한 타도 안 친 '자리'는 이어 치기가 아님(고르는 화면만 거쳐도 저장되던 빈 기록 무시)
-function saveResume(){ if(S.mode!=='today' || S.attract || COURSE.lesson) return; try{ localStorage.setItem(resumeKey(), JSON.stringify({date:TODAY, hi:S.hi, strokes:S.strokes.slice(), ball:S.ball, pos:S.holeOver?null:{x:S.pos.x,y:S.pos.y}, done:S.holeOver})); }catch(e){} }
+function loadResume(){ try{ const r=JSON.parse(localStorage.getItem(resumeKey())||'null'); if(!r||typeof r!=='object'||r.date!==TODAY) return null;
+  if(!Number.isInteger(r.hi)||r.hi<0||r.hi>=HOLES.length||!Array.isArray(r.strokes)||r.strokes.length!==HOLES.length||!r.strokes.every(x=>Number.isInteger(x)&&x>=0&&x<99)||!BALLS[r.ball]) return null;
+  if(r.pos!=null && !(r.pos&&isFinite(r.pos.x)&&isFinite(r.pos.y))) r.pos=null;
+  return (r.hi>0 || r.strokes.some(x=>x>0)) ? r : null; }catch(e){ return null; } } // 한 타도 안 친 '자리'는 이어 치기가 아님(고르는 화면만 거쳐도 저장되던 빈 기록 무시)
+function saveResume(){ if(!S.live || S.mode!=='today' || S.attract || COURSE.lesson) return; const done=S.holeOver||!!S.sink, p=S.moving?S.lastSafe:S.pos; try{ localStorage.setItem(resumeKey(), JSON.stringify({date:TODAY, hi:S.hi, strokes:S.strokes.slice(), ball:S.ball, pos:done?null:{x:p.x,y:p.y}, done})); }catch(e){} }
 function clearResume(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
 function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause','lessonDone','adScreen','payScreen','ss','ssEnd','ssMid'].every(id=>!$(id) || $(id).hidden); }
 function openPause(){ if(!playing() && $('holeDone').hidden) return; const h=H_(), tot=S.strokes.reduce((a,b)=>a+b,0);
   $('pauseSub').textContent = S.mode==='today' ? h.n+'번 홀 · 지금까지 '+tot+'타 · 나갔다 와도 이 자리에서 이어 칩니다' : COURSE.lesson ? h.n+'단계 배우는 중' : h.n+'번 홀 · 연습 (기록 안 남음)';
   $('pRetry').hidden = S.mode==='today'; saveResume(); $('pause').hidden=false; PT.event('pause',{c:COURSE.key,mode:S.mode,n:h.n}); }
-function leaveRound(){ saveResume(); S.moving=false; S.vel={x:0,y:0}; S.drag=null; sndStop(); showHint(''); $('pause').hidden=true; $('holeDone').hidden=true; }
+function leaveRound(){ saveResume(); S.live=false; S.moving=false; S.vel={x:0,y:0}; S.drag=null; sndStop(); showHint(''); $('pause').hidden=true; $('holeDone').hidden=true; }
 $('menuBtn').onclick=openPause;
 $('pResume').onclick=()=>{ $('pause').hidden=true; };
 $('pRetry').onclick=()=>{ $('pause').hidden=true; S.strokes[S.hi]=0; loadHole(); S.intro=null; };
@@ -1266,6 +1227,8 @@ addEventListener('pagehide',saveResume); document.addEventListener('visibilitych
 function guardBack(){ try{ history.pushState({pg:1},''); }catch(e){} }
 function handleBack(){
   if(ArinPaper.isOpen()){ ArinPaper.back(); guardBack(); return true; }
+  if(!$('payScreen').hidden){ $('payScreen').hidden=true; guardBack(); return true; }
+  if(!$('adScreen').hidden){ guardBack(); return true; } // 시험 광고(3초)는 끝까지 — 뒤로 가기로 앱이 닫히지 않게만
   if(typeof SSUI!=='undefined' && SSUI.back()){ guardBack(); return true; }
   if(!$('pause').hidden){ $('pause').hidden=true; guardBack(); return true; }
   if(!$('lessonDone').hidden){ $('lessonDone').hidden=true; showJourney(); guardBack(); return true; }
@@ -1278,6 +1241,8 @@ function handleBack(){
 addEventListener('popstate',()=>{ handleBack(); });
 // 토스 앱: 시스템 뒤로 가기는 backEvent로 온다. 더 돌아갈 곳이 없으면(첫 화면) 미니앱을 닫는다.
 const AIT=window.AIT||null, AIT_CFG=window.AIT_CFG||{};
+// 토스 묶음인지: build.sh가 넣는 표시(연결부가 못 떠도 토스판으로 봄) — 토스판에선 돈 없이 여는 시험 지급을 절대 안 씀 (2026-11-22 Codex 검수 1)
+const AIT_BUILD=!!window.__AIT_BUILD||!!AIT;
 // 토스 오른쪽 위 「⋯ · X」 캡슐 아래로 우리 화면을 내림 — 캡슐 크기는 기기마다 달라 SDK 값(SafeAreaInsets.top)을 씀
 // 토스 안에서는 오른쪽 위 「⋯ ✕」 캡슐 아래로 모든 화면을 내린다(v71: 아이폰에서 캡슐이 머리띠 「지금 N타」를 덮던 것)
 if(AIT) document.documentElement.classList.add('ait');
@@ -1290,8 +1255,8 @@ const JOURNEY=[{k:'lesson',label:'배우기',place:'치는 법 세 단계'},{k:'
 function hasPass(){ try{ return localStorage.getItem('opg_pass')==='1'; }catch(e){ return false; } }
 function allStar(k){ const hs=COURSES[k].holes; return Object.values(roundsOf(k)).some(r=>r.strokes.every((x,i)=>x>0&&x<=hs[i].par)); }
 function relLabel(d){ const [y,m,dd]=d.split('-').map(Number); return m+'월 '+dd+'일(토)'; }
-const OPEN_ALL=!window.AIT && /[?&]all\b/.test(location.search); // 테스트용: 주소 끝에 ?all 을 붙이면 다 열림
-function roundsOf(k){ try{ return JSON.parse(localStorage.getItem(COURSES[k].store)||'{}'); }catch(e){ return {}; } }
+const OPEN_ALL=!AIT_BUILD && /[?&]all\b/.test(location.search); // 테스트용: 주소 끝에 ?all 을 붙이면 다 열림
+function roundsOf(k){ try{ return cleanRounds(JSON.parse(localStorage.getItem(COURSES[k].store)||'{}'),COURSES[k].holes); }catch(e){ return {}; } }
 function bestOf(k){ const t=Object.values(roundsOf(k)).map(r=>r.strokes.reduce((a,b)=>a+b,0)); return t.length?Math.min(...t):null; }
 function parOf(k){ return COURSES[k].holes.reduce((a,h)=>a+h.par,0); }
 function metersOf(k){ const m=COURSES[k].holes.reduce((a,h)=>a+(h.m||0),0); return m||null; }
@@ -1332,7 +1297,7 @@ function fillSheet(){ const st=JOURNEY.find(x=>x.k===S.jSel), ss=stopState(st);
   $('jGo').disabled=!ss.open; $('jGo').textContent= ss.open ? (st.k==='lesson'?'배우러 가기':st.k==='range'?'연습장 들어가기':'이 코스로 가기') : (ss.cond||'아직 잠겨 있어요');
   if(st.release && !ss.open) $('jMeta').textContent=st.place+' · 9홀 · 파'+parOf(st.k)+' · '+ss.star;
   if(st.release && ss.open && ss.why==='star') $('jBest').textContent=(bestOf(st.k)!=null?$('jBest').textContent+' · ':'')+'⭐ 올스타로 먼저 열었어요';
-  $('jPass').hidden = !(!ss.open && (st.passOpen || st.k==='jamsil' || st.k==='hapcheon')) || !!(window.AIT && !(window.AIT_CFG||{}).sku); $('jEarly').hidden = !(st.release && !ss.open && ss.canEarly); }
+  $('jPass').hidden = !(!ss.open && (st.passOpen || st.k==='jamsil' || st.k==='hapcheon')) || !!(AIT_BUILD && !AIT_CFG.sku); $('jEarly').hidden = !(st.release && !ss.open && ss.canEarly); }
 function showJourney(){ $('start').hidden=true; $('title').hidden=true;
   const ok=k=>{ const st=JOURNEY.find(x=>x.k===k); return st && stopState(st).open; };
   if(!ok(S.jSel)) S.jSel = ok(COURSE.key) ? COURSE.key : 'home';
@@ -1345,23 +1310,29 @@ $('ballBtn').onclick=()=>{ if(S.moving||S.sink) return; const ks=Object.keys(BAL
 $('jEarly').onclick=()=>{ const k=S.jSel; showAd(()=>{ try{ localStorage.setItem('opg_early_'+k,'1'); }catch(e){} PT.event('early_unlock',{k}); renderJourney(); fillSheet(); msg('먼저 열렸어요! 다른 분들보다 먼저 쳐 보세요'); }); };
 $('jPass').onclick=()=>{ PT.event('pass_offer',{k:S.jSel}); $('payScreen').hidden=false; };
 $('payNo').onclick=()=>{ $('payScreen').hidden=true; };
-function grantPass(test,orderId){ try{ localStorage.setItem('opg_pass','1'); }catch(e){} PT.event('pass_buy',{k:S.jSel,test:test?1:0,order:orderId||undefined}); $('payScreen').hidden=true; renderJourney(); fillSheet(); msg('모든 코스가 열렸어요. 고맙습니다!'); }
+// 이용권 저장: 실제로 저장됐는지 다시 읽어 확인한 경우에만 true (2026-11-22 Codex 검수 2)
+function setPass(){ try{ localStorage.setItem('opg_pass','1'); return localStorage.getItem('opg_pass')==='1'; }catch(e){ return false; } }
+const PASS_SAVE_FAIL='이용권을 폰에 저장하지 못했어요. 앱을 다시 열면 「산 기록 불러오기」로 다시 받을 수 있어요';
+function grantPass(test,orderId){ const ok=hasPass()||setPass(); PT.event(ok?'pass_buy':'pass_save_fail',{k:S.jSel,test:test?1:0,order:orderId||undefined}); $('payScreen').hidden=true; renderJourney(); fillSheet(); msg(ok?'모든 코스가 열렸어요. 고맙습니다!':PASS_SAVE_FAIL); }
 const TOSS_PAY=!!(AIT_CFG.sku && aitOk(AIT&&AIT.IAP&&AIT.IAP.createOneTimePurchaseOrder));
+if(AIT_BUILD && !TOSS_PAY){ $('payTitle').textContent='토스 앱을 새로 바꿔 주세요'; $('paySub').innerHTML='지금 토스 앱에서는 이용권을 살 수 없어요.<br>토스 앱을 최신으로 바꾸면 살 수 있어요.'; $('payOk').hidden=true; }
 if(TOSS_PAY){ $('payOk').textContent='3,300원으로 모두 열기'; $('payTitle').textContent='커피 한 잔 값으로'; $('paySub').innerHTML='3,300원 한 번이면 지금 있는 코스가 다 바로 열리고,<br>한 판 더도 광고 없이 칠 수 있어요.<br>매달 나가는 돈은 없어요.';
-  try{ AIT.IAP.getPendingOrders().then(r=>{ (r&&r.orders||[]).forEach(o=>{ try{ localStorage.setItem('opg_pass','1'); }catch(e){} PT.event('pass_pending_grant',{order:o.orderId}); AIT.IAP.completeProductGrant({params:{orderId:o.orderId}}).catch(()=>{}); }); }).catch(()=>{}); }catch(e){}
+  // 대기 주문: 우리 상품(sku 일치)만, 이용권 저장을 확인한 뒤에만 지급 완료 (Codex 검수 2·12) — 다른 상품 주문은 손대지 않음
+  try{ AIT.IAP.getPendingOrders().then(r=>{ (r&&r.orders||[]).forEach(o=>{ if(!o||o.sku!==AIT_CFG.sku){ PT.event('pass_pending_skip',{order:o&&o.orderId}); return; } if(!(hasPass()||setPass())){ PT.event('pass_save_fail',{order:o.orderId,pending:1}); return; } PT.event('pass_pending_grant',{order:o.orderId}); try{ renderJourney(); if(S.jSel) fillSheet(); }catch(e){} AIT.IAP.completeProductGrant({params:{orderId:o.orderId}}).catch(()=>{}); }); }).catch(()=>{}); }catch(e){}
   $('payRestore').hidden=false; restorePass(false); }
 // 구매 복원: 토스에 남은 완료·환불 주문으로 이용권을 되살림(앱을 지우고 다시 깔거나 폰을 바꿔도) — 우리 장부는 기록(pass_restore·pass_refund, 주문 번호)
 async function restorePass(manual){ const f=AIT&&AIT.IAP&&AIT.IAP.getCompletedOrRefundedOrders; if(!aitOk(f)){ if(manual) msg('지금은 산 기록을 불러올 수 없어요'); return; }
   try{ let key=null, done=false, refunded=false, oid=null, n=0;
     do{ const r=await f(key?{key}:undefined); (r&&r.orders||[]).forEach(o=>{ if(o.sku!==AIT_CFG.sku) return; if(o.status==='COMPLETED'){ done=true; oid=o.orderId; } else if(o.status==='REFUNDED') refunded=true; }); key=r&&r.hasNext?r.nextKey:null; n++; } while(key && n<10);
     const had=hasPass();
-    if(done){ if(!had){ try{ localStorage.setItem('opg_pass','1'); }catch(e){} PT.event('pass_restore',{order:oid,manual:manual?1:0}); try{ renderJourney(); if(S.jSel) fillSheet(); }catch(e){} msg('산 기록을 다시 불러왔어요. 모든 코스가 열렸어요'); } else if(manual) msg('이미 모든 코스가 열려 있어요'); $('payScreen').hidden=true; }
+    if(done){ if(!had){ if(!setPass()){ PT.event('pass_save_fail',{order:oid,restore:1}); msg(PASS_SAVE_FAIL); return; } PT.event('pass_restore',{order:oid,manual:manual?1:0}); try{ renderJourney(); if(S.jSel) fillSheet(); }catch(e){} msg('산 기록을 다시 불러왔어요. 모든 코스가 열렸어요'); } else if(manual) msg('이미 모든 코스가 열려 있어요'); $('payScreen').hidden=true; }
     else if(refunded && had){ try{ localStorage.removeItem('opg_pass'); }catch(e){} PT.event('pass_refund',{}); try{ renderJourney(); if(S.jSel) fillSheet(); }catch(e){} }
     else if(manual) msg('다시 불러올 산 기록이 없어요');
   }catch(e){ if(manual) msg('지금은 산 기록을 불러올 수 없어요'); } }
 $('payRestore').onclick=()=>restorePass(true);
-$('payOk').onclick=()=>{ if(!TOSS_PAY){ grantPass(true); return; }
-  let stop=null; try{ stop=AIT.IAP.createOneTimePurchaseOrder({ options:{ sku:AIT_CFG.sku, processProductGrant:()=>{ try{ localStorage.setItem('opg_pass','1'); }catch(e){} return true; } },
+$('payOk').onclick=()=>{ if(window.STOPPED) return; if(!TOSS_PAY){ if(AIT_BUILD){ msg('토스 앱을 최신으로 바꾸면 살 수 있어요'); return; } grantPass(true); return; } // 웹판(토스 밖)만 돈 없이 시험으로 열림
+  if($('payOk').disabled) return; $('payOk').disabled=true; setTimeout(()=>{ $('payOk').disabled=false; },3000);
+  let stop=null; try{ stop=AIT.IAP.createOneTimePurchaseOrder({ options:{ sku:AIT_CFG.sku, processProductGrant:()=>hasPass()||setPass() },
     onEvent:e=>{ if(e.type==='success'){ grantPass(false, e.data&&e.data.orderId); } if(stop) stop(); },
     onError:()=>{ PT.event('pass_fail',{}); msg('결제가 끝나지 않았어요'); if(stop) stop(); } }); }catch(e){ msg('결제를 열 수 없어요'); } };
 $('jGo').onclick=()=>{ const k=S.jSel; if(k!==COURSE.key) setCourse(k); else setupToday(); PT.event('course_pick',{c:k}); if(COURSE.range){ $('journey').hidden=true; startRound('range'); return; } showStart(); };
@@ -1373,29 +1344,35 @@ $('next').onclick=()=>{ S.assist=false; if(COURSE.range){ S.hi=(S.hi+1)%HOLES.le
 // 오늘 세 코스(우리 동네·잠실·합천)를 다 치면, 하루 한 번 광고를 보고 한 판 더. 첫 판과 두 번째 판을 나란히 비교해 보여 준다.
 const BONUS_COURSES=['home','jamsil','hapcheon'];
 function allTodayDone(){ return BONUS_COURSES.every(k=>!!roundsOf(k)[TODAY]); }
-function bonusState(){ try{ const b=JSON.parse(localStorage.getItem('opg_bonus')||'null'); return b&&b.date===TODAY?b:null; }catch(e){ return null; } }
+function bonusState(){ try{ const b=JSON.parse(localStorage.getItem('opg_bonus')||'null'); return b&&typeof b==='object'&&b.date===TODAY?b:null; }catch(e){ return null; } }
 function bonusSave(b){ try{ localStorage.setItem('opg_bonus',JSON.stringify(b)); }catch(e){} }
 function bonusAvail(){ return !COURSE.lesson && allTodayDone() && !bonusState(); }
+let AD_BUSY=false;
 function showAd(cb){ // 토스 앱이면 보상형 광고, 아니면 3초짜리 시험 화면
-  PT.event('bonus_ad',{c:COURSE.key});
-  if(AIT_CFG.ad && aitOk(AIT.loadFullScreenAd)){ tossAd(cb); return; }
-  if(AIT){ cb(); return; } // 토스 앱인데 광고 번호가 아직 없으면 시험 화면 없이 바로
+  if(window.STOPPED || AD_BUSY) return; PT.event('bonus_ad',{c:COURSE.key});
+  if(AIT_CFG.ad && aitOk(AIT&&AIT.loadFullScreenAd)){ tossAd(cb); return; }
+  if(AIT_BUILD){ cb(); return; } // 토스 앱인데 광고 번호가 아직 없으면 시험 화면 없이 바로
   $('adScreen').hidden=false; $('adDone').disabled=true; let n=3; $('adCount').textContent=n;
   const t=setInterval(()=>{ n--; $('adCount').textContent=n>0?n:'끝!'; if(n<=0){ clearInterval(t); $('adDone').disabled=false; } },1000);
   $('adDone').onclick=()=>{ $('adScreen').hidden=true; cb(); }; }
-function tossAd(cb){ let earned=false, done=false; msg('광고를 불러오고 있어요');
-  const fail=()=>{ if(done) return; done=true; PT.event('ad_fail',{}); msg('광고가 없어서 그냥 열어 드릴게요'); cb(); };
-  try{ AIT.loadFullScreenAd({options:{adGroupId:AIT_CFG.ad}, onError:fail, onEvent:e=>{ if(e.type!=='loaded') return;
-    AIT.showFullScreenAd({options:{adGroupId:AIT_CFG.ad}, onError:fail, onEvent:ev=>{
+// 광고 한 번 = 요청 하나: 누르면 잠그고, loaded가 두 번 와도 한 번만 보여 주고, 불러오기 10초·보여 주기 15초(아무 소식 없을 때) 넘으면 실패로 정리 (Codex 검수 7·8)
+// 광고를 못 불러오거나 못 보여 주면 그냥 열어 줌 — 대표 결정 2026-11-22 13:18 「정책 유지」
+function tossAd(cb){ let earned=false, done=false, shown=false, tLoad=0, tShow=0; AD_BUSY=true; msg('광고를 불러오고 있어요');
+  const finish=()=>{ done=true; AD_BUSY=false; clearTimeout(tLoad); clearTimeout(tShow); };
+  const fail=why=>{ if(done) return; finish(); PT.event('ad_fail',{why:why||''}); msg('광고가 없어서 그냥 열어 드릴게요'); cb(); };
+  tLoad=setTimeout(()=>fail('load_timeout'),10000);
+  try{ AIT.loadFullScreenAd({options:{adGroupId:AIT_CFG.ad}, onError:()=>fail('load_err'), onEvent:e=>{ if(done||e.type!=='loaded'||shown) return; shown=true; clearTimeout(tLoad);
+    tShow=setTimeout(()=>fail('show_timeout'),15000);
+    AIT.showFullScreenAd({options:{adGroupId:AIT_CFG.ad}, onError:()=>fail('show_err'), onEvent:ev=>{ if(done) return; clearTimeout(tShow);
       if(ev.type==='userEarnedReward') earned=true;
-      if(ev.type==='failedToShow') fail();
-      if(ev.type==='dismissed' && !done){ done=true; if(earned){ PT.event('ad_done',{}); cb(); } else msg('광고를 끝까지 보시면 열려요'); } }}); }}); }catch(e){ fail(); } }
+      if(ev.type==='failedToShow') fail('failed_to_show');
+      if(ev.type==='dismissed'){ finish(); if(earned){ PT.event('ad_done',{}); cb(); } else msg('광고를 끝까지 보시면 열려요'); } }}); }}); }catch(e){ fail('throw'); } }
 function startBonus(){ (hasPass()?(cb=>cb()):showAd)(()=>{ bonusSave({date:TODAY, course:COURSE.key}); PT.event('bonus_start',{c:COURSE.key}); startRound('bonus'); }); }
 // 새 코스 알림 동의(토스 알림동의문 136818, 매주 토요일) — 첫 정규 라운드를 마친 뒤 한 번만 물음; 거절·동의 모두 다시 묻지 않음, 아직 알림 틀이 없어 실패하면 다음 라운드에 다시
 const NOTI_TEMPLATE='today-parkgolf-newcourse';
 function askNewCourseAlarm(){ const N=AIT&&AIT.Notification&&AIT.Notification.requestAgreement; if(!aitOk(N)) return; try{ if(localStorage.getItem('opg_noti_asked')) return; }catch(e){ return; }
   try{ const off=N({options:{templateCode:NOTI_TEMPLATE}, onEvent:r=>{ try{ localStorage.setItem('opg_noti_asked',r&&r.type||'1'); }catch(e){} PT.event('noti_agree',{r:r&&r.type}); try{ off&&off(); }catch(e){} }, onError:e=>{ PT.event('noti_err',{m:String(e&&e.message||e).slice(0,60)}); try{ off&&off(); }catch(e2){} } }); }catch(e){} }
-function finishRound(){ if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; $('lessonDone').hidden=false; return; }
+function finishRound(){ S.live=false; if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; $('lessonDone').hidden=false; return; }
   say(12,0.6); if(S.mode!=='practice') say(13,1.2); if(S.mode==='bonus'){ const b=bonusState()||{date:TODAY,course:COURSE.key}; b.strokes=S.strokes.slice(); b.ball=S.ball; bonusSave(b); } $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); let prevBest=null; if(S.mode==='today'){ const r0=loadRounds(), ds=Object.keys(r0).filter(d=>d!==TODAY&&r0[d]&&r0[d].strokes); if(ds.length) prevBest=Math.min(...ds.map(d=>r0[d].strokes.reduce((a,b)=>a+b,0))); } if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); try{ SSUI.unlock(); SSUI.refresh(); }catch(e){} } if(S.mode==='today'){ const st=S.strokes.slice(), wx=S.wx; setTimeout(()=>{ if(!showNews(st,prevBest,wx,()=>setTimeout(askNewCourseAlarm,600))) setTimeout(askNewCourseAlarm,1600); },900); }
   showCard(S.mode==='today'||S.mode==='bonus'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
 const ArinPaper=(()=>{
@@ -1693,10 +1670,11 @@ const SSUI=(()=>{
     TIP={normal:'화면 어디서든 아래로 당겼다 놓으세요',rubber:'고무공은 통통 튀어요',cork:'코르크공은 잘 안 튀고 물에 떠요'};
   const N=3;  // 하루 판 수
   // 판 전체를 날마다 3개씩 차례로 돌림(난이도 구분 없음)
-  function dayNo(){ const d=new Date(); return Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(2026,0,5))/864e5); }
+  // 날짜 기준은 TODAY 하나(페이지를 연 날) — 자정을 넘기면 dayRoll이 안전할 때 새로 엶 (Codex 검수 6)
+  function dayNo(){ const [y,m,d]=TODAY.split('-').map(Number); return Math.floor((Date.UTC(y,m-1,d)-Date.UTC(2026,0,5))/864e5); }
   function todayLevels(){ const k=dayNo(), n=LV.length; return [0,1,2].map(i=>LV[(((k*N+i)%n)+n)%n]); }
   const todayLevel=()=>todayLevels()[Math.min(N-1,day().cur)];
-  function day(){ try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o.date===TODAY&&o.s) return o; }catch(e){} return {date:TODAY,cur:0,s:[{used:0},{used:0},{used:0}]}; }
+  function day(){ try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o&&o.date===TODAY&&Array.isArray(o.s)&&o.s.length===N&&o.s.every(x=>x&&typeof x==='object'&&Number.isInteger(x.used)&&x.used>=0&&x.used<=PRAC+2)&&Number.isInteger(o.cur)&&o.cur>=0&&o.cur<=N) return o; }catch(e){} return {date:TODAY,cur:0,s:[{used:0},{used:0},{used:0}]}; }
   let D=null; const st=()=>D.s[Math.min(N-1,D.cur)];
   function put(){ try{ localStorage.setItem(KEY,JSON.stringify(D)); }catch(e){} }
   const tries=s=>PRAC+1+(s.more?1:0);
@@ -1705,11 +1683,12 @@ const SSUI=(()=>{
   const available=()=>window.LANG!=='th' && !doneToday();
   /* 출석: 한 번이라도 치면 'try'(파란 도장), 넣으면 'win'(금 도장) */
   const LOG='opg_ss_log';
-  function logGet(){ try{ return JSON.parse(localStorage.getItem(LOG)||'{}'); }catch(e){ return {}; } }
+  function logGet(){ try{ const g=JSON.parse(localStorage.getItem(LOG)||'{}'); return g&&typeof g==='object'&&!Array.isArray(g)?g:{}; }catch(e){ return {}; } }
+  const todayDate=()=>{ const [y,m,d]=TODAY.split('-').map(Number); return new Date(y,m-1,d); };
   function logMark(v){ const g=logGet(); if(v==='win'||!g[TODAY]){ g[TODAY]=v; try{ localStorage.setItem(LOG,JSON.stringify(g)); }catch(e){} } return g; }
   const dkey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  function streak(){ const g=logGet(); const d=new Date(); if(!g[dkey(d)]) d.setDate(d.getDate()-1); let n=0; while(g[dkey(d)]){ n++; d.setDate(d.getDate()-1); } return n; }
-  function calHTML(){ const g=logGet(), d=new Date(), y=d.getFullYear(), m=d.getMonth(), first=new Date(y,m,1).getDay(), last=new Date(y,m+1,0).getDate();
+  function streak(){ const g=logGet(); const d=todayDate(); if(!g[dkey(d)]) d.setDate(d.getDate()-1); let n=0; while(g[dkey(d)]){ n++; d.setDate(d.getDate()-1); } return n; }
+  function calHTML(){ const g=logGet(), d=todayDate(), y=d.getFullYear(), m=d.getMonth(), first=new Date(y,m,1).getDay(), last=new Date(y,m+1,0).getDate();
     let h='<div class="calH"><span>'+(m+1)+'월 슈퍼샷 출석부</span><b>연속 '+streak()+'일</b></div><div class="calG">';
     '일월화수목금토'.split('').forEach(w=>h+='<span class="wd">'+w+'</span>'); for(let i=0;i<first;i++) h+='<span></span>';
     for(let n=1;n<=last;n++){ const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(n).padStart(2,'0'), v=g[k]; h+='<span class="'+(v||'')+(k===TODAY?' today':'')+'">'+(v==='win'?'★':n)+'</span>'; }
@@ -1749,9 +1728,11 @@ const SSUI=(()=>{
   function fresh(){ b=SS.newBall(L); club.mode='aim'; club.th=0; club.dir=L.tee[0]>W/2?-1:1; trail=[]; }
 
   function stage(){ o=st(); L=todayLevels()[D.cur]; title(); fresh(); dots(); $('ssMid').hidden=true;
+    // 도전을 다 쓴 판(결과 카드 전에 나갔다 온 경우): 결과 카드를 다시 보여 줘 다음 판으로 갈 수 있게 (Codex 검수 4)
+    if(o.used>=tries(o)){ hint(''); b.state='wait'; mid(!!o.won); return; }
     if(o.used>=PRAC){ hint(''); adPreload(); setTimeout(()=>{ banner(o.more?'한 번 더 도전!':'이제 진짜 도전!','단 한 번 · 연습한 길을 보세요'); drum(); },300); }
     else hint(o.used?'연습 '+(PRAC-o.used)+'번 남았어요':(D.cur===0?'먼저 연습 세 번! ':(D.cur+1)+'번째 판 · 연습 세 번! ')+TIP[L.ball]); }
-  function open(from){ if(!available()) return; back=from; D=day(); cv=$('ssCv'); ctx=cv.getContext('2d');
+  function open(from){ if(!available() || window.STOPPED) return; back=from; D=day(); cv=$('ssCv'); ctx=cv.getContext('2d');
     ['end','start'].forEach(id=>$(id).hidden=true); $('ss').hidden=false; $('ssEnd').hidden=true; resize(); stage();
     try{ if(typeof audioWake==='function') audioWake(); }catch(e){}
     PT.event('ss_open',{lv:L.id,cur:D.cur,used:o.used,from}); last=performance.now(); acc=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); if(typeof guardBack==='function') guardBack(); }
@@ -1855,13 +1836,13 @@ const SSUI=(()=>{
   function adPreload(){ if(!tossAdOn()||hasPass()||adSt==='loading'||adSt==='ready') return; adSt='loading';
     const done=ok=>{ adSt=ok?'ready':'fail'; if(adWait){ const f=adWait; adWait=null; f(ok); } };
     try{ AIT.loadFullScreenAd({options:{adGroupId:AIT_CFG.ad}, onError:()=>done(false), onEvent:e=>{ if(e.type==='loaded') done(true); }}); }catch(e){ done(false); } }
-  function adShow(go,fallback){ adSt='idle'; let earned=false, fin=false; const end=f=>{ if(fin) return; fin=true; f(); };
-    try{ AIT.showFullScreenAd({options:{adGroupId:AIT_CFG.ad}, onError:()=>end(fallback), onEvent:ev=>{
+  function adShow(go,fallback){ adSt='idle'; moreBtn(false); let earned=false, fin=false; const tm=setTimeout(()=>end(fallback),15000); const end=f=>{ if(fin) return; fin=true; clearTimeout(tm); f(); };
+    try{ AIT.showFullScreenAd({options:{adGroupId:AIT_CFG.ad}, onError:()=>end(fallback), onEvent:ev=>{ clearTimeout(tm);
       if(ev.type==='userEarnedReward') earned=true;
       if(ev.type==='failedToShow') end(fallback);
       if(ev.type==='dismissed') end(earned?go:()=>{ moreBtn(true); $('ssMidP').textContent='광고를 끝까지 보시면 한 번 더 칠 수 있어요.'; adPreload(); }); }}); }catch(e){ end(fallback); } }
   function moreBtn(on){ const b=$('ssMore'); b.disabled=!on; b.textContent=on?(hasPass()?'한 번 더 시도하기 (이용권)':'📺 광고 보고 한 번 더 시도'):'광고 불러오는 중…'; }
-  function more(){ if($('ssMore').disabled) return;
+  function more(){ if($('ssMore').disabled || window.STOPPED) return;
     const go=()=>{ o.more=1; put(); PT.event('ss_more',{lv:L.id,cur:D.cur,pass:hasPass()?1:0}); moreBtn(true); $('ssMid').hidden=true; fresh(); dots(); banner('한 번 더 도전!','연습한 길을 다시 보세요'); drum(); };
     if(hasPass()) return go(); PT.event('ss_ad',{lv:L.id,cur:D.cur,st:adSt});
     if(!tossAdOn()){ const t=$('adDone').textContent; $('adDone').textContent='한 번 더 도전하러 가기'; showAd(()=>{ $('adDone').textContent=t; go(); }); return; }
@@ -1918,7 +1899,7 @@ function showCard(practice){
 $('bonusBtn').onclick=()=>{ $('end').hidden=true; startBonus(); };
 $('again').onclick=()=>{ if(S.mode==='today'||S.mode==='bonus'){ S.mode='practice'; S.startHole=0; } startRound(S.mode); };
 $('home').onclick=()=>{ $('end').hidden=true; setupToday(); showJourney(); };
-$('goToday').onclick=()=>{ if(loadRounds()[TODAY] && bonusAvail()){ $('start').hidden=true; startBonus(); } else startRound('today'); };
+$('goToday').onclick=()=>{ if(window.STOPPED) return; if(loadRounds()[TODAY] && bonusAvail()){ $('start').hidden=true; startBonus(); } else startRound('today'); };
 $('goPractice').onclick=()=>{ $('start').hidden=true; $('practice').hidden=false; };
 $('backP').onclick=()=>{ $('practice').hidden=true; $('start').hidden=false; };
 $('goP').onclick=()=>startRound('practice');
@@ -1929,7 +1910,7 @@ $('showCard').onclick=()=>{ S.mode='today'; $('start').hidden=true; showCard(nul
 $('wxRow').innerHTML=WX_KEYS.map((k,i)=>'<button class="opt'+(i===0?' on':'')+'" data-wx="'+k+'">'+WX[k].name+'<span>'+WX[k].line+'</span></button>').join('');
 const pick=(sel,attr,fn)=>{ for(const b of document.querySelectorAll(sel)) b.onclick=()=>{ document.querySelectorAll(sel).forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset[attr]); }; };
 function buildHoleRow(){ $('holeRow').innerHTML=HOLES.map((h,i)=>'<button class="opt'+(i===0?' on':'')+'" data-hole="'+i+'" style="flex:1 1 60px;min-height:48px">'+h.n+'번</button>').join(''); S.startHole=0; pick('#holeRow .opt','hole',v=>S.startHole=+v); }
-function setCourse(k){ applySeason(k); COURSE=COURSES[k]; HOLES=COURSE.holes; PAR=HOLES.reduce((a,h)=>a+h.par,0); buildHoleRow(); setupToday(); S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; }
+function setCourse(k){ S.live=false; applySeason(k); COURSE=COURSES[k]; HOLES=COURSE.holes; PAR=HOLES.reduce((a,h)=>a+h.par,0); buildHoleRow(); setupToday(); S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; }
 buildHoleRow();
 pick('#wxRow .opt','wx',v=>S.wx=v); pick('#pinRow .opt','pin',v=>S.pinChoice=+v); pick('#ballRow .opt','ball',v=>{ S.ballPick=v; S.ball=v; }); pick('#courseRow .opt','course',v=>setCourse(v));
 
@@ -2175,8 +2156,9 @@ function edgeWatch(){ if(!S.lookT) return;
 function edgeEnd(ms){ S.edge=null; clearTimeout(S.edgeT); S.edgeT=setTimeout(()=>{ S.edgeHold=null; if(!S.edge && !S.drag) lookReset(); }, ms||600); }
 function drawEdge(){ if(!S.edge) return; const k=Math.min(1,(performance.now()-S.edge.t0)/300); const g=ctx.createRadialGradient(W/2,H*0.45,Math.min(W,H)*0.25,W/2,H*0.45,Math.max(W,H)*0.7);
   g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,'+(0.5*k)+')'); ctx.save(); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.restore(); }
-function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; edgeWatch(); acc+=dt*(S.edge?0.3:1); const h=H_();
-  while(acc>=DT){ acc-=DT; if(S.moving && !S.holeOver){ step(h); if(S.vel.x===0 && S.vel.y===0 && S.moving){ S.moving=false; if(!S.holeOver && S.strokes[S.hi]>=h.par+3) holeOut(true); else if(!S.holeOver){ shotVoice(); if(COURSE.range) rangeWeather(true); } puttCheck(); updateHud(); } } }
+function frozen(){ return !S.attract && (window.STOPPED || !$('pause').hidden || ArinPaper.isOpen() || (typeof SSUI!=='undefined'&&SSUI.isOpen()) || !$('payScreen').hidden || !$('adScreen').hidden); }
+function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; if(frozen()){ acc=0; render(); requestAnimationFrame(loop); return; } edgeWatch(); acc+=dt*(S.edge?0.3:1); const h=H_();
+  while(acc>=DT){ acc-=DT; if(S.moving && !S.holeOver){ step(h); if(S.vel.x===0 && S.vel.y===0 && S.moving){ S.moving=false; if(!S.holeOver && S.strokes[S.hi]>=h.par+3) holeOut(true); else if(!S.holeOver){ shotVoice(); if(COURSE.range) rangeWeather(true); } puttCheck(); updateHud(); saveResume(); } } }
   if(S.attract){ if(!S.intro) startIntro(); S.intro.t+=dt*0.42; if(S.intro.t>=INTRO_DUR+0.6){ S.attractN=(S.attractN+1)%ATTRACT.length; S.hi=ATTRACT[S.attractN]; loadHole(); startIntro(); } }
   else if(S.intro){ S.intro.t+=dt; if(S.intro.t>=INTRO_DUR+0.4) endIntro(); }
   sinkUpdate(dt); if(!S.sink && S.pop) S.pop.t+=dt;
@@ -2185,27 +2167,29 @@ function loop(now){ let dt=(now-last)/1000; last=now; if(dt>0.1) dt=0.1; edgeWat
 // ===== 유입 경로 (토스애즈 준비, 2026-11-09) — toss-ads-ready 스킬: referrer=tossads 를 우리 utm보다 먼저, 소재는 ad
 const ENTRY=(function(){ let url=location.href; try{ if(window.AIT&&AIT.Environment&&AIT.Environment.initialURL) url=AIT.Environment.initialURL; }catch(e){}
   let q={}; try{ const i=url.indexOf('?'); if(i>=0) new URLSearchParams(url.slice(i+1).split('#')[0]).forEach((v,k)=>{ q[k]=v; }); }catch(e){}
-  const ref=q.referrer||''; const src=(ref==='tossads'||ref==='external_ads') ? ref : (q.utm_source||q.src||ref||'direct');
+  const clean=v=>String(v||'').toLowerCase().replace(/[^a-z0-9_.-]/g,'').slice(0,40);
+  const ref=clean(q.referrer); const src=(ref==='tossads'||ref==='external_ads') ? ref : (clean(q.utm_source)||clean(q.src)||ref||'direct');
   const ad=(q.ad||q.utm_campaign||q.utm_content||'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);
-  let first=null, isNew=false; try{ first=JSON.parse(localStorage.getItem('opg_first_src')||'null'); }catch(e){}
+  let first=null, isNew=false; try{ first=JSON.parse(localStorage.getItem('opg_first_src')||'null'); if(!first||typeof first!=='object'||typeof first.src!=='string') first=null; else first={src:clean(first.src)||'direct', ad:clean(first.ad), d:String(first.d||'').slice(0,10)}; }catch(e){ first=null; }
   if(!first){ first={src, ad, d:TODAY}; isNew=true; try{ localStorage.setItem('opg_first_src', JSON.stringify(first)); }catch(e){} }
   return {src, ad, ref, first, isNew}; })();
 // 원격 설정(토스 심사 없이 바꿈) — play.arinplay.app/ParkGolf/config.json: notice(공지)·stop(긴급 정지)·release(코스 열리는 날 바꾸기). 3초 안에 못 불러오면 지금처럼 동작
-(function(){ try{ const th=window.LANG==='th', ctl=(window.AbortController?new AbortController():null); if(ctl) setTimeout(()=>ctl.abort(),3000);
+let CFG_AT=0; function fetchCfg(){ if(window.STOPPED || Date.now()-CFG_AT<300000) return; CFG_AT=Date.now(); try{ const th=window.LANG==='th', ctl=(window.AbortController?new AbortController():null); if(ctl) setTimeout(()=>ctl.abort(),3000);
   fetch('https://play.arinplay.app/ParkGolf/config.json?t='+Date.now(),{cache:'no-store',signal:ctl?ctl.signal:undefined}).then(r=>r.ok?r.json():null).then(c=>{ if(!c||typeof c!=='object') return; window.REMOTE_CFG=c;
     if(c.release&&typeof c.release==='object') JOURNEY.forEach(st=>{ if(st.release&&/^\d{4}-\d\d-\d\d$/.test(c.release[st.k]||'')) st.release=c.release[st.k]; });
-    if(c.stop){ const d=document.createElement('div'); d.id='stopScreen'; d.style.cssText='position:fixed;inset:0;z-index:99999;background:#14231c;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;font-size:22px;font-weight:800;line-height:1.6';
+    if(c.stop){ window.STOPPED=true; S.moving=false; S.vel={x:0,y:0}; try{ saveResume(); }catch(e){} const d=document.createElement('div'); d.id='stopScreen'; d.style.cssText='position:fixed;inset:0;z-index:99999;background:#14231c;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;font-size:22px;font-weight:800;line-height:1.6';
       d.textContent=(th&&c.stopMsg_th)||c.stopMsg||(th?'กำลังปิดปรับปรุงชั่วคราว กรุณากลับมาใหม่ภายหลัง':'지금 잠깐 손보는 중이에요.\n조금 뒤에 다시 와 주세요.'); d.style.whiteSpace='pre-line'; document.body.appendChild(d); PT.event('remote_stop',{}); return; }
-    const note=(th&&c.notice_th)||c.notice; if(note) setTimeout(()=>msg(String(note).slice(0,80)),1500);
-  }).catch(()=>{}); }catch(e){} })();
-PT.init({game:'parkgolf', build:'v82', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs', maxPulses:3, gapMs:60000, strings:{thanks:'고마워요.', skip:'×'}});
+    const note=(th&&c.notice_th)||c.notice; if(note && note!==fetchCfg.lastNote){ fetchCfg.lastNote=note; setTimeout(()=>msg(String(note).slice(0,80)),1500); }
+  }).catch(()=>{}); }catch(e){} }
+fetchCfg(); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetchCfg(); }); setInterval(fetchCfg,600000);
+PT.init({game:'parkgolf', build:'v83', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs'});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
 PT.event(ENTRY.isNew?'first_open':'app_open', {now_src:ENTRY.src, now_ad:ENTRY.ad||undefined, toss_ref:ENTRY.ref||undefined});
 try{ if(window.AIT&&AIT.Analytics) AIT.Analytics.log({log_name:ENTRY.isNew?'first_open':'app_open', log_type:'event', params:{toss_ref:ENTRY.ref||'none', ad:ENTRY.ad||'none', src:ENTRY.first.src}}).catch(()=>{}); }catch(e){}
 const ATTRACT=[2,7,8];
-function showTitle(){ S.attract=true; S.attractN=0; document.body.classList.add('attract'); S.hi=ATTRACT[0]; S.strokes=HOLES.map(()=>0); loadHole(); startIntro();
+function showTitle(){ S.live=false; S.attract=true; S.attractN=0; document.body.classList.add('attract'); S.hi=ATTRACT[0]; S.strokes=HOLES.map(()=>0); loadHole(); startIntro();
   $('tDate').textContent=$('todayLine').textContent+' · '+COURSE.name; $('title').hidden=false; $('start').hidden=true; $('journey').hidden=true; }
 function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; document.body.classList.remove('attract'); $('title').hidden=true;
   let fresh=false; try{ fresh=!localStorage.getItem('opg_lesson_done') && localStorage.getItem('opg_rounds')===null; }catch(e){}
@@ -2222,7 +2206,7 @@ S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loo
 // 등급 표시: 켤 때마다 3초 이상 보여 준 뒤 사라짐(그 전에는 눌러도 안 넘어감)
 if(AIT){ const r=document.getElementById('rating'); if(r) r.remove(); }
 else setTimeout(()=>{ const r=document.getElementById('rating'); if(r){ r.classList.add('off'); setTimeout(()=>r.remove(),400); } }, 3200);
-if(/[?&]sim\b/.test(location.search)) window.__pg={SSUI,TODAY,S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
+if(/[?&]sim\b/.test(location.search)) window.__pg={SSUI,saveResume:()=>saveResume(),loadResume:()=>loadResume(),hasPass:()=>hasPass(),AIT_BUILD,showAd:cb=>showAd(cb),TODAY,S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
 })();
 </script>
 

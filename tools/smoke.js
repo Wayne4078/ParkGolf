@@ -8,7 +8,7 @@ if(MODE==='toss') await ctx.addInitScript(()=>{ window.AIT_CFG={ad:'g',sku:'s'};
   window.AIT={ graniteEvent:{addEventListener(){return()=>{}}}, closeView(){}, Analytics:{log(){}}, Environment:{getDeploymentId(){return 'x'}},
     SafeAreaInsets:{get(){return {top:47,bottom:34}}}, File:{saveBase64:async()=>({})},
     Notification:{requestAgreement:async()=>({status:'agreed'})},
-    IAP:{getCompletedOrRefundedOrders:async()=>({orders:[]}),createOneTimePurchaseOrder(){}},
+    IAP:{getCompletedOrRefundedOrders:Object.assign(async()=>({orders:[],hasNext:false}),{isSupported:()=>true}),getPendingOrders:async()=>({orders:[]}),completeProductGrant:async()=>true,createOneTimePurchaseOrder:Object.assign(function(){ return ()=>{}; },{isSupported:()=>true})},
     loadFullScreenAd(o){ setTimeout(()=>o.onEvent({type:'loaded'}),300) }, showFullScreenAd(o){ setTimeout(()=>{o.onEvent({type:'userEarnedReward'});o.onEvent({type:'dismissed'})},200) } }; });
 const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push('PAGEERR '+e.message));pg.on('console',m=>{ if(m.type()==='error'&&!/net::|Failed to load|ERR_/.test(m.text())) errs.push('CONSOLE '+m.text().slice(0,160)) });
 await pg.goto((process.env.BASE||'http://localhost:8765/')+'index.html?sim'+(MODE==='web'?'&all':''));await pg.waitForTimeout(500);
@@ -36,4 +36,6 @@ const res=await pg.evaluate(async()=>{ const out=[]; const P=__pg; const sleep=m
   return out; });
 console.log(MODE, res.join(' | '));
 console.log('errors', errs.length? errs.join('\n'):'none');
-await br.close()})();
+await br.close();
+const bad=res.filter(x=>/=false|THROW/.test(x));
+if(bad.length||errs.length){ console.log('FAIL', bad.join(' | ')); process.exit(1); } console.log('PASS (흐름 시험 — 강제 홀 완료 포함)');})().catch(e=>{ console.error(e); process.exit(1); });

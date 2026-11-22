@@ -5,5 +5,8 @@ h = open(os.path.join(os.path.dirname(__file__), '..', 'index.html'), encoding='
 ids = re.findall(r'\sid="([^"]+)"', h)
 refs = set(re.findall(r"\$\('([A-Za-z0-9_-]+)'\)", h)) | set(re.findall(r"getElementById\('([A-Za-z0-9_-]+)'\)", h))
 dyn = set(re.findall(r"\.id\s*=\s*'([^']+)'", h))
-print('중복 id:', [k for k, v in collections.Counter(ids).items() if v > 1])
-print('HTML에 없는 id:', sorted(r for r in refs if r not in ids and r not in dyn))
+dup = [k for k, v in collections.Counter(ids).items() if v > 1]
+miss = sorted(r for r in refs if r not in ids and r not in dyn)
+print('중복 id:', dup)
+print('HTML에 없는 id:', miss)
+raise SystemExit(1 if (dup or miss) else 0)
