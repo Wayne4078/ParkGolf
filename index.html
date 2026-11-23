@@ -771,7 +771,7 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
 </script>
 <script>
 (() => {
-const W=360, H=600, R=4.5; let CUP_R=9; const ZOOM=1.6, M_PER_PX=0.15, TILT=0.70;
+const W=360, H=600, R_STD=4.5; let R=R_STD; let CUP_R=9; /* 공 크기: 코스마다 ballR로 바꿀 수 있음(대표 2026-11-23 「이번부터 공을 조금 작게」) */ const SIM_R=/[?&]sim\b/.test(location.search)&&+((location.search.match(/[?&]r=([0-9.]+)/)||[])[1])||0; /* 시험 비교용(?sim&r=3.8) */ const ZOOM=1.6, M_PER_PX=0.15, TILT=0.70;
 const BALLS={
   normal:{name:'일반공', e:0.30, wind:1.0, color:'#f4f4ee', floats:false, leaves:false},
   rubber:{name:'고무공', e:1.22, wind:1.0, color:'#d9382b', floats:false, leaves:true},
@@ -1945,7 +1945,7 @@ $('showCard').onclick=()=>{ S.mode='today'; $('start').hidden=true; showCard(nul
 $('wxRow').innerHTML=WX_KEYS.map((k,i)=>'<button class="opt'+(i===0?' on':'')+'" data-wx="'+k+'">'+WX[k].name+'<span>'+WX[k].line+'</span></button>').join('');
 const pick=(sel,attr,fn)=>{ for(const b of document.querySelectorAll(sel)) b.onclick=()=>{ document.querySelectorAll(sel).forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset[attr]); }; };
 function buildHoleRow(){ $('holeRow').innerHTML=HOLES.map((h,i)=>'<button class="opt'+(i===0?' on':'')+'" data-hole="'+i+'" style="flex:1 1 60px;min-height:48px">'+h.n+'번</button>').join(''); S.startHole=0; pick('#holeRow .opt','hole',v=>S.startHole=+v); }
-function setCourse(k){ S.live=false; applySeason(k); COURSE=COURSES[k]; HOLES=COURSE.holes; PAR=HOLES.reduce((a,h)=>a+h.par,0); buildHoleRow(); setupToday(); S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; }
+function setCourse(k){ S.live=false; applySeason(k); COURSE=COURSES[k]; R=SIM_R||COURSE.ballR||R_STD; HOLES=COURSE.holes; PAR=HOLES.reduce((a,h)=>a+h.par,0); buildHoleRow(); setupToday(); S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; }
 buildHoleRow();
 pick('#wxRow .opt','wx',v=>S.wx=v); pick('#pinRow .opt','pin',v=>S.pinChoice=+v); pick('#ballRow .opt','ball',v=>{ S.ballPick=v; S.ball=v; }); pick('#courseRow .opt','course',v=>setCourse(v));
 
