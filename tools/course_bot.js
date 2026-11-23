@@ -3,9 +3,10 @@
 const {chromium}=require('playwright'); const KS=process.argv.slice(2);
 (async()=>{ const br=await chromium.launch(); const pg=await (await br.newContext({viewport:{width:360,height:640}})).newPage();
  await pg.goto((process.env.BASE||'http://localhost:8765')+'/index.html?sim&all'); await pg.waitForTimeout(3800); let bad=0;
- for(const k of KS){ const r=await pg.evaluate(k=>{ const P=__pg, S=P.S; document.querySelectorAll('.screen,#title,#rating,#holeDone').forEach(e=>e.hidden=true);
+ const PINS=(process.env.PINS||'0').split(',').map(Number);
+ for(const k of KS) for(const pin of PINS){ const r=await pg.evaluate(([k,pin])=>{ const P=__pg, S=P.S; document.querySelectorAll('.screen,#title,#rating,#holeDone').forEach(e=>e.hidden=true);
    P.setCourse(k); P.startRound('practice'); S.wx='clear'; const out=[];
-   for(let i=0;i<P.HOLES.length;i++){ S.hi=i; S.pins[i]=0; P.loadHole(); S.intro=null; let n=0, inn=false;
+   for(let i=0;i<P.HOLES.length;i++){ S.hi=i; S.pins[i]=pin; P.loadHole(); S.intro=null; let n=0, inn=false;
      while(n<8 && !inn){ const start={...S.pos}, c=P.cup(); let best=null;
        for(let a=0;a<72 && !(best&&best.d<0);a++) for(const f of [0.15,0.25,0.35,0.45,0.55,0.7,0.85,1]){ const ang=a/72*Math.PI*2;
          S.pos={...start}; S.vel={x:Math.cos(ang)*P.MAXV*f,y:Math.sin(ang)*P.MAXV*f}; S.moving=true; S.holeOver=false; S.sink=null;
@@ -14,7 +15,7 @@ const {chromium}=require('playwright'); const KS=process.argv.slice(2);
          if(done){ best={ang,f,d:-1}; break; } if(!best||d<best.d) best={ang,f,d,pos:{...S.pos}}; }
        n++; if(best.d<0){ inn=true; break; } S.pos=best.pos; S.vel={x:0,y:0}; S.moving=false; S.sink=null; S.holeOver=false; }
      out.push({n:i+1,par:P.HOLES[i].par,s:inn?n:null}); }
-   return out; },k);
+   return out; },[k,pin]);
    const fail=r.filter(x=>x.s===null); bad+=fail.length;
-   console.log(k, r.map(x=>x.n+':'+(x.s??'X')+'/'+x.par).join(' '), fail.length?'못 넣은 홀 '+fail.map(x=>x.n).join(','):'전 홀 들어감'); }
+   console.log(k+' 핀'+(pin+1), r.map(x=>x.n+':'+(x.s??'X')+'/'+x.par).join(' '), fail.length?'못 넣은 홀 '+fail.map(x=>x.n).join(','):'전 홀 들어감'); }
  await br.close(); process.exit(bad?1:0); })();

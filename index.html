@@ -918,7 +918,17 @@ let COURSE=COURSES.home, HOLES=COURSE.holes;
 let PAR=HOLES.reduce((a,h)=>a+h.par,0);
 
 // ---------- date & seed ----------
-const now=new Date(); const pad=n=>String(n).padStart(2,'0');
+const pad=n=>String(n).padStart(2,'0');
+/* 날짜(v87, #M-1123-2105 ⑤): 오늘 = 우리 서버(api.arinplay.app/time)의 한국 날짜. 받은 값은 이 창(sessionStorage)에 30분 보관해 켤 때 바로 씀.
+   서버를 못 받으면: 무료 라운드는 폰 날짜(뒤로 돌려도 본 적 있는 가장 늦은 날보다 앞으로 안 감), 광고 한 라운드 더·새 코스 열기는 안 함 */
+const BUILD_DAY='2026-11-23', DAY_RE=/^\d{4}-\d\d-\d\d$/;
+const SRV=(()=>{ let c=null, rl=''; try{ c=JSON.parse(sessionStorage.getItem('opg_srv')||'null'); rl=sessionStorage.getItem('opg_srv_rl')||''; }catch(e){} const t=Date.now();
+  const fresh=c&&DAY_RE.test(c.day)&&(Math.abs(t-c.at)<1800000 || rl.startsWith(c.day+'|')); /* 방금 그 날짜로 맞추려고 새로 고친 거면 폰 시계와 상관없이 씀 */
+  return fresh?{ok:true,day:c.day,at:c.at}:{ok:false,day:null,at:0}; })();
+function phoneDay(){ const d=new Date(), real=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); let seen=null; try{ seen=localStorage.getItem('opg_maxday'); }catch(e){}
+  const use=(seen&&DAY_RE.test(seen)&&seen>real)?seen:real; try{ localStorage.setItem('opg_maxday',use); }catch(e){} return use; }
+const now=(()=>{ const pd=phoneDay(), d=SRV.ok?SRV.day:pd; return d===(new Date().getFullYear()+'-'+pad(new Date().getMonth()+1)+'-'+pad(new Date().getDate()))?new Date():new Date(d+'T12:00:00'); })();
+function courseDay(){ if(SRV.ok) return SRV.day; let m=BUILD_DAY; try{ const v=localStorage.getItem('opg_srvmax'); if(v&&DAY_RE.test(v)&&v>m) m=v; }catch(e){} return m; } // 새 코스는 서버가 알려 준 날짜로만 열림
 const TODAY=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
 const YDAY=(()=>{const d=new Date(now); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());})();
 function hash(s){ let h=2166136261; for(const ch of s){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619)>>>0; } return h; }
@@ -1202,7 +1212,7 @@ function bounce(p,v,nx,ny,qx,qy,b){ p.x=qx+nx*(R+WALL); p.y=qy+ny*(R+WALL); cons
   if(vn<0){ v.x-=(1+b.e)*vn*nx; v.y-=(1+b.e)*vn*ny; v.x*=0.97; v.y*=0.97; const s2=Math.hypot(v.x,v.y), cap=MAXV*1.15; if(s2>cap){ v.x*=cap/s2; v.y*=cap/s2; }
     if(-vn>40 && S.t-S.lastHit>0.12){ S.lastHit=S.t; S.fx.push({x:p.x,y:p.y,t:S.t,big:S.ball==='rubber'}); sndCurb(S.ball==='rubber'); if(-vn>MAXV*0.55 && S.shot && !S.shot.wall){ S.shot.wall=1; say(9); } } } }
 function shoot(sdx,sdy){ const len=Math.min(Math.hypot(sdx,sdy),MAXDRAG); if(len<16) return false; showHint(''); const k=len/MAXDRAG*MAXV; const gx=sdx, gy=sdy/S.cam.tilt; const ca=Math.cos(S.cam.a), sa=Math.sin(S.cam.a); const wx=gx*ca+gy*sa, wy=-gx*sa+gy*ca; const l=Math.hypot(wx,wy);
-  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; S.edgeHold=null; S.sandIn=inSand(H_(),S.pos); lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; saveResume(); sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
+  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; S.edgeHold=null; S.sandIn=inSand(H_(),S.pos); lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; if(!S.counted){ S.counted=true; if((S.mode==='today'||S.mode==='bonus') && !COURSE.lesson && !COURSE.range) countRound(); } saveResume(); sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
 function holeOut(capped,quiet,voice){ if(S.holeOver) return; S.holeOver=true; S.moving=false; const h=H_(), s=S.strokes[S.hi], diff=s-h.par; if(!capped && !quiet) sndCup();
   if(!quiet||voice){ if(capped) say(8,0.2); else if(s===1) say(4,0.5); else if(diff<=-2) say(3,0.5); else if(diff<0) say(5,0.5); else if(diff===0) say(6,0.5); else say(7,0.5); }
   PT.event('hole_end',{c:COURSE.key,mode:S.mode,n:h.n,par:h.par,s:s,capped:!!capped,ball:S.ball,wx:S.wx});
@@ -1219,12 +1229,13 @@ function setupToday(){ $('courseSub').textContent=COURSE.sub;
   if(COURSE.lesson){ $('todayLine').textContent='배우는 코스 · 세 단계'; $('todayNote').textContent='치는 법 → 코르크공과 바람 → 고무공'; $('goToday').disabled=false; $('goToday').textContent='배우기 시작'; $('ballRow').hidden=true; $('ballNote').hidden=true; $('goPractice').hidden=true; return; }
   $('ballRow').hidden=false; $('ballNote').hidden=false; { const bp=S.ballPick||'normal'; document.querySelectorAll('#ballRow .opt').forEach(x=>{ x.classList.toggle('on',x.dataset.ball===bp); if(x.dataset.ball===bp) $('ballNote').textContent=x.dataset.note; }); } $('goPractice').hidden=!hasPass() && !PASS_SELL; $('goPractice').textContent=hasPass()?'연습':'연습 (평생권)'; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins();
   const rounds=loadRounds(); const played=rounds[TODAY]; $('todayLine').textContent=(now.getMonth()+1)+'월 '+now.getDate()+'일 · '+WX[S.wx].name;
-  if(played){ $('todayNote').textContent='오늘 라운드는 쳤어요 · '+played.strokes.reduce((a,b)=>a+b,0)+'타 ('+BALLS[played.ball].name+')'; $('goToday').disabled=true; $('goToday').textContent='오늘은 여기까지 · 내일 또 만나요'; if(bonusAvail()){ $('goToday').disabled=false; $('goToday').textContent=bonusLabel(); } }
-  else { const rs=loadResume(); $('todayNote').textContent= rs ? (rs.hi+1)+'번 홀에서 멈추셨어요 · 지금 '+rs.strokes.reduce((a,b)=>a+b,0)+'타' : WX[S.wx].line;
-    if(rs){ $('ballRow').hidden=true; $('ballNote').textContent='처음 고른 '+BALLS[rs.ball].name+'으로 이어 칩니다'; } $('goToday').disabled=false; $('goToday').textContent= rs ? '오늘의 라운드 이어 치기' : '오늘의 라운드'; }
+  const rs=played?null:loadResume(), nk=nextKind();
+  $('todayNote').textContent= played ? '오늘 이 코스 '+played.strokes.reduce((a,b)=>a+b,0)+'타 ('+BALLS[played.ball].name+')' : rs ? (rs.hi+1)+'번 홀에서 멈추셨어요 · 지금 '+rs.strokes.reduce((a,b)=>a+b,0)+'타' : WX[S.wx].line;
+  if(rs && resumeOpen()){ $('ballRow').hidden=true; $('ballNote').textContent='처음 고른 '+BALLS[rs.ball].name+'으로 이어 칩니다'; }
+  $('goToday').disabled= nk==='none'; $('goToday').textContent=nextLabel(nk);
   $('showCard').hidden=Object.keys(rounds).length===0; }
-function startRound(mode){ if(window.STOPPED) return; S.live=false; S.mode=mode; S.strokes=HOLES.map(()=>0); if(!S.attract && !COURSE.range){ try{ localStorage.setItem('opg_last_course',COURSE.key); }catch(e){} }
-  let res=null; if(mode==='range'){ S.ball=S.ballPick||'normal'; S.hi=0; S.pins=HOLES.map(()=>Math.floor(Math.random()*3)); rangeWeather(); } else if(mode==='bonus'){ S.ball=S.ballPick||'normal'; S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); } else if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; } else if(!COURSE.lesson) S.ball=S.ballPick||'normal'; }
+function startRound(mode){ if(window.STOPPED) return; S.live=false; S.mode=mode; S.strokes=HOLES.map(()=>0); S.counted=!(mode==='today'||mode==='bonus'); if(!S.attract && !COURSE.range){ try{ localStorage.setItem('opg_last_course',COURSE.key); }catch(e){} }
+  let res=null; if(mode==='range'){ S.ball=S.ballPick||'normal'; S.hi=0; S.pins=HOLES.map(()=>Math.floor(Math.random()*3)); rangeWeather(); } else if(mode==='bonus'){ S.ball=S.ballPick||'normal'; S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); } else if(mode==='today'){ S.hi=0; S.wx=todayWeather(); S.windDir=dailyWindDir(TODAY); S.pins=todayPins(); res=COURSE.lesson?null:loadResume(); if(res){ S.hi=res.hi; S.strokes=res.strokes.slice(); S.ball=res.ball; S.counted=res.strokes.some(x=>x>0)||res.hi>0; } else if(!COURSE.lesson) S.ball=S.ballPick||'normal'; }
   else { S.ball=S.ballPick||'normal'; S.hi=S.startHole; S.pins = S.pinChoice===0 ? dailyPins(TODAY) : HOLES.map(()=>S.pinChoice); S.windDir=dailyWindDir(TODAY); }
   S.startHole=S.hi; $('start').hidden=true; $('practice').hidden=true; $('end').hidden=true; guardBack(); loadHole();
   S.live=true;
@@ -1250,7 +1261,7 @@ function clearResume(){ try{ localStorage.removeItem(resumeKey()); }catch(e){} }
 function playing(){ return !S.attract && ['title','journey','start','end','practice','how','pause','lessonDone','adScreen','payScreen','ss','ssEnd','ssMid'].every(id=>!$(id) || $(id).hidden); }
 function openPause(){ if(!playing() && $('holeDone').hidden) return; const h=H_(), tot=S.strokes.reduce((a,b)=>a+b,0);
   $('pauseSub').textContent = S.mode==='today' ? h.n+'번 홀 · 지금까지 '+tot+'타 · 나갔다 와도 이 자리에서 이어 칩니다' : COURSE.lesson ? h.n+'단계 배우는 중' : h.n+'번 홀 · 연습 (기록 안 남음)';
-  $('pRetry').hidden = S.mode==='today'; saveResume(); $('pause').hidden=false; PT.event('pause',{c:COURSE.key,mode:S.mode,n:h.n}); }
+  $('pRetry').hidden = S.mode==='today' || (S.mode==='bonus' && !hasPass()); /* 무료 한 판 더도 오늘 판과 같게 — 홀 다시 치기는 평생권 */ saveResume(); $('pause').hidden=false; PT.event('pause',{c:COURSE.key,mode:S.mode,n:h.n}); }
 function leaveRound(){ saveResume(); S.live=false; S.moving=false; S.vel={x:0,y:0}; S.drag=null; sndStop(); showHint(''); $('pause').hidden=true; $('holeDone').hidden=true; }
 $('menuBtn').onclick=openPause;
 $('pResume').onclick=()=>{ $('pause').hidden=true; };
@@ -1259,8 +1270,20 @@ $('pCourse').onclick=()=>{ leaveRound(); setupToday(); showJourney(); };
 $('pTitle').onclick=()=>{ leaveRound(); setupToday(); showTitle(); };
 $('pAmb').onclick=()=>{ SND.amb=SND.amb?0:1; sndApply(); }; $('pSfx').onclick=()=>{ SND.sfx=SND.sfx?0:1; sndApply(); }; sndLabels();
 document.addEventListener('visibilitychange',()=>{ if(!AC) return; try{ if(document.visibilityState==='hidden'){ AUD_STALE=true; AC.suspend().catch(()=>{}); } else audioWake(); }catch(e){} }); addEventListener('pageshow',()=>audioWake()); addEventListener('focus',()=>audioWake());
-function dayRoll(){ const d=new Date(), t=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); if(t===TODAY) return; if(playing()||!$('holeDone').hidden||ArinPaper.isOpen()||(typeof SSUI!=='undefined'&&SSUI.isOpen())||!$('adScreen').hidden||!$('payScreen').hidden) return; PT.event('day_roll',{from:TODAY,to:t}); setTimeout(()=>location.reload(),50); }
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') dayRoll(); }); addEventListener('pageshow',dayRoll); setInterval(dayRoll,60000);
+function dayRoll(){ fetchTime(); rollCheck(); }
+function rollCheck(){ const t=SRV.ok?SRV.day:phoneDay(); if(t===TODAY) return; if(!SRV.ok && t<TODAY) return; /* 폰 날짜는 앞으로 갈 때만(되돌리면 그대로) */ if(playing()||!$('holeDone').hidden||ArinPaper.isOpen()||(typeof SSUI!=='undefined'&&SSUI.isOpen())||!$('adScreen').hidden||!$('payScreen').hidden) return;
+  try{ if(sessionStorage.getItem('opg_srv_rl')===t+'|'+TODAY) return; sessionStorage.setItem('opg_srv_rl',t+'|'+TODAY); }catch(e){} /* 같은 이유로 두 번 새로 고치지 않음 */ PT.event('day_roll',{from:TODAY,to:t,srv:SRV.ok?1:0}); setTimeout(()=>location.reload(),50); }
+// 서버 한국 날짜 받기(v87 ⑤) — 켤 때·5분마다; 3초 안에 못 받으면 그대로(광고 한 라운드 더·새 코스 열기는 서버 날짜를 받았을 때만)
+let TIME_AT=0; function fetchTime(){ if(Date.now()-TIME_AT<300000) return; TIME_AT=Date.now(); try{ const ctl=window.AbortController?new AbortController():null; if(ctl) setTimeout(()=>ctl.abort(),3000);
+  fetch('https://api.arinplay.app/time?t='+Date.now(),{cache:'no-store',signal:ctl?ctl.signal:undefined}).then(r=>r.ok?r.json():null).then(j=>{ if(!j||typeof j!=='object') return;
+    let d=j.kst_date||j.date||j.day; if(!d && (j.now||j.iso||j.ms)){ const ms=typeof j.ms==='number'?j.ms:Date.parse(j.now||j.iso); if(ms) d=new Date(ms+9*3600000).toISOString().slice(0,10); }
+    if(!DAY_RE.test(d||'')) return; const was=SRV.ok; SRV.ok=true; SRV.day=d; SRV.at=Date.now();
+    try{ sessionStorage.setItem('opg_srv',JSON.stringify({day:d,at:SRV.at})); const m=localStorage.getItem('opg_srvmax'); if(!m||!DAY_RE.test(m)||d>m) localStorage.setItem('opg_srvmax',d); }catch(e){}
+    if(!was) PT.event('srv_day',{d,phone:TODAY});
+    if(d!==TODAY){ rollCheck(); return; }
+    if(!was){ try{ if(!$('start').hidden) setupToday(); if(!$('journey').hidden){ renderJourney(); fillSheet(); } if(!$('end').hidden){ const b=$('bonusBtn'); const nk=nextKind(); BONUS_PAY=nk==='pay'; b.hidden=nk==='none'; bonusBtnSet(true); } }catch(e){} }
+  }).catch(()=>{}); }catch(e){} }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') dayRoll(); }); addEventListener('pageshow',dayRoll); setInterval(dayRoll,60000); fetchTime();
 addEventListener('pagehide',saveResume); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') saveResume(); });
 // 폰의 뒤로 가기: 치는 중이면 잠깐 쉬기를 열고, 쉬는 중이면 닫는다. 연습·설명 화면에서는 코스 고르기로 돌아간다.
 function guardBack(){ try{ history.pushState({pg:1},''); }catch(e){} }
@@ -1300,6 +1323,7 @@ function bestOf(k){ const t=Object.values(roundsOf(k)).map(r=>r.strokes.reduce((
 function parOf(k){ return COURSES[k].holes.reduce((a,h)=>a+h.par,0); }
 function metersOf(k){ const m=COURSES[k].holes.reduce((a,h)=>a+(h.m||0),0); return m||null; }
 function lessonDone(){ try{ return !!localStorage.getItem('opg_lesson_done'); }catch(e){ return false; } }
+function addDays(d,n){ const t=new Date(d+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10); }
 function stopState(st){ const k=st.k;
   if(st.soon) return {open:false, cond:'곧 열립니다'};
   if(k==='lesson') return {open:true, done:lessonDone()};
@@ -1307,9 +1331,10 @@ function stopState(st){ const k=st.k;
   if(k==='range') return {open:true, done:false};
   if(k==='jamsil') return {open:OPEN_ALL||bestOf('home')!=null, done:bestOf('jamsil')!=null, cond:'우리 동네 오늘의 라운드를 한 번 돌면 열려요'};
   if(k==='hapcheon'){ const b=bestOf('jamsil'), need=parOf('jamsil')+3; return {open:OPEN_ALL||(b!=null&&b<=need), done:bestOf('hapcheon')!=null, cond:'강변 공원을 '+need+'타 이하로 돌면 열려요'}; }
-  if(st.release){ const pv=JOURNEY.find(x=>x.k===st.prev), pvOpen=stopState(pv).open; const early=(()=>{ try{ return localStorage.getItem('opg_early_'+k)==='1'; }catch(e){ return false; } })(); const pvWeek = !pv.release || TODAY>=pv.release; /* v86(대표 20:17): 광고로 먼저 열기 없앰 — 새 코스는 날짜에 모두에게, 평생권이면 다음 주 코스 하나를 일주일 먼저. 예전에 광고로 연 것(early)은 그대로 둠 */
-    const why = OPEN_ALL?'all': TODAY>=st.release?'week': early?'star': (hasPass()&&pvWeek)?'pass':null; const canEarly = !why && pvWeek && !hasPass();
-    return {open:!!why, why, done:bestOf(k)!=null, canEarly, cond:relLabel(st.release)+'에 열려요', star:'평생권이 있으면 일주일 먼저 칠 수 있어요'}; }
+  // 코스 문(v87 ④, #M-1123-2105): 새 코스는 토요일 날짜에 모두에게 — 광고·올스타·평생권으로 먼저 여는 길 없음
+  // 지난 코스와 다음 주 코스(일주일 먼저)는 평생권. 광고·올스타로 먼저 열기는 없앰.
+  if(st.release){ const cd=courseDay(), released=OPEN_ALL || cd>=st.release; // v87 ④: 코스는 BM과 무관 — 토요일 날짜에 모두에게, 먼저 여는 길 없음
+    return {open:released, why:released?(cd<addDays(st.release,7)?'week':'date'):null, done:bestOf(k)!=null, canEarly:false, cond:relLabel(st.release)+'에 열려요', star:'토요일마다 새 코스가 누구나 무료로 열려요'}; }
   return {open:false}; }
 S.jSel=null;
 function renderJourney(){ const road=$('jRoad'), W=Math.min(road.clientWidth||360,480), N=JOURNEY.length, SH=Math.round(W*0.66)+40, H=N*SH+60;
@@ -1336,8 +1361,8 @@ function fillSheet(){ const st=JOURNEY.find(x=>x.k===S.jSel), ss=stopState(st);
     $('jMeta').textContent=st.place+' · '+COURSES[st.k].holes.length+'홀 · 파'+p+(m?' · '+m+'m':'')+' · '+(SEASONS[st.k]&&SEASONS[st.k].season?SEASONS[st.k].season:(fld?'들판':'벽 있는 연습장')); }
   $('jGo').disabled=!ss.open; $('jGo').textContent= ss.open ? (st.k==='lesson'?'배우러 가기':st.k==='range'?'연습장 들어가기':'이 코스로 가기') : (ss.cond||'아직 잠겨 있어요');
   if(st.release && !ss.open) $('jMeta').textContent=st.place+' · 9홀 · 파'+parOf(st.k)+' · '+ss.star;
-  if(st.release && ss.open && ss.why==='star') $('jBest').textContent=(bestOf(st.k)!=null?$('jBest').textContent+' · ':'')+'⭐ 올스타로 먼저 열었어요';
-  $('jPass').hidden = !(st.release && !ss.open && ss.canEarly && PASS_SELL); $('jEarly').hidden = true; }
+  if(st.release && ss.open && ss.why==='week') $('jBest').textContent=(bestOf(st.k)!=null?$('jBest').textContent+' · ':'')+'🆕 이번 주 새 코스';
+  $('jPass').hidden = true; $('jEarly').hidden = true; }
 function showJourney(){ $('start').hidden=true; $('title').hidden=true;
   const ok=k=>{ const st=JOURNEY.find(x=>x.k===k); return st && stopState(st).open; };
   if(!ok(S.jSel)) S.jSel = ok(COURSE.key) ? COURSE.key : 'home';
@@ -1347,7 +1372,7 @@ function showStart(){ $('journey').hidden=true; $('startTitle').textContent=COUR
 $('ldGo').onclick=()=>{ $('lessonDone').hidden=true; PT.event('lesson_next',{go:'home'}); setCourse('home'); showStart(); $('goToday').click(); };
 $('ldPick').onclick=()=>{ $('lessonDone').hidden=true; PT.event('lesson_next',{go:'pick'}); showJourney(); };
 $('ballBtn').onclick=()=>{ if(S.moving||S.sink) return; const ks=Object.keys(BALLS); S.ball=ks[(ks.indexOf(S.ball)+1)%ks.length]; updateHud(); msg(BALLS[S.ball].name+'으로 바꿨어요'); PT.event('range_ball',{b:S.ball}); };
-$('jEarly').onclick=()=>{ const k=S.jSel; showAd(()=>{ try{ localStorage.setItem('opg_early_'+k,'1'); }catch(e){} PT.event('early_unlock',{k}); renderJourney(); fillSheet(); msg('먼저 열렸어요! 다른 분들보다 먼저 쳐 보세요'); }); };
+/* 광고 보고 먼저 열기(jEarly)는 A안에서 없앰 — 버튼 눌러도 아무 일 없음 */ $('jEarly').onclick=()=>{};
 function openPay(from){ PT.event('pass_offer',{k:COURSE.key,from}); $('payScreen').hidden=false; }
 $('jPass').onclick=()=>openPay('journey');
 $('payNo').onclick=()=>{ $('payScreen').hidden=true; };
@@ -1357,7 +1382,7 @@ const PASS_SAVE_FAIL='이용권을 폰에 저장하지 못했어요. 앱을 다�
 function grantPass(test,orderId){ const ok=hasPass()||setPass(); PT.event(ok?'pass_buy':'pass_save_fail',{k:S.jSel,test:test?1:0,order:orderId||undefined}); $('payScreen').hidden=true; renderJourney(); fillSheet(); try{ setupToday(); if(!$('end').hidden) showCard(null); }catch(e){} msg(ok?'평생권이 생겼어요. 이제 몇 판이든 치세요. 고맙습니다!':PASS_SAVE_FAIL); }
 const TOSS_PAY=!!(AIT_CFG.sku && aitOk(AIT&&AIT.IAP&&AIT.IAP.createOneTimePurchaseOrder));
 const PASS_SELL=!AIT_BUILD || TOSS_PAY; // 살 수 있는 곳에서만 평생권 버튼을 보임
-const PAY_SUB='3,300원 한 번이면 평생권 — 모든 코스를 언제든,<br>몇 판이든 광고 없이 칠 수 있어요.<br>매주 새 코스도 일주일 먼저, 연습·슈퍼샷 다시 도전도 광고 없이.';
+const PAY_SUB='3,300원 한 번이면 평생권 — 하루 판 수 제한 없이,<br>몇 판이든 광고 없이 칠 수 있어요.<br>연습과 슈퍼샷 다시 도전도 광고 없이.';
 $('paySub').innerHTML=PAY_SUB+'<br>결제는 토스 앱에서 할 수 있어요.';
 if(AIT_BUILD && !TOSS_PAY){ $('payTitle').textContent='토스 앱을 새로 바꿔 주세요'; $('paySub').innerHTML='지금 토스 앱에서는 이용권을 살 수 없어요.<br>토스 앱을 최신으로 바꾸면 살 수 있어요.'; $('payOk').hidden=true; }
 if(TOSS_PAY){ $('payOk').textContent='3,300원으로 평생권 받기'; $('payTitle').textContent='커피 한 잔 값으로'; $('paySub').innerHTML=PAY_SUB+'<br>매달 나가는 돈은 없어요.';
@@ -1386,15 +1411,30 @@ addEventListener('resize',()=>{ if(!$('journey').hidden) renderJourney(); });
 $('next').onclick=()=>{ S.assist=false; if(COURSE.range){ S.hi=(S.hi+1)%HOLES.length; loadHole(); rangeWeather(true); return; } if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else { PT.closeBubble(); finishRound(); } };
 // ===== 한 판 더 (BM 1단계, 2026-11-07 대표 결정) =====
 // 오늘 세 코스(우리 동네·잠실·합천)를 다 치면, 하루 한 번 광고를 보고 한 판 더. 첫 판과 두 번째 판을 나란히 비교해 보여 준다.
-// v85 BM(대표 결정 2026-11-23 13:52, #M-1123-1355): 무료는 코스마다 하루 한 판, 광고 한 편 = 그 코스 한 판 더(코스마다 하루 BONUS_MAX번),
-// 평생권 3,300원 = 하루 한 판 제한 풀기(모든 코스 몇 판이든 광고 없이, 연습도) — 코스를 먼저 여는 기능은 아님
-const BONUS_MAX=3;
+// ===== BM v87 (대표 결정 2026-11-23 21:04, #M-1123-2105) — 「한 라운드를 칠 수 있나」는 이 블록 한 곳에서만 정함 =====
+// ① 무료: 하루 freeN()라운드(기본 3, 원격 설정 freeRounds) — 코스 상관없이 합산, 첫 타 치는 순간 1라운드(이어 치기는 같은 라운드)
+// ② 그 뒤: 라운드가 끝날 때마다 광고 한 편 = 한 라운드 더, 횟수 제한 없음(광고를 못 불러와 그냥 열어 준 것도 1라운드) — 서버 날짜를 받았을 때만
+// ③ 평생권 3,300원: 광고 없이 라운드 무제한(연습 포함)   ④ 코스는 날짜에 모두에게(stopState)   배우기·연습장은 라운드로 안 셈
+function freeN(){ const c=window.REMOTE_CFG, v=c&&c.freeRounds; return (Number.isInteger(v)&&v>=0&&v<=50)?v:3; }
+function dayRec(){ try{ const d=JSON.parse(localStorage.getItem('opg_day')||'null'); if(d&&typeof d==='object'&&d.date===TODAY) return {date:TODAY,n:Math.max(0,d.n|0),ad:Math.max(0,d.ad|0)}; }catch(e){} return {date:TODAY,n:0,ad:0}; }
+function daySave(d){ try{ localStorage.setItem('opg_day',JSON.stringify(d)); }catch(e){} }
+function roundsLeft(){ if(hasPass()) return 99; const d=dayRec(); return Math.max(0, freeN()+d.ad-d.n); }
+function adRoundOK(){ return !hasPass() && SRV.ok; }
+function countRound(){ const d=dayRec(); d.n++; daySave(d); PT.event('round_count',{c:COURSE.key,n:d.n,ad:d.ad,pass:hasPass()?1:0}); }
+function resumeOpen(){ if(loadRounds()[TODAY]) return false; const r=loadResume(); return !!(r && (r.hi>0 || r.strokes.some(x=>x>0))); } // 치다 만 오늘 라운드(이미 센 라운드)
 function bonusAll(){ try{ const b=JSON.parse(localStorage.getItem('opg_bonus')||'null'); return b&&typeof b==='object'&&b.date===TODAY&&b.c&&typeof b.c==='object'?b:{date:TODAY,c:{}}; }catch(e){ return {date:TODAY,c:{}}; } }
-function bonusOf(k){ const x=bonusAll().c[k]; return x&&typeof x==='object'?{n:Math.max(0,x.n|0), strokes:Array.isArray(x.strokes)?x.strokes:null, ball:x.ball}:{n:0,strokes:null}; }
-function bonusPut(k,x){ const b=bonusAll(); b.c[k]=x; bonusSave(b); }
-function bonusLeft(k){ return Math.max(0, BONUS_MAX-bonusOf(k).n); }
-function bonusSave(b){ try{ localStorage.setItem('opg_bonus',JSON.stringify(b)); }catch(e){} }
-function bonusAvail(){ return !COURSE.lesson && !COURSE.range && !!loadRounds()[TODAY] && (hasPass() || bonusLeft(COURSE.key)>0); }
+function bonusOf(k){ const x=bonusAll().c[k]; return x&&typeof x==='object'?{n:Math.max(0,x.n|0), strokes:Array.isArray(x.strokes)?x.strokes:null, ball:x.ball}:{n:0,strokes:null}; } // 그 코스 오늘 두 번째 판부터의 마지막 기록(기록표용)
+function bonusPut(k,x){ const b=bonusAll(); b.c[k]=x; try{ localStorage.setItem('opg_bonus',JSON.stringify(b)); }catch(e){} }
+// 다음 라운드 버튼이 할 일: 'go'(바로) · 'ad'(광고 보고) · 'pay'(평생권 안내) · 'none'(오늘은 여기까지)
+function nextKind(){ if(COURSE.lesson||COURSE.range) return 'go'; if(resumeOpen()||roundsLeft()>0) return 'go'; if(adRoundOK()) return 'ad'; return PASS_SELL?'pay':'none'; }
+function nextLabel(k){ k=k||nextKind(); const L=roundsLeft(), again=!!loadRounds()[TODAY];
+  return k==='ad'?'🎬 광고 보고 한 라운드 더' : k==='pay'?'⛳ 평생권이면 광고 없이 몇 판이든' : k==='none'?'오늘은 여기까지 · 내일 또 만나요'
+    : resumeOpen()?'오늘의 라운드 이어 치기' : (again?'⛳ 한 라운드 더':'오늘의 라운드')+(hasPass()?'':' (오늘 '+L+'판 남음)'); }
+function playNext(from){ if(window.STOPPED) return; const k=nextKind();
+  const go=()=>{ $('end').hidden=true; $('start').hidden=true; startRound(resumeOpen()||!loadRounds()[TODAY]?'today':'bonus'); };
+  if(k==='go') return go();
+  if(k==='ad') return showAd(()=>{ const d=dayRec(); d.ad++; daySave(d); PT.event('ad_round',{c:COURSE.key,ad:d.ad,n:d.n,from}); go(); });
+  if(k==='pay') return openPay(from||'round'); }
 let AD_BUSY=false;
 function showAd(cb){ // 토스 앱이면 보상형 광고, 아니면 3초짜리 시험 화면
   if(window.STOPPED || AD_BUSY) return; PT.event('bonus_ad',{c:COURSE.key});
@@ -1409,8 +1449,7 @@ function bonusAdPreload(){ if(!(AIT_CFG.ad && aitOk(AIT&&AIT.loadFullScreenAd)) 
   const done=ok=>{ if(BAD.st!=='loading') return; BAD.st=ok?'ready':'fail'; if(BAD.wait){ const f=BAD.wait; BAD.wait=null; f(ok); } };
   try{ AIT.loadFullScreenAd({options:{adGroupId:AIT_CFG.ad}, onError:()=>done(false), onEvent:e=>{ if(e.type==='loaded') done(true); }}); }catch(e){ done(false); } }
 let BONUS_PAY=false;
-function bonusLabel(){ return hasPass()?'⛳ 한 판 더':'🎬 광고 보고 한 판 더 ('+bonusLeft(COURSE.key)+'번 남음)'; }
-function bonusBtnSet(on){ const b=$('bonusBtn'); b.disabled=!on; b.textContent=!on?'광고 불러오는 중…':BONUS_PAY?'⛳ 평생권이면 몇 판이든':bonusLabel(); }
+function bonusBtnSet(on){ const b=$('bonusBtn'); b.disabled=!on; b.textContent=!on?'광고 불러오는 중…':nextLabel(); }
 // 광고 한 번 = 요청 하나: 누르면 잠그고, 불러오기 10초·보여 주기 15초(아무 소식 없을 때) 넘으면 실패로 정리 (Codex 검수 7·8)
 // 광고를 못 불러오거나 못 보여 주면 그냥 열어 줌 — 대표 결정 2026-11-22 13:18 「정책 유지」
 function tossAd(cb){ let earned=false, done=false, shown=false, tLoad=0, tShow=0; AD_BUSY=true; bonusBtnSet(false);
@@ -1426,13 +1465,12 @@ function tossAd(cb){ let earned=false, done=false, shown=false, tLoad=0, tShow=0
   tLoad=setTimeout(()=>fail('load_timeout'),10000);
   BAD.wait=ok=>ok?show():fail('load_err');
   if(BAD.st!=='loading'){ BAD.st='idle'; bonusAdPreload(); } }
-function startBonus(){ (hasPass()?(cb=>cb()):showAd)(()=>{ $('end').hidden=true; const o=bonusOf(COURSE.key); bonusPut(COURSE.key,{n:o.n+1}); PT.event('bonus_start',{c:COURSE.key,n:o.n+1,pass:hasPass()?1:0}); startRound('bonus'); }); }
 // 새 코스 알림 동의(토스 알림동의문 136818, 매주 토요일) — 첫 정규 라운드를 마친 뒤 한 번만 물음; 거절·동의 모두 다시 묻지 않음, 아직 알림 틀이 없어 실패하면 다음 라운드에 다시
 const NOTI_TEMPLATE='today-parkgolf-newcourse';
 function askNewCourseAlarm(){ const N=AIT&&AIT.Notification&&AIT.Notification.requestAgreement; if(!aitOk(N)) return; try{ if(localStorage.getItem('opg_noti_asked')) return; }catch(e){ return; }
   try{ const off=N({options:{templateCode:NOTI_TEMPLATE}, onEvent:r=>{ try{ localStorage.setItem('opg_noti_asked',r&&r.type||'1'); }catch(e){} PT.event('noti_agree',{r:r&&r.type}); try{ off&&off(); }catch(e){} }, onError:e=>{ PT.event('noti_err',{m:String(e&&e.message||e).slice(0,60)}); try{ off&&off(); }catch(e2){} } }); }catch(e){} }
 function finishRound(){ S.live=false; if(COURSE.lesson){ try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{strokes:S.strokes.slice()}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; $('lessonDone').hidden=false; return; }
-  say(12,0.6); if(S.mode!=='practice') say(13,1.2); if(S.mode==='bonus'){ const o=bonusOf(COURSE.key); bonusPut(COURSE.key,{n:Math.max(1,o.n), strokes:S.strokes.slice(), ball:S.ball}); } $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); let prevBest=null; if(S.mode==='today'){ const r0=loadRounds(), ds=Object.keys(r0).filter(d=>d!==TODAY&&r0[d]&&r0[d].strokes); if(ds.length) prevBest=Math.min(...ds.map(d=>r0[d].strokes.reduce((a,b)=>a+b,0))); } if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); try{ SSUI.unlock(); SSUI.refresh(); }catch(e){} } if(S.mode==='today'){ const st=S.strokes.slice(), wx=S.wx; setTimeout(()=>{ if(!showNews(st,prevBest,wx,()=>setTimeout(askNewCourseAlarm,600))) setTimeout(askNewCourseAlarm,1600); },900); }
+  say(12,0.6); if(S.mode!=='practice') say(13,1.2); if(S.mode==='bonus'){ const o=bonusOf(COURSE.key); bonusPut(COURSE.key,{n:o.n+1, strokes:S.strokes.slice(), ball:S.ball}); } $('holeDone').hidden=true; PT.event('end',{c:COURSE.key,mode:S.mode,from:S.startHole,total:S.strokes.reduce((a,b)=>a+b,0),par:PAR,strokes:S.strokes.slice(),ball:S.ball,wx:S.wx}); let prevBest=null; if(S.mode==='today'){ const r0=loadRounds(), ds=Object.keys(r0).filter(d=>d!==TODAY&&r0[d]&&r0[d].strokes); if(ds.length) prevBest=Math.min(...ds.map(d=>r0[d].strokes.reduce((a,b)=>a+b,0))); } if(S.mode==='today'){ saveRound(TODAY,{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx}); clearResume(); try{ SSUI.unlock(); SSUI.refresh(); }catch(e){} } if(S.mode==='today'){ const st=S.strokes.slice(), wx=S.wx; setTimeout(()=>{ if(!showNews(st,prevBest,wx,()=>setTimeout(askNewCourseAlarm,600))) setTimeout(askNewCourseAlarm,1600); },900); }
   showCard(S.mode==='today'||S.mode==='bonus'?null:{strokes:S.strokes.slice(), ball:S.ball, wx:S.wx, from:S.startHole}); }
 const ArinPaper=(()=>{
   let ac=null, dst=null, hook=null, saver=null, layer, paper, press, stampEl, btns, saved, cur=null, pressN=null;
@@ -1964,13 +2002,13 @@ function showCard(practice){
   $('again').textContent = ((S.mode==='today'||S.mode==='bonus') && today && !practice) ? '연습으로 한 번 더' : '다시 치기'; $('again').hidden = !hasPass() && S.mode!=='practice'; /* 연습은 평생권만(무료는 광고 한 판 더) */
   if(bonusHere && S.mode==='bonus' && today){ const a=today.strokes.reduce((x,y)=>x+y,0), b2=bz.strokes.reduce((x,y)=>x+y,0), d=a-b2;
     $('endSub').textContent = d>0 ? '한 판 더 '+b2+'타 · 첫 판보다 '+d+'타 줄였어요!' : d<0 ? '한 판 더 '+b2+'타 · 첫 판보다 '+(-d)+'타 많아요 · 내일 다시!' : '한 판 더 '+b2+'타 · 첫 판과 똑같아요'; }
-  const real=!practice && (S.mode==='today'||S.mode==='bonus') && !COURSE.range; const offer = real && bonusAvail(); BONUS_PAY = real && !offer && !hasPass() && PASS_SELL;
-  $('bonusBtn').hidden=!(offer||BONUS_PAY); bonusBtnSet(true); if(offer){ PT.event('bonus_offer',{c:COURSE.key,left:hasPass()?-1:bonusLeft(COURSE.key)}); bonusAdPreload(); } else if(BONUS_PAY) PT.event('pass_offer_end',{c:COURSE.key});
+  const real=!practice && (S.mode==='today'||S.mode==='bonus') && !COURSE.range, nk=real?nextKind():'none'; BONUS_PAY = nk==='pay';
+  $('bonusBtn').hidden=nk==='none'; bonusBtnSet(true); if(nk!=='none') PT.event('next_offer',{c:COURSE.key,k:nk,left:hasPass()?-1:roundsLeft()}); if(nk==='ad') bonusAdPreload();
   $('end').hidden=false; }
-$('bonusBtn').onclick=()=>{ if($('bonusBtn').disabled) return; if(BONUS_PAY){ openPay('end'); return; } startBonus(); }; // 결과 화면은 광고를 다 본 뒤에 닫음(끝까지 안 보면 그대로 남음)
+$('bonusBtn').onclick=()=>{ if($('bonusBtn').disabled) return; playNext('end'); }; // 결과 화면은 광고를 다 본 뒤에 닫음(끝까지 안 보면 그대로 남음)
 $('again').onclick=()=>{ if(S.mode==='today'||S.mode==='bonus'){ S.mode='practice'; S.startHole=0; } startRound(S.mode); };
 $('home').onclick=()=>{ $('end').hidden=true; setupToday(); showJourney(); };
-$('goToday').onclick=()=>{ if(window.STOPPED) return; if(loadRounds()[TODAY] && bonusAvail()){ $('start').hidden=true; startBonus(); } else startRound('today'); };
+$('goToday').onclick=()=>{ if(window.STOPPED) return; if(COURSE.lesson) return startRound('today'); playNext('start'); };
 $('goPractice').onclick=()=>{ if(!hasPass()){ openPay('practice'); return; } $('start').hidden=true; $('practice').hidden=false; }; // 연습(코스 마음껏)은 평생권만 — 무료는 광고 한 판 더 (v85)
 $('backP').onclick=()=>{ $('practice').hidden=true; $('start').hidden=false; };
 $('goP').onclick=()=>startRound('practice');
@@ -2253,7 +2291,7 @@ let CFG_AT=0; function fetchCfg(){ if(window.STOPPED || Date.now()-CFG_AT<300000
     const note=(th&&c.notice_th)||c.notice; if(note && note!==fetchCfg.lastNote){ fetchCfg.lastNote=note; setTimeout(()=>msg(String(note).slice(0,80)),1500); }
   }).catch(()=>{}); }catch(e){} }
 fetchCfg(); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetchCfg(); }); setInterval(fetchCfg,600000);
-PT.init({game:'parkgolf', build:'v86', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs'});
+PT.init({game:'parkgolf', build:'v87', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs'});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
@@ -2277,7 +2315,7 @@ S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loo
 // 등급 표시: 켤 때마다 3초 이상 보여 준 뒤 사라짐(그 전에는 눌러도 안 넘어감)
 if(AIT){ const r=document.getElementById('rating'); if(r) r.remove(); }
 else setTimeout(()=>{ const r=document.getElementById('rating'); if(r){ r.classList.add('off'); setTimeout(()=>r.remove(),400); } }, 3200);
-if(/[?&]sim\b/.test(location.search)) window.__pg={SSUI,hitBuf:()=>HITBUF,courseOpen:k=>stopState(JOURNEY.find(x=>x.k===k)).open,saveResume:()=>saveResume(),loadResume:()=>loadResume(),hasPass:()=>hasPass(),AIT_BUILD,showAd:cb=>showAd(cb),TODAY,S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
+if(/[?&]sim\b/.test(location.search)) window.__pg={shoot:(x,y)=>shoot(x,y),bm:()=>({today:TODAY,srv:SRV.ok?SRV.day:null,courseDay:courseDay(),free:freeN(),rec:dayRec(),left:roundsLeft(),pass:hasPass(),next:nextKind(),label:nextLabel(),open:JOURNEY.filter(st=>stopState(st).open).map(st=>st.k)}),playNext:f=>playNext(f),fetchTime:()=>{TIME_AT=0;fetchTime();},SSUI,hitBuf:()=>HITBUF,courseOpen:k=>stopState(JOURNEY.find(x=>x.k===k)).open,saveResume:()=>saveResume(),loadResume:()=>loadResume(),hasPass:()=>hasPass(),AIT_BUILD,showAd:cb=>showAd(cb),TODAY,S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
 })();
 </script>
 
