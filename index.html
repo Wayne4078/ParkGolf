@@ -416,6 +416,7 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
     <h2 id="ssEndT" style="margin:0">오늘의 슈퍼샷</h2>
     <p class="sub" id="ssEndP" style="margin:0"></p>
     <div id="ssCal"></div>
+    <button class="btn" id="ssExtra" type="button" hidden>📺 광고 보고 한 판 더</button>
     <button class="btn ghost" id="ssBack" type="button">돌아가기</button>
   </div>
 </div>
@@ -1694,14 +1695,18 @@ const SSUI=(()=>{
   // 판 전체를 날마다 3개씩 차례로 돌림(난이도 구분 없음)
   // 날짜 기준은 TODAY 하나(페이지를 연 날) — 자정을 넘기면 dayRoll이 안전할 때 새로 엶 (Codex 검수 6)
   function dayNo(){ const [y,m,d]=TODAY.split('-').map(Number); return Math.floor((Date.UTC(y,m-1,d)-Date.UTC(2026,0,5))/864e5); }
-  function todayLevels(){ const k=dayNo(), n=LV.length; return [0,1,2].map(i=>LV[(((k*N+i)%n)+n)%n]); }
-  const todayLevel=()=>todayLevels()[Math.min(N-1,day().cur)];
-  function day(){ try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o&&o.date===TODAY&&Array.isArray(o.s)&&o.s.length===N&&o.s.every(x=>x&&typeof x==='object'&&Number.isInteger(x.used)&&x.used>=0&&x.used<=PRAC+2)&&Number.isInteger(o.cur)&&o.cur>=0&&o.cur<=N) return o; }catch(e){} return {date:TODAY,cur:0,s:[{used:0},{used:0},{used:0}]}; }
-  let D=null; const st=()=>D.s[Math.min(N-1,D.cur)];
+  function lvAt(i){ const k=dayNo(), n=LV.length, j= i<N ? k*N+i : k*N+21+(i-N); return LV[((j%n)+n)%n]; } // 한 판 더(i≥N)는 반 바퀴 떨어진 판 — 내일·모레 판과 안 겹치게
+  function todayLevels(){ return [0,1,2].map(lvAt); }
+  // v85 한 판 더(대표 2026-11-23 14:08): 오늘 3판을 다 치면 광고 한 편에 한 판 더(무료 하루 EX_MAX번, 평생권은 광고 없이 몇 판이든)
+  const EX_MAX=3; const total=d=>N+(d.ex|0);
+  const todayLevel=()=>{ const d=day(); return lvAt(Math.min(total(d)-1,d.cur)); };
+  function day(){ try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o&&o.date===TODAY&&(o.ex===undefined||(Number.isInteger(o.ex)&&o.ex>=0&&o.ex<1000))&&Array.isArray(o.s)&&o.s.length===total(o)&&o.s.every(x=>x&&typeof x==='object'&&Number.isInteger(x.used)&&x.used>=0&&x.used<=PRAC+2)&&Number.isInteger(o.cur)&&o.cur>=0&&o.cur<=total(o)) return o; }catch(e){} return {date:TODAY,cur:0,s:[{used:0},{used:0},{used:0}]}; }
+  let D=null; const st=()=>D.s[Math.min(total(D)-1,D.cur)];
   function put(){ try{ localStorage.setItem(KEY,JSON.stringify(D)); }catch(e){} }
   const tries=s=>PRAC+1+(s.more?1:0);
   function unlock(){}
-  const doneToday=()=>day().cur>=N;
+  const doneToday=()=>{ const d=day(); return d.cur>=total(d); };
+  const exLeft=()=>hasPass()?99:Math.max(0,EX_MAX-(day().ex|0));
   const available=()=>window.LANG!=='th' && !doneToday();
   /* 출석: 한 번이라도 치면 'try'(파란 도장), 넣으면 'win'(금 도장) */
   const LOG='opg_ss_log';
@@ -1716,9 +1721,9 @@ const SSUI=(()=>{
     for(let n=1;n<=last;n++){ const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(n).padStart(2,'0'), v=g[k]; h+='<span class="'+(v||'')+(k===TODAY?' today':'')+'">'+(v==='win'?'★':n)+'</span>'; }
     return h+'</div><div class="calK"><span><i style="background:var(--accent)"></i>도전</span><span><i style="background:#ffcf3a"></i>성공</span></div>'; }
   function book(from){ back=from; $('ss').hidden=true;
-    const w=day().s.filter(x=>x.won).length; $('ssEndT').textContent='슈퍼샷 출석부'; $('ssEndP').textContent='오늘 '+N+'판 중 '+w+'판 성공. 내일 새 슈퍼샷 '+N+'판이 열려요.';
-    $('ssCal').innerHTML=calHTML(); $('ssEnd').hidden=false; PT.event('ss_book',{from,streak:streak()}); if(typeof guardBack==='function') guardBack(); }
-  function refresh(){ const th=window.LANG==='th', dd=day(), done=dd.cur>=N, o=dd.s[Math.min(N-1,dd.cur)], n=streak();
+    const dd=day(), w=dd.s.filter(x=>x.won).length; $('ssEndT').textContent='슈퍼샷 출석부'; $('ssEndP').textContent='오늘 '+dd.s.length+'판 중 '+w+'판 성공. 내일 새 슈퍼샷 '+N+'판이 열려요.';
+    $('ssCal').innerHTML=calHTML(); $('ssEnd').hidden=false; extraBtn(); PT.event('ss_book',{from,streak:streak()}); if(typeof guardBack==='function') guardBack(); }
+  function refresh(){ const th=window.LANG==='th', dd=day(), done=dd.cur>=total(dd), o=dd.s[Math.min(total(dd)-1,dd.cur)], n=streak();
     ['ssEndBtn','ssStartBtn'].forEach(id=>{ const b=$(id); if(!b) return; b.hidden=th||(done&&id==='ssEndBtn');
       b.innerHTML=done?('📅 슈퍼샷 출석부<small>'+(n?'연속 '+n+'일 출석':'오늘 출석 완료')+'</small>')
         :('⛳ 오늘의 슈퍼샷<small>'+((dd.cur||o.used)?(dd.cur+1)+'번째 판 · '+(o.used<PRAC?'연습 '+(PRAC-o.used)+'번 남음':'진짜 도전 차례'):n?'연속 '+n+'일 출석 중 · 오늘도 '+N+'판':'하루 '+N+'판 · 연습 세 번, 진짜 도전 한 번')+'</small>'); }); }
@@ -1742,18 +1747,18 @@ const SSUI=(()=>{
     sc=Math.min(cv.width/W,cv.height/(H-60)); ox=(cv.width-W*sc)/2; oy=cv.height-H*sc; }
   function dots(){ const t=$('ssTries'); t.innerHTML=''; for(let i=0;i<PRAC;i++){ const e=document.createElement('i'); if(i<o.used) e.className='off'; else e.style.background=PCOL[i]; t.appendChild(e); }
     const c=document.createElement('b'); c.className='ch'+(o.used>=tries(o)?' off':''); c.textContent=o.more?'한 번 더':'도전'; t.appendChild(c); }
-  function title(){ $('ssName').innerHTML='슈퍼샷 '+(D.cur+1)+'/'+N+' <i class="dot" style="background:'+COL[L.ball]+'" title="'+NAME[L.ball]+'"></i>'; }
+  function title(){ $('ssName').innerHTML=(D.cur>=N?'한 판 더 '+(D.cur-N+1):'슈퍼샷 '+(D.cur+1)+'/'+N)+' <i class="dot" style="background:'+COL[L.ball]+'" title="'+NAME[L.ball]+'"></i>'; }
   function banner(s,sub){ const e=$('ssBanner'); e.innerHTML=s+(sub?'<small>'+sub+'</small>':''); e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
   function drum(){ for(let i=0;i<8;i++) tone(90+i*6,.12,'triangle',.14,i*.09); tone(180,.5,'sawtooth',.06,.75); }
   function hint(s){ $('ssHint').textContent=s||''; $('ssHint').hidden=!s; }
   function toast(s){ const e=$('ssToast'); e.textContent=s; e.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>e.classList.remove('on'),1600); }
   function fresh(){ b=SS.newBall(L); club.mode='aim'; club.th=0; club.dir=L.tee[0]>W/2?-1:1; trail=[]; }
 
-  function stage(){ o=st(); L=todayLevels()[D.cur]; title(); fresh(); dots(); $('ssMid').hidden=true;
+  function stage(){ o=st(); L=lvAt(D.cur); title(); fresh(); dots(); $('ssMid').hidden=true;
     // 도전을 다 쓴 판(결과 카드 전에 나갔다 온 경우): 결과 카드를 다시 보여 줘 다음 판으로 갈 수 있게 (Codex 검수 4)
     if(o.used>=tries(o)){ hint(''); b.state='wait'; mid(!!o.won); return; }
     if(o.used>=PRAC){ hint(''); adPreload(); setTimeout(()=>{ banner(o.more?'한 번 더 도전!':'이제 진짜 도전!','단 한 번 · 연습한 길을 보세요'); drum(); },300); }
-    else hint(o.used?'연습 '+(PRAC-o.used)+'번 남았어요':(D.cur===0?'먼저 연습 세 번! ':(D.cur+1)+'번째 판 · 연습 세 번! ')+TIP[L.ball]); }
+    else hint(o.used?'연습 '+(PRAC-o.used)+'번 남았어요':(D.cur===0?'먼저 연습 세 번! ':D.cur>=N?'한 판 더 · 연습 세 번! ':(D.cur+1)+'번째 판 · 연습 세 번! ')+TIP[L.ball]); }
   function open(from){ if(!available() || window.STOPPED) return; back=from; D=day(); cv=$('ssCv'); ctx=cv.getContext('2d');
     ['end','start'].forEach(id=>$(id).hidden=true); $('ss').hidden=false; $('ssEnd').hidden=true; resize(); stage();
     try{ if(typeof audioWake==='function') audioWake(); }catch(e){}
@@ -1773,7 +1778,7 @@ const SSUI=(()=>{
       club.mode='swing'; club.t=0; club.from=club.th; club.dur=.2-.08*a.pow; club.shot=a; o.used++; put(); dots();
       PT.event('ss_shot',{lv:L.id,cur:D.cur,n:o.used,ang:+a.ang.toFixed(3),pow:+a.pow.toFixed(3)}); if(!logGet()[TODAY]){ logMark('try'); PT.event('ss_attend',{lv:L.id,streak:streak()}); } });
     el.addEventListener('pointercancel',()=>{ drag=null; });
-    $('ssClose').onclick=close; $('ssBack').onclick=close; $('ssNext').onclick=next; $('ssMore').onclick=more;
+    $('ssClose').onclick=close; $('ssBack').onclick=close; $('ssExtra').onclick=extra; $('ssNext').onclick=next; $('ssMore').onclick=more;
     
     $('ssEndBtn').onclick=()=>doneToday()?book('end'):open('end'); $('ssStartBtn').onclick=()=>doneToday()?book('start'):open('start');
     addEventListener('resize',()=>{ if(!$('ss').hidden) resize(); }); }
@@ -1846,10 +1851,10 @@ const SSUI=(()=>{
   function win(){ b.state='done'; cupS(); o.won=1; o.wp=trail.filter((_,i)=>i%2===0).map(q=>[Math.round(q[0]),Math.round(q[1])]).concat([[Math.round(b.x),Math.round(b.y)]]); put(); logMark('win');
     PT.event('ss_clear',{lv:L.id,cur:D.cur,more:o.more?1:0}); banner('쏙! 성공',''); setTimeout(()=>mid(true),1400); }
   /* 판 사이 카드: 성공이면 다음 판, 실패면 광고 한 편으로 한 번 더(판마다 한 번, 이용권이면 광고 없이) */
-  function mid(won){ const last=D.cur>=N-1;
+  function mid(won){ const last=D.cur>=total(D)-1;
     const canMore=!won&&!o.more; if(canMore) adPreload();
-    $('ssMidT').textContent=won?(D.cur+1)+'번째 판 성공!':'아깝다! 도전 실패';
-    $('ssMidP').textContent=won?(last?'오늘의 슈퍼샷 끝! 결과를 볼까요?':'다음 판으로 가 볼까요?'):(canMore?'아쉬우시죠? 한 번 더 시도해 보시겠어요?':'아쉽지만 여기까지예요.');
+    $('ssMidT').textContent=won?(D.cur>=N?'한 판 더 성공!':(D.cur+1)+'번째 판 성공!'):'아깝다! 도전 실패';
+    $('ssMidP').textContent=won?(last?'결과를 볼까요?':'다음 판으로 가 볼까요?'):(canMore?'아쉬우시죠? 한 번 더 시도해 보시겠어요?':'아쉽지만 여기까지예요.');
     $('ssMore').hidden=!canMore; moreBtn(true);
     $('ssNext').textContent=canMore?(last?'괜찮아요, 결과 보기':'괜찮아요, 다음 판으로'):(last?'오늘 결과 보기':'다음 판으로'); $('ssNext').className='btn'+(canMore?' ghost':''); $('ssMid').hidden=false; }
   /* 「한 번 더」 광고: 도전에 들어가면 미리 불러 두고, 누르면 바로 보여 줌(두 번 누르지 않게 버튼을 잠그고 「불러오는 중」 표시) */
@@ -1872,9 +1877,16 @@ const SSUI=(()=>{
     if(adSt==='ready') return adShow(go,fallback);
     moreBtn(false); let waited=false; const tm=setTimeout(()=>{ waited=true; adWait=null; fallback(); },8000);
     adWait=ok=>{ if(waited) return; clearTimeout(tm); ok?adShow(go,fallback):fallback(); }; if(adSt!=='loading'){ adSt='idle'; adPreload(); } }
-  function next(){ $('ssMid').hidden=true; D.cur++; put(); refresh(); if(D.cur>=N) return finish(); stage(); }
-  function finish(){ cancelAnimationFrame(raf); raf=0; const lv=todayLevels(); let k=-1; D.s.forEach((x,i)=>{ if(x.won) k=i; }); PT.event('ss_day',{won:D.s.filter(x=>x.won).length});
-    if(k<0) return endCard(false); L=lv[k]; hoe(k); }
+  function next(){ $('ssMid').hidden=true; D.cur++; put(); refresh(); if(D.cur>=total(D)) return finish(); stage(); }
+  function finish(){ cancelAnimationFrame(raf); raf=0; const j=D.cur-1;
+    if(j>=N){ PT.event('ss_extra_end',{lv:lvAt(j).id,won:D.s[j].won?1:0,n:j-N+1}); if(!D.s[j].won) return endCard(false,true); L=lvAt(j); return hoe(j); } // 한 판 더: 그 판만 봄
+    let k=-1; D.s.forEach((x,i)=>{ if(x.won) k=i; }); PT.event('ss_day',{won:D.s.filter(x=>x.won).length});
+    if(k<0) return endCard(false); L=lvAt(k); hoe(k); }
+  function extraBtn(){ const b=$('ssExtra'), left=exLeft(), can=left>0 && (hasPass()||!AIT_BUILD||!!(AIT_CFG.ad&&aitOk(AIT&&AIT.loadFullScreenAd))); b.hidden=!can || window.LANG==='th';
+    if(can){ b.textContent=hasPass()?'⛳ 한 판 더':'📺 광고 보고 한 판 더 ('+left+'번 남음)'; if(!hasPass()) bonusAdPreload(); } }
+  function extra(){ if(window.STOPPED || $('ssExtra').disabled || exLeft()<=0) return; const from=back||'start';
+    (hasPass()?(cb=>cb()):showAd)(()=>{ const d=day(); d.ex=(d.ex|0)+1; d.s.push({used:0}); try{ localStorage.setItem(KEY,JSON.stringify(d)); }catch(e){} PT.event('ss_extra',{n:d.ex,pass:hasPass()?1:0});
+      $('ssEnd').hidden=true; open(from); }); }
   function photo(){ const c=document.createElement('canvas'); c.width=640; c.height=360; const g=c.getContext('2d'), s2=Math.min(c.width/W,c.height/560);
     g.fillStyle='#e9e0c8'; g.fillRect(0,0,c.width,c.height); g.save(); g.translate((c.width-W*s2)/2,c.height-960*s2); g.scale(s2,s2);
     g.fillStyle='#6b6152'; g.beginPath(); const sf=L.surf; g.moveTo(sf[0][0],H); for(const q of sf) g.lineTo(q[0],q[1]); g.lineTo(sf[sf.length-1][0],H); g.fill();
@@ -1885,13 +1897,13 @@ const SSUI=(()=>{
   let st0={};
   function hoe(k){ st0=D.s[k]; const w=D.s.filter(x=>x.won).length; try{ tone(523,.35,'triangle',.16); tone(659,.35,'triangle',.16,.12); tone(784,.35,'triangle',.16,.24); tone(1047,.45,'triangle',.16,.36); }catch(e){}
     ArinPaper.show({gameId:'parkgolf', masthead:'파크골프 일보', theme:'noir', headline:L.head, sub:L.lead,
-      body:'오늘의 슈퍼샷 '+N+'판 중 '+w+'판 성공. 「'+L.name+'」에서는 연습 세 번으로 길을 읽고 '+(st0.more?'한 번 더 주어진 기회에서':'단 한 번의 진짜 도전에서')+' 넣었다. 내일은 또 다른 묘기가 기다린다.',
+      body:(D.cur>N?'오늘의 슈퍼샷 한 판 더 성공.':'오늘의 슈퍼샷 '+N+'판 중 '+w+'판 성공.')+' 「'+L.name+'」에서는 연습 세 번으로 길을 읽고 '+(st0.more?'한 번 더 주어진 기회에서':'단 한 번의 진짜 도전에서')+' 넣었다. 내일은 또 다른 묘기가 기다린다.',
       photo:photo(), stamp:w===N?'전판 성공':'한 방', onClose:()=>endCard(true)});
     PT.event('ss_news',{lv:L.id,won:w}); }
-  function endCard(won){ cancelAnimationFrame(raf); raf=0; const w=D.s.filter(x=>x.won).length;
-    $('ssEndT').textContent=won?'오늘 '+N+'판 중 '+w+'판 성공!':'오늘의 슈퍼샷은 여기까지';
-    $('ssEndP').textContent=won?'금 도장을 받았어요. 호외는 「내 신문 보관함」에 있어요.':'아깝게 놓쳤지만 출석 도장은 받았어요. 내일 새 슈퍼샷이 열려요.';
-    $('ssCal').innerHTML=calHTML(); $('ssEnd').hidden=false; refresh(); }
+  function endCard(won,ex){ cancelAnimationFrame(raf); raf=0; const w=D.s.filter(x=>x.won).length;
+    $('ssEndT').textContent=won?'오늘 '+D.s.length+'판 중 '+w+'판 성공!':ex?'한 판 더는 아깝게 놓쳤어요':'오늘의 슈퍼샷은 여기까지';
+    $('ssEndP').textContent=won?'금 도장을 받았어요. 호외는 「내 신문 보관함」에 있어요.':ex?'내일 새 슈퍼샷 '+N+'판이 열려요.':'아깝게 놓쳤지만 출석 도장은 받았어요. 내일 새 슈퍼샷이 열려요.';
+    $('ssCal').innerHTML=calHTML(); $('ssEnd').hidden=false; extraBtn(); refresh(); }
   function back_(){ if(!$('ssEnd').hidden||!$('ss').hidden||!$('ssMid').hidden){ close(); return true; } return false; }
   function peek(id){ L=LV[id-1]; o={used:0}; title(); fresh(); dots(); hint(''); frame(); }
   return {bind,refresh,unlock,open,close,isOpen,back:back_,available,todayLevel,todayLevels,peek};

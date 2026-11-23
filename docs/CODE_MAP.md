@@ -46,7 +46,7 @@
 
 ## 3. 손님 기록이 사는 곳 (서버 없음, 전부 폰 localStorage)
 
-`opg_rounds*`(코스별 하루 기록) · `*_resume`(이어 치기) · `opg_pass`(이용권 — 토스 주문으로 복원) · `opg_bonus`(한 판 더: {date, c:{코스:{n, strokes, ball}}} — v85부터 코스마다) · `opg_ss`·`opg_ss_log`(슈퍼샷 오늘 상태·출석) · `opg_snd`(소리) · `opg_noti_asked` · `opg_early_*` · `opg_last_course` · `opg_first_src`(첫 유입)
+`opg_rounds*`(코스별 하루 기록) · `*_resume`(이어 치기) · `opg_pass`(이용권 — 토스 주문으로 복원) · `opg_bonus`(한 판 더: {date, c:{코스:{n, strokes, ball}}} — v85부터 코스마다) · `opg_ss`·`opg_ss_log`(슈퍼샷 오늘 상태·출석 — v85부터 opg_ss.ex = 한 판 더 횟수, s 길이 3+ex) · `opg_snd`(소리) · `opg_noti_asked` · `opg_early_*` · `opg_last_course` · `opg_first_src`(첫 유입)
 
 ## 4. 검사 도구 (`tools/`)
 
@@ -59,6 +59,7 @@
 | `node tools/verify_fixes.js` | v83 Codex 검수 고친 곳 19개 | 모두 통과 |
 | `node tools/bonus_ad_check.js` | 「한 판 더」 광고 미리 불러 두기(v84): 미리 받은 뒤 누름·받는 중 누름·끝까지 안 봄·못 받음 4경우, 가짜 토스 | 모두 통과 |
 | `node tools/bm_check.js` | v85 BM: 무료(코스마다 하루 한 판+광고 한 판 더 3번, 연습은 평생권 안내)·평생권(몇 판이든 광고 없이, 코스는 안 엶)·살 수 없는 토스판, 가짜 토스 20경우. 옛 v84에 돌리면 첫 항목부터 실패 | 모두 통과 |
+| `node tools/ss_extra_check.js` | 슈퍼샷 한 판 더(v85): 3판 뒤 광고 한 편 = 한 판 더(무료 하루 3번, 오늘 판과 다른 판), 실패·성공(호외) 끝, 다시 켜도 유지, 평생권은 광고 없이 — 가짜 토스 13경우 | 모두 통과 |
 | `node tools/fold_check.js [사진폴더]` | 첫 화면 접힘: 첫 화면·코스 길·시작·결과(한 판 더 포함) 버튼이 4개 크기에서 스크롤 없이 보이는지 | 360·375·393 전부 보임 (320×568은 신문 보관함만 아래) |
 
 검사기 검증: lint는 v79(웹 광고 시험 화면이 주석에 먹혀 `n` 미정의) 판에 돌려 그 버그를 잡는 것을 확인함.
