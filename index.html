@@ -303,7 +303,7 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
     <div class="jMeta" id="jMeta"></div>
     <button class="btn" id="jGo" type="button">이 코스로 가기</button>
     <button class="btn" id="jEarly" type="button" hidden>⭐ 올스타 달성! 광고 보고 먼저 열기</button>
-    <button class="btn ghost" id="jPass" type="button" hidden>☕ 3,300원에 지금 바로 열기</button>
+    <button class="btn ghost" id="jPass" type="button" hidden>☕ 평생권이면 지금 바로 치기</button>
   </div>
 </div>
 
@@ -1307,8 +1307,9 @@ function stopState(st){ const k=st.k;
   if(k==='range') return {open:true, done:false};
   if(k==='jamsil') return {open:OPEN_ALL||bestOf('home')!=null, done:bestOf('jamsil')!=null, cond:'우리 동네 오늘의 라운드를 한 번 돌면 열려요'};
   if(k==='hapcheon'){ const b=bestOf('jamsil'), need=parOf('jamsil')+3; return {open:OPEN_ALL||(b!=null&&b<=need), done:bestOf('hapcheon')!=null, cond:'강변 공원을 '+need+'타 이하로 돌면 열려요'}; }
-  if(st.release){ const pv=JOURNEY.find(x=>x.k===st.prev), pvOpen=stopState(pv).open; const early=(()=>{ try{ return localStorage.getItem('opg_early_'+k)==='1'; }catch(e){ return false; } })(); const why = OPEN_ALL?'all': TODAY>=st.release?'week': (pvOpen&&allStar(st.prev)&&early)?'star':null; const canEarly = !why && pvOpen && allStar(st.prev);
-    return {open:!!why, why, done:bestOf(k)!=null, canEarly, cond:relLabel(st.release)+'에 열려요', star:COURSES[st.prev].name+(((COURSES[st.prev].name.slice(-1).charCodeAt(0)-0xAC00)%28)?'을':'를')+' 올스타(9홀 모두 파 이하)로 깨면 바로 열려요'}; }
+  if(st.release){ const pv=JOURNEY.find(x=>x.k===st.prev), pvOpen=stopState(pv).open; const early=(()=>{ try{ return localStorage.getItem('opg_early_'+k)==='1'; }catch(e){ return false; } })(); const pvWeek = !pv.release || TODAY>=pv.release; /* v86(대표 20:17): 광고로 먼저 열기 없앰 — 새 코스는 날짜에 모두에게, 평생권이면 다음 주 코스 하나를 일주일 먼저. 예전에 광고로 연 것(early)은 그대로 둠 */
+    const why = OPEN_ALL?'all': TODAY>=st.release?'week': early?'star': (hasPass()&&pvWeek)?'pass':null; const canEarly = !why && pvWeek && !hasPass();
+    return {open:!!why, why, done:bestOf(k)!=null, canEarly, cond:relLabel(st.release)+'에 열려요', star:'평생권이 있으면 일주일 먼저 칠 수 있어요'}; }
   return {open:false}; }
 S.jSel=null;
 function renderJourney(){ const road=$('jRoad'), W=Math.min(road.clientWidth||360,480), N=JOURNEY.length, SH=Math.round(W*0.66)+40, H=N*SH+60;
@@ -1336,7 +1337,7 @@ function fillSheet(){ const st=JOURNEY.find(x=>x.k===S.jSel), ss=stopState(st);
   $('jGo').disabled=!ss.open; $('jGo').textContent= ss.open ? (st.k==='lesson'?'배우러 가기':st.k==='range'?'연습장 들어가기':'이 코스로 가기') : (ss.cond||'아직 잠겨 있어요');
   if(st.release && !ss.open) $('jMeta').textContent=st.place+' · 9홀 · 파'+parOf(st.k)+' · '+ss.star;
   if(st.release && ss.open && ss.why==='star') $('jBest').textContent=(bestOf(st.k)!=null?$('jBest').textContent+' · ':'')+'⭐ 올스타로 먼저 열었어요';
-  $('jPass').hidden = true; /* v85: 평생권은 코스를 먼저 여는 게 아님 */ $('jEarly').hidden = !(st.release && !ss.open && ss.canEarly); }
+  $('jPass').hidden = !(st.release && !ss.open && ss.canEarly && PASS_SELL); $('jEarly').hidden = true; }
 function showJourney(){ $('start').hidden=true; $('title').hidden=true;
   const ok=k=>{ const st=JOURNEY.find(x=>x.k===k); return st && stopState(st).open; };
   if(!ok(S.jSel)) S.jSel = ok(COURSE.key) ? COURSE.key : 'home';
@@ -1356,7 +1357,7 @@ const PASS_SAVE_FAIL='이용권을 폰에 저장하지 못했어요. 앱을 다�
 function grantPass(test,orderId){ const ok=hasPass()||setPass(); PT.event(ok?'pass_buy':'pass_save_fail',{k:S.jSel,test:test?1:0,order:orderId||undefined}); $('payScreen').hidden=true; renderJourney(); fillSheet(); try{ setupToday(); if(!$('end').hidden) showCard(null); }catch(e){} msg(ok?'평생권이 생겼어요. 이제 몇 판이든 치세요. 고맙습니다!':PASS_SAVE_FAIL); }
 const TOSS_PAY=!!(AIT_CFG.sku && aitOk(AIT&&AIT.IAP&&AIT.IAP.createOneTimePurchaseOrder));
 const PASS_SELL=!AIT_BUILD || TOSS_PAY; // 살 수 있는 곳에서만 평생권 버튼을 보임
-const PAY_SUB='3,300원 한 번이면 평생권 — 모든 코스를 언제든,<br>몇 판이든 광고 없이 칠 수 있어요.<br>연습도, 슈퍼샷 다시 도전도 광고 없이.';
+const PAY_SUB='3,300원 한 번이면 평생권 — 모든 코스를 언제든,<br>몇 판이든 광고 없이 칠 수 있어요.<br>매주 새 코스도 일주일 먼저, 연습·슈퍼샷 다시 도전도 광고 없이.';
 $('paySub').innerHTML=PAY_SUB+'<br>결제는 토스 앱에서 할 수 있어요.';
 if(AIT_BUILD && !TOSS_PAY){ $('payTitle').textContent='토스 앱을 새로 바꿔 주세요'; $('paySub').innerHTML='지금 토스 앱에서는 이용권을 살 수 없어요.<br>토스 앱을 최신으로 바꾸면 살 수 있어요.'; $('payOk').hidden=true; }
 if(TOSS_PAY){ $('payOk').textContent='3,300원으로 평생권 받기'; $('payTitle').textContent='커피 한 잔 값으로'; $('paySub').innerHTML=PAY_SUB+'<br>매달 나가는 돈은 없어요.';
