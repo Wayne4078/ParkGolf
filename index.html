@@ -1122,13 +1122,20 @@ function step(h){
   if(!b.floats && inWater(h,p)){ v.x=0; v.y=0; S.pos={...S.lastSafe}; S.moving=false; camTarget(); sndWater(); say(10,0.15); if(S.strokes[S.hi]>=h.par+3) holeOut(true); else msg('물에 빠졌어요. 제자리에서 다시 칩니다'); return; }
   const c=cup(), cdx=p.x-c[0], cdy=p.y-c[1], cd=Math.hypot(cdx,cdy), cs=Math.hypot(v.x,v.y);
   if(S.assist && COURSE.lesson && S.hi===0 && cd<40 && cd>0.5){ const tx=-cdx/cd, ty=-cdy/cd, k=Math.min(1,0.18*(1-cd/40)+0.06); v.x=v.x*(1-k)+tx*cs*k; v.y=v.y*(1-k)+ty*cs*k; if(cs>CAP_V*0.85){ v.x*=0.93; v.y*=0.93; } }
+  // 컵(v86 다시 짬, 대표 20:05 「컵 주변이 이상하다」): 공 가운데가 구멍 위(cd<CUP_R-CAP_IN)면 — 가운데일수록 빨라도 들어가고 가장자리일수록 느려야 들어감.
+  // 너무 빠르면: 가운데 쪽은 구멍을 건너뛰어 그대로 직진(속도만 줄고), 가장자리 쪽은 테두리를 타고 휘어 나감(립아웃). 예전엔 0.72배로 줄인 뒤 바로 빨려 들어가거나, 구멍 가장자리를 그냥 지나가거나 구멍 위에 멈췄음
   if(cd<CUP_R-CAP_IN){
-    if(cs<CAP_V){ startSink(cdx,cdy,cd,v,cs); return; }
-    if(!S.lip){ S.lip=1; if(S.shot) S.shot.lip=1; const k=cd>0.5?0.38*cs/cd:0; v.x+=cdx*k; v.y+=cdy*k; const s2=Math.hypot(v.x,v.y); v.x*=cs*0.72/s2; v.y*=cs*0.72/s2; sndLip(); S.fx.push({x:p.x,y:p.y,t:S.t,big:false}); }
+    const off=Math.min(1,cd/(CUP_R-CAP_IN)), vmax=CAP_V*(1.3-0.8*off);
+    if(cs<vmax){ startSink(cdx,cdy,cd,v,cs); return; }
+    // 구멍 한가운데에 가장 가까워진 순간(멀어지기 시작할 때) 한 번만 판정
+    if(!S.lip && (cdx*v.x+cdy*v.y)>0){ S.lip=1; if(S.shot) S.shot.lip=1;
+      if(off<0.45){ v.x*=0.8; v.y*=0.8; }
+      else { const side=Math.sign(v.x*cdy-v.y*cdx)||1, th=-side*(0.30+0.45*off), ca=Math.cos(th), sa=Math.sin(th), vx=v.x*ca-v.y*sa, vy=v.x*sa+v.y*ca; v.x=vx*0.78; v.y=vy*0.78; }
+      sndLip(); S.fx.push({x:p.x,y:p.y,t:S.t,big:false}); }
   } else if(cd>CUP_R+4) S.lip=0;
 }
 // ---------- cup-in: ball circles the rim (또르르), drops (똥), the cup pops ----------
-let CAP_V=90, CAP_IN=4; /* v86: 컵이 받아 주는 속도 120→90 — 세게 지나가면 튕겨 나옴 */ const SINK_ROLL=0.42, SINK_END=1.05;
+let CAP_V=90, CAP_IN=1; /* v86: 컵이 받아 주는 속도 120→90 — 세게 지나가면 튕겨 나옴 */ const SINK_ROLL=0.42, SINK_END=1.05;
 function startSink(dx,dy,d,v,sp){ S.moving=false; S.vel={x:0,y:0}; S.lip=0;
   const turns=Math.max(0.4,Math.min(1.4,sp/110)); S.sink={t:0, a:Math.atan2(dy,dx), r:Math.max(d,CUP_R*0.55), dir:Math.sign(v.x*dy-v.y*dx)||1, turns, dropped:false};
   sndRim(SINK_ROLL, turns); }
