@@ -15,7 +15,7 @@ await pg.goto((process.env.BASE||'http://localhost:8765/')+'index.html?sim'+(MOD
 await pg.evaluate(()=>localStorage.clear());await pg.reload();await pg.waitForTimeout(4500);
 const res=await pg.evaluate(async()=>{ const out=[]; const P=__pg; const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const hide=()=>['title','journey','start','end','how','practice','pause','lessonDone','holeDone','ssEnd','ssMid','ss'].forEach(id=>{const e=document.getElementById(id); if(e) e.hidden=true});
-  for(const k of ['lesson','home','jamsil','hapcheon','pond','ferry','range']){
+  for(const k of ['lesson','home','jamsil','hapcheon','pond','ferry','lake','sea','range']){
     try{ hide(); P.setCourse(k); P.startRound(k==='range'?'practice':'today'); await sleep(200);
       const n=P.HOLES.length;
       for(let i=0;i<(k==='range'?3:n);i++){
