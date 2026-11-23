@@ -13,3 +13,9 @@
 ## 2026-11-23 · 공 치는 소리 (대표 16:14 고름, 메인 PD #M-1123-1615)
 - sfx/hit.mp3 ← CLAUDE_MAIN/PARKGOLF/광고소재_2026-11-22/공치는소리_맑은나무딱.wav(ElevenLabs eleven_text_to_sound_v3, 노드 uuc1yPjD5LM3z87tIcFo, 약 17크레딧 — 메인 PD 기록) → ffmpeg 모노 44.1kHz 96k mp3(6.6KB)
 - 본편 치기·슈퍼샷 치기 둘 다 이 소리, 세기에 따라 볼륨 0.3~1.0, 효과음 끄기 따름, 파일을 못 받으면 예전 합성음
+
+## 2026-11-23 · 8·9코스 섬 그림 (대표 16:58 「골프 코스 계속 만들어」, 코스마다 1장)
+- 같은 방식: ElevenLabs recraft-v4.1, 1장씩, 플로우 NGgP2kRgeCY37NbatCmn, 장당 242 크레딧 × 2 = 484 (오늘 누적 968)
+- art/course_temple.jpg (산사 가는 길, generation d3C1ki9EMAlvlfFE3Uk7): 주문문 앞뒤는 6·7코스와 같고 가운데만 — Winter mountain temple path: snow on the ground and on pine trees, old stone steps, a small traditional Korean Buddhist temple hall with curved tiled roof and a little stone pagoda on a hill, a persimmon tree with a few orange persimmons left, a tiny frozen pond, a winding green fairway dusted with snow leading to a small putting green with a tiny red flag, misty snowy mountains behind.
+- art/course_reed.jpg (갈대 강둑, generation n26N8VXMbCYS3gJ3wV2K): 가운데 — Winter riverside: tall golden-beige dry reed beds along a calm blue river bend, a flock of white swans and migrating birds on the water, a grassy embankment path with a few bare willow trees, sandy river banks, a winding green fairway leading to a small putting green with a tiny red flag, soft low winter sunlight.
+- 후처리 같음(가장자리 흰 배경 순백 → 정사각 → 720 JPG)
