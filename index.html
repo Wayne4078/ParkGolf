@@ -895,9 +895,9 @@ const COURSES={
   range:{key:'range', name:'연습장', sub:'물·모래·꺾인 홀 · 공 바꿔 가며 마음껏', holes:[POND_HOLES[0],POND_HOLES[1],HAPCHEON_HOLES[3],FERRY_HOLES[2],POND_HOLES[5]].map((h,i)=>Object.assign(JSON.parse(JSON.stringify(h)),{n:i+1})), store:'opg_rounds_range', onboard:false, range:true},
   pond:{key:'pond', name:'연못 정원', sub:'남도 연못 정원 · 9홀 647m', holes:POND_HOLES, store:'opg_rounds_pond', onboard:false},
   ferry:{key:'ferry', name:'나루터', sub:'강변 옛 나루터 · 9홀 674m', holes:FERRY_HOLES, store:'opg_rounds_ferry', onboard:false},
-  // 6·7코스부터 공을 조금 작게(4.5→3.8) — 대표 2026-11-23 공 크기 고르기 2번
-  lake:{key:'lake', name:'호숫가 언덕', sub:'산골 호숫가 · 9홀 627m', holes:LAKE_HOLES, store:'opg_rounds_lake', onboard:false, ballR:3.8},
-  sea:{key:'sea', name:'바닷가 솔밭', sub:'겨울 바닷가 솔밭 · 9홀 590m', holes:SEA_HOLES, store:'opg_rounds_sea', onboard:false, ballR:3.8} };
+  // 6·7코스부터 공을 작게(4.5→3.2) — 대표 2026-11-23 고르기 2번(3.8) 뒤 「조금만 더 작게」(16:26)
+  lake:{key:'lake', name:'호숫가 언덕', sub:'산골 호숫가 · 9홀 627m', holes:LAKE_HOLES, store:'opg_rounds_lake', onboard:false, ballR:3.2},
+  sea:{key:'sea', name:'바닷가 솔밭', sub:'겨울 바닷가 솔밭 · 9홀 590m', holes:SEA_HOLES, store:'opg_rounds_sea', onboard:false, ballR:3.2} };
 let COURSE=COURSES.home, HOLES=COURSE.holes;
 let PAR=HOLES.reduce((a,h)=>a+h.par,0);
 
@@ -2112,7 +2112,7 @@ function drawProp(h,[t,x,y],g){ const p=scr([x,y],g), s=g.s;
   else if(t==='bin'){ ctx.fillStyle=THEME.bin; ctx.fillRect(p.x-6*s,p.y-18*s,12*s,18*s); ctx.fillStyle='#3a5a47'; ctx.fillRect(p.x-7*s,p.y-21*s,14*s,4*s); ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.fillRect(p.x-6*s,p.y-18*s,3*s,18*s); }
   else if(t==='sign'){ const sgT=tr(h.n+'번 · 파'+h.par+' · '+dist()+'m'); let sgF=Math.round(14*s); ctx.font='800 '+sgF+'px "Noto Sans KR", sans-serif'; let sgW=ctx.measureText(sgT).width; if(sgW>110*s){ sgF=Math.round(sgF*110*s/sgW); ctx.font='800 '+sgF+'px "Noto Sans KR", sans-serif'; sgW=ctx.measureText(sgT).width; } const bw=Math.max(72*s,sgW+12*s); ctx.fillStyle=THEME.signPost; ctx.fillRect(p.x-2*s,p.y-30*s,4*s,30*s); ctx.fillStyle=THEME.sign; ctx.fillRect(p.x-bw/2,p.y-50*s,bw,22*s);
     ctx.font='800 '+sgF+'px "Noto Sans KR", sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(sgT, p.x, p.y-34*s); } }
-function drawBallUp(g){ const b=BALLS[S.ball], p=scr([S.pos.x,S.pos.y],g), s=g.s, r=Math.max(R*s,5.5);
+function drawBallUp(g){ const b=BALLS[S.ball], p=scr([S.pos.x,S.pos.y],g), s=g.s, r=Math.max(R*s,5.5*R/R_STD); /* 멀리 볼 때 최소 크기도 공 크기 비율대로(작은 공 코스가 똑같아 보이지 않게) */
   ctx.beginPath(); ctx.arc(p.x,p.y-r*0.6,r,0,Math.PI*2); ctx.fillStyle=b.color; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.stroke();
   if(S.ball==='rubber'){ ctx.beginPath(); ctx.arc(p.x-2.5*s,p.y-r*0.6-2.5*s,2.2*s,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.fill(); }
   if(S.ball==='cork'){ ctx.fillStyle='rgba(90,60,20,0.35)'; for(const [ox,oy] of [[-3,-2],[2,-3],[0,3],[-3,3],[3,1]]){ ctx.beginPath(); ctx.arc(p.x+ox*s,p.y-r*0.6+oy*s,1*s,0,Math.PI*2); ctx.fill(); } } }
@@ -2135,7 +2135,7 @@ function drawStanding(h,g){ const items=[];
       if(cover && k>0){ a=0.32; hid=true; } }
     const key=it.x+','+it.y; const cur=S.fade[key]==null?1:S.fade[key]; const nx=cur+(a-cur)*0.25; S.fade[key]=nx;
     if(nx<0.99){ ctx.save(); ctx.globalAlpha=nx; it.f(); ctx.restore(); } else it.f(); });
-  if(hid && bp){ const r=Math.max(R*g.s,5.5)+3; ctx.beginPath(); ctx.arc(bp.x,bp.y-r*0.5,r,0,Math.PI*2); ctx.lineWidth=2.5; ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.stroke(); } }
+  if(hid && bp){ const r=Math.max(R*g.s,5.5*R/R_STD)+3; ctx.beginPath(); ctx.arc(bp.x,bp.y-r*0.5,r,0,Math.PI*2); ctx.lineWidth=2.5; ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.stroke(); } }
 function drawWind(){ const w=windVec();
   // 어두운 받침 위에 주황·흰 줄무늬 바람자루 — 잔디·러프·흙 어디 위에서도 잘 보이게
   const bw=118, bh=64, bx=W-bw-10, by=12; ctx.fillStyle='rgba(18,28,24,0.78)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,by,bw,bh,14) : ctx.rect(bx,by,bw,bh); ctx.fill();
