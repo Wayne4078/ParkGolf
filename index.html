@@ -2243,7 +2243,7 @@ let CFG_AT=0; function fetchCfg(){ if(window.STOPPED || Date.now()-CFG_AT<300000
     const note=(th&&c.notice_th)||c.notice; if(note && note!==fetchCfg.lastNote){ fetchCfg.lastNote=note; setTimeout(()=>msg(String(note).slice(0,80)),1500); }
   }).catch(()=>{}); }catch(e){} }
 fetchCfg(); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetchCfg(); }); setInterval(fetchCfg,600000);
-PT.init({game:'parkgolf', build:'v85', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs'});
+PT.init({game:'parkgolf', build:'v86', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs'});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
