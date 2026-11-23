@@ -168,7 +168,7 @@ html[lang=th] .t-small{letter-spacing:2px}
 .t-rule{width:120px;height:2px;background:linear-gradient(90deg,transparent,#fff,transparent);margin:10px 0 4px;opacity:.85}
 .t-tag{font-size:19px;font-weight:700;letter-spacing:3px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
 .t-bottom{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:14px;animation:tUp .5s .15s both ease-out}
-.t-studio{width:104px;height:auto;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))} /* 회사 로고(평면, 2026-11-22 확정) — 작은 자리는 평면 */
+.t-studio{position:absolute;left:max(16px,env(safe-area-inset-left,0px));top:calc(var(--top,0px) + 14px);width:150px;height:auto;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));pointer-events:none} /* 회사 로고(평면, 2026-11-22 확정) — 작은 자리는 평면 */
 .t-date{font-size:18px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.7)}
 .t-go{font-size:30px;min-height:80px;border-radius:40px;background:linear-gradient(180deg,#ffe36a,#ffc21a);color:#2a1d05;letter-spacing:2px;border:3px solid #fff6c8;box-shadow:0 0 0 0 rgba(255,214,60,.7),0 10px 26px rgba(0,0,0,.4);animation:tBreath 1.8s .7s ease-in-out infinite}
 @keyframes tUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -282,6 +282,7 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
   <div class="rt-info"><b>내용정보</b> · 해당 없음 (선정성·폭력성·공포·언어·약물·범죄·사행성 없음)<br><b>제명</b> · 오늘의 파크골프<br><b>상호</b> · 아린게임즈<br><b>등급분류번호</b> · GC-SC-NM-261117-007<br><b>제작연월일</b> · 2026년 11월 17일</div>
 </div>
 <div id="title" hidden>
+  <img class="t-studio" src="art/arinplay_logo_flat.svg" alt="arinplay">
   <div class="t-top">
     <svg class="t-emblem" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#fff" stroke-width="2.5"/><ellipse cx="30" cy="47" rx="11" ry="3.6" fill="#fff" opacity=".9"/><ellipse cx="30" cy="47" rx="6" ry="2" fill="#1b2a16"/><path d="M30 47V14" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M31 14l15 5.5L31 25z" fill="#e23b2e"/></svg>
     <div class="t-logo" data-th="&lt;span class=&quot;t-small&quot;&gt;วันนี้&lt;/span&gt;&lt;span class=&quot;t-big&quot;&gt;พาร์คกอล์ฟ&lt;/span&gt;"><span class="t-small">오늘의</span><span class="t-big">파크골프</span></div>
@@ -291,7 +292,6 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
   <div class="t-bottom">
     <div class="t-date" id="tDate"></div>
     <button class="btn t-go" id="tGo">▶ 시작하기</button>
-    <img class="t-studio" src="art/arinplay_logo_flat.svg" alt="arinplay">
   </div>
 </div>
 
