@@ -12,7 +12,7 @@ if(MODE==='toss') await ctx.addInitScript(()=>{ window.AIT_CFG={ad:'g',sku:'s'};
     loadFullScreenAd(o){ setTimeout(()=>o.onEvent({type:'loaded'}),300) }, showFullScreenAd(o){ setTimeout(()=>{o.onEvent({type:'userEarnedReward'});o.onEvent({type:'dismissed'})},200) } }; });
 const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push('PAGEERR '+e.message));pg.on('console',m=>{ if(m.type()==='error'&&!/net::|Failed to load|ERR_/.test(m.text())) errs.push('CONSOLE '+m.text().slice(0,160)) });
 await pg.goto((process.env.BASE||'http://localhost:8765/')+'index.html?sim'+(MODE==='web'?'&all':''));await pg.waitForTimeout(500);
-await pg.evaluate(()=>localStorage.clear());await pg.reload();await pg.waitForTimeout(4500);
+await pg.evaluate(()=>{ localStorage.clear(); localStorage.setItem('opg_lesson_done','1'); });await pg.reload();await pg.waitForTimeout(4500); // v88: 처음 손님은 배우기 1홀 뒤 바로 우리 동네로 가므로(tools/onboard_check.js가 봄) 여기선 배운 손님으로 전 코스 흐름만
 const res=await pg.evaluate(async()=>{ const out=[]; const P=__pg; const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const hide=()=>['title','journey','start','end','how','practice','pause','lessonDone','holeDone','ssEnd','ssMid','ss'].forEach(id=>{const e=document.getElementById(id); if(e) e.hidden=true});
   for(const k of ['lesson','home','jamsil','hapcheon','pond','ferry','lake','sea','temple','reed','village','sunrise','range']){

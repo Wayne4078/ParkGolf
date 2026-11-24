@@ -6,5 +6,5 @@ run(){ local name=$1; shift; local out; out=$("$@" 2>&1); local rc=$?; local las
 run lint bash tools/lint.sh
 run ids python3 tools/ids_check.py
 run smoke bash tools/smoke.sh
-for t in verify_fixes bm87_check bonus_ad_check ss_check ss_extra_check fold_check; do run $t timeout 900 node tools/$t.js; done
+for t in verify_fixes bm87_check bonus_ad_check ss_check ss_extra_check ss_album_check onboard_check fold_check; do run $t timeout 900 node tools/$t.js; done
 echo "== 바퀴 $SEED: 실패한 검사 $bad개"; exit $bad

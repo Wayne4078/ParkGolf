@@ -1143,11 +1143,11 @@ function step(h){
   if(wx.leaves && h.leaves && !b.leaves) for(const [lx,ly,lr] of h.leaves){ if(Math.hypot(p.x-lx,p.y-ly)<lr){ v.x=0;v.y=0; sndStop(); msg('낙엽 더미에 섰어요'); return; } }
   if(!b.floats && inWater(h,p)){ v.x=0; v.y=0; S.pos={...S.lastSafe}; S.moving=false; camTarget(); sndWater(); say(10,0.15); if(S.strokes[S.hi]>=h.par+3) holeOut(true); else msg('물에 빠졌어요. 제자리에서 다시 칩니다'); return; }
   const c=cup(), cdx=p.x-c[0], cdy=p.y-c[1], cd=Math.hypot(cdx,cdy), cs=Math.hypot(v.x,v.y);
-  if(S.assist && COURSE.lesson && S.hi===0 && cd<40 && cd>0.5){ const tx=-cdx/cd, ty=-cdy/cd, k=Math.min(1,0.18*(1-cd/40)+0.06); v.x=v.x*(1-k)+tx*cs*k; v.y=v.y*(1-k)+ty*cs*k; if(cs>CAP_V*0.85){ v.x*=0.93; v.y*=0.93; } }
+  if(S.assist && COURSE.lesson && S.hi===0 && cd<AS.r && cd>0.5){ const tx=-cdx/cd, ty=-cdy/cd, k=Math.min(1,AS.k*(1-cd/AS.r)+AS.k0); /* v88: 처음 손님 첫 홀 도움 더 크게(11/24 혜택탭 손님 71명 중 23명이 1번 홀을 못 넣음) */ v.x=v.x*(1-k)+tx*cs*k; v.y=v.y*(1-k)+ty*cs*k; if(cs>CAP_V*0.85){ v.x*=0.93; v.y*=0.93; } }
   // 컵(v86 다시 짬, 대표 20:05 「컵 주변이 이상하다」): 공 가운데가 구멍 위(cd<CUP_R-CAP_IN)면 — 가운데일수록 빨라도 들어가고 가장자리일수록 느려야 들어감.
   // 너무 빠르면: 가운데 쪽은 구멍을 건너뛰어 그대로 직진(속도만 줄고), 가장자리 쪽은 테두리를 타고 휘어 나감(립아웃). 예전엔 0.72배로 줄인 뒤 바로 빨려 들어가거나, 구멍 가장자리를 그냥 지나가거나 구멍 위에 멈췄음
   if(cd<CUP_R-CAP_IN){
-    const off=Math.min(1,cd/(CUP_R-CAP_IN)), vmax=CAP_V*(1.3-0.8*off);
+    const off=Math.min(1,cd/(CUP_R-CAP_IN)), vmax=CAP_V*(1.3-0.8*off)*(S.assist&&COURSE.lesson&&S.hi===0?AS.cap:1);
     if(cs<vmax){ startSink(cdx,cdy,cd,v,cs); return; }
     // 구멍 한가운데에 가장 가까워진 순간(멀어지기 시작할 때) 한 번만 판정
     if(!S.lip && (cdx*v.x+cdy*v.y)>0){ S.lip=1; if(S.shot) S.shot.lip=1;
@@ -1158,6 +1158,7 @@ function step(h){
 }
 // ---------- cup-in: ball circles the rim (또르르), drops (똥), the cup pops ----------
 let CAP_V=90, CAP_IN=1; /* v86: 컵이 받아 주는 속도 120→90 — 세게 지나가면 튕겨 나옴 */ const SINK_ROLL=0.42, SINK_END=1.05;
+const AS={r:40,k:0.18,k0:0.06,cap:1}; /* 배우기 1번 홀 도움 세기(v87과 같은 값) — 봇으로 바꿔 보며 잴 때 __pg.setAS */
 function startSink(dx,dy,d,v,sp){ S.moving=false; S.vel={x:0,y:0}; S.lip=0;
   const turns=Math.max(0.4,Math.min(1.4,sp/110)); S.sink={t:0, a:Math.atan2(dy,dx), r:Math.max(d,CUP_R*0.55), dir:Math.sign(v.x*dy-v.y*dx)||1, turns, dropped:false};
   sndRim(SINK_ROLL, turns); }
@@ -1224,13 +1225,13 @@ function bounce(p,v,nx,ny,qx,qy,b){ p.x=qx+nx*(R+WALL); p.y=qy+ny*(R+WALL); cons
   if(vn<0){ v.x-=(1+b.e)*vn*nx; v.y-=(1+b.e)*vn*ny; v.x*=0.97; v.y*=0.97; const s2=Math.hypot(v.x,v.y), cap=MAXV*1.15; if(s2>cap){ v.x*=cap/s2; v.y*=cap/s2; }
     if(-vn>40 && S.t-S.lastHit>0.12){ S.lastHit=S.t; S.fx.push({x:p.x,y:p.y,t:S.t,big:S.ball==='rubber'}); sndCurb(S.ball==='rubber'); if(-vn>MAXV*0.55 && S.shot && !S.shot.wall){ S.shot.wall=1; say(9); } } } }
 function shoot(sdx,sdy){ const len=Math.min(Math.hypot(sdx,sdy),MAXDRAG); if(len<16) return false; showHint(''); const k=len/MAXDRAG*MAXV; const gx=sdx, gy=sdy/S.cam.tilt; const ca=Math.cos(S.cam.a), sa=Math.sin(S.cam.a); const wx=gx*ca+gy*sa, wy=-gx*sa+gy*ca; const l=Math.hypot(wx,wy);
-  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; S.edgeHold=null; S.sandIn=inSand(H_(),S.pos); lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; if(!S.counted){ S.counted=true; if((S.mode==='today'||S.mode==='bonus') && !COURSE.lesson && !COURSE.range) countRound(); } saveResume(); sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
+  { const c0=cup(); S.shot={d0:Math.hypot(c0[0]-S.pos.x,c0[1]-S.pos.y), lip:0, wall:0}; } S.edgeUsed=false; if(S.edge) S.edge=null; S.edgeHold=null; S.sandIn=inSand(H_(),S.pos); lookReset(); S.lastSafe={...S.pos}; S.vel={x:-wx/l*k, y:-wy/l*k}; S.moving=true; S.strokes[S.hi]++; if(!S.counted){ S.counted=true; if((S.mode==='today'||S.mode==='bonus') && !COURSE.lesson && !COURSE.range) countRound(); } saveResume(); sndHitP(len/MAXDRAG); if(S.t0){ PT.event('first_shot',{sec:Math.round((performance.now()-S.t0)/100)/10}); S.t0=0; } PT.event('shot',{aerr:(()=>{ const c=cup(), a1=Math.atan2(c[1]-S.lastSafe.y,c[0]-S.lastSafe.x), a2=Math.atan2(S.vel.y,S.vel.x); let e=Math.abs(a1-a2)*180/Math.PI; if(e>180) e=360-e; return Math.round(e); })(),c:COURSE.key,n:H_().n,s:S.strokes[S.hi],pull:Math.round(Math.pow(len/MAXDRAG*MAXV,2)/(2*FRICTION)*M_PER_PX),remain:remain()}); updateHud(); msg(''); return true; }
 function holeOut(capped,quiet,voice){ if(S.holeOver) return; S.holeOver=true; S.moving=false; const h=H_(), s=S.strokes[S.hi], diff=s-h.par; if(!capped && !quiet) sndCup();
   if(!quiet||voice){ if(capped) say(8,0.2); else if(s===1) say(4,0.5); else if(diff<=-2) say(3,0.5); else if(diff<0) say(5,0.5); else if(diff===0) say(6,0.5); else say(7,0.5); }
   PT.event('hole_end',{c:COURSE.key,mode:S.mode,n:h.n,par:h.par,s:s,capped:!!capped,ball:S.ball,wx:S.wx});
   $('hdTitle').textContent=h.n+'번 홀 · '+h.name; $('hdScore').textContent=s+'타 (파 '+h.par+')';
   $('hdNote').textContent= capped?'이 홀은 여기까지. 다음 홀로 갑니다' : s===1?'홀인원!' : diff<=-2?'이글! 파보다 '+(-diff)+'타 적게' : diff<0?'버디! 파보다 '+(-diff)+'타 적게' : diff===0?'파' : '파보다 '+diff+'타 많이';
-  $('next').textContent = S.hi===HOLES.length-1 ? '스코어 카드 보기' : '다음 홀'; setTimeout(()=>{ $('holeDone').hidden=false; }, 600); }
+  $('next').textContent = (S.quickLesson&&COURSE.lesson) ? '우리 동네 코스로 ▶' : S.hi===HOLES.length-1 ? '스코어 카드 보기' : '다음 홀'; setTimeout(()=>{ $('holeDone').hidden=false; }, 600); }
 
 // ---------- flow ----------
 // Onboarding: until 3 days of rounds are on the card, every day is clear with the center pin (A).
@@ -1420,7 +1421,7 @@ $('jGo').onclick=()=>{ const k=S.jSel; if(k!==COURSE.key) setCourse(k); else set
 $('jTitle').onclick=()=>{ $('journey').hidden=true; setupToday(); showTitle(); };
 $('sBack').onclick=showJourney;
 addEventListener('resize',()=>{ if(!$('journey').hidden) renderJourney(); });
-$('next').onclick=()=>{ S.assist=false; if(COURSE.range){ S.hi=(S.hi+1)%HOLES.length; loadHole(); rangeWeather(true); return; } if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else { PT.closeBubble(); finishRound(); } };
+$('next').onclick=()=>{ S.assist=false; if(S.quickLesson&&COURSE.lesson){ S.quickLesson=false; S.live=false; try{ localStorage.setItem('opg_lesson_done','1'); }catch(e){} PT.event('lesson_done',{quick:1,strokes:S.strokes.slice(0,1)}); $('holeDone').hidden=true; setCourse('home'); S.jSel='home'; PT.event('lesson_next',{go:'home',quick:1}); showStart(); $('goToday').click(); return; } if(COURSE.range){ S.hi=(S.hi+1)%HOLES.length; loadHole(); rangeWeather(true); return; } if(S.hi<HOLES.length-1){ S.hi++; loadHole(); } else { PT.closeBubble(); finishRound(); } };
 // ===== 한 판 더 (BM 1단계, 2026-11-07 대표 결정) =====
 // 오늘 세 코스(우리 동네·잠실·합천)를 다 치면, 하루 한 번 광고를 보고 한 판 더. 첫 판과 두 번째 판을 나란히 비교해 보여 준다.
 // ===== BM v87 (대표 결정 2026-11-23 21:04, #M-1123-2105) — 「한 라운드를 칠 수 있나」는 이 블록 한 곳에서만 정함 =====
@@ -2072,7 +2073,7 @@ $('showCard').onclick=()=>{ S.mode='today'; $('start').hidden=true; showCard(nul
 $('wxRow').innerHTML=WX_KEYS.map((k,i)=>'<button class="opt'+(i===0?' on':'')+'" data-wx="'+k+'">'+WX[k].name+'<span>'+WX[k].line+'</span></button>').join('');
 const pick=(sel,attr,fn)=>{ for(const b of document.querySelectorAll(sel)) b.onclick=()=>{ document.querySelectorAll(sel).forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset[attr]); }; };
 function buildHoleRow(){ $('holeRow').innerHTML=HOLES.map((h,i)=>'<button class="opt'+(i===0?' on':'')+'" data-hole="'+i+'" style="flex:1 1 60px;min-height:48px">'+h.n+'번</button>').join(''); S.startHole=0; pick('#holeRow .opt','hole',v=>S.startHole=+v); }
-function setCourse(k){ S.live=false; applySeason(k); COURSE=COURSES[k]; R=SIM_R||COURSE.ballR||R_STD; HOLES=COURSE.holes; PAR=HOLES.reduce((a,h)=>a+h.par,0); buildHoleRow(); setupToday(); S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; }
+function setCourse(k){ if(k!=='lesson') S.quickLesson=false; S.live=false; applySeason(k); COURSE=COURSES[k]; R=SIM_R||COURSE.ballR||R_STD; HOLES=COURSE.holes; PAR=HOLES.reduce((a,h)=>a+h.par,0); buildHoleRow(); setupToday(); S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; }
 buildHoleRow();
 pick('#wxRow .opt','wx',v=>S.wx=v); pick('#pinRow .opt','pin',v=>S.pinChoice=+v); pick('#ballRow .opt','ball',v=>{ S.ballPick=v; S.ball=v; }); pick('#courseRow .opt','course',v=>setCourse(v));
 
@@ -2086,7 +2087,7 @@ cv.addEventListener('pointerdown',ev=>{ audioInit(); if($('hint')&&!$('hint').hi
   try{ cv.setPointerCapture(ev.pointerId); }catch(e){} const p=pt(ev); PTRS.set(ev.pointerId,p); if(!S.look) lookUpdate(0);
   if(PTRS.size===2){ S.drag=null; const [a,b]=[...PTRS.values()]; S.pinch={d0:Math.hypot(a.x-b.x,a.y-b.y)||1, z0:S.lookT.z}; S.pan=null; return; }
   if(PTRS.size>2) return;
-  if(!S.moving && !S.holeOver && !S.sink && ballNear(p)){ lookReset(); S.drag={sx:p.x,sy:p.y,x:p.x,y:p.y}; return; }
+  if(!S.moving && !S.holeOver && !S.sink && (ballNear(p) || COURSE.lesson)){ lookReset(); S.drag={sx:p.x,sy:p.y,x:p.x,y:p.y}; return; } /* v88: 배우는 코스는 화면 어디서나 당겨 치기(처음 손님이 공 밖을 끌어 화면만 움직이다 나감) */
   S.pan={x:p.x,y:p.y,lx:S.lookT.x,ly:S.lookT.y,moved:0}; });
 cv.addEventListener('pointermove',ev=>{ if(!PTRS.has(ev.pointerId)) return; const p=pt(ev); PTRS.set(ev.pointerId,p);
   if(S.pinch && PTRS.size>=2){ const [a,b]=[...PTRS.values()]; const z=S.pinch.z0*Math.hypot(a.x-b.x,a.y-b.y)/S.pinch.d0; S.lookT.z=Math.max(0.45,Math.min(1.9,z)); S.lookHold=1; return; }
@@ -2356,7 +2357,7 @@ function showTitle(){ S.live=false; S.attract=true; S.attractN=0; document.body.
 function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; document.body.classList.remove('attract'); $('title').hidden=true;
   let fresh=false; try{ fresh=!localStorage.getItem('opg_lesson_done') && localStorage.getItem('opg_rounds')===null; }catch(e){}
   if(fresh){ setCourse('lesson'); document.querySelectorAll('#courseRow .opt').forEach(b=>b.classList.toggle('on',b.dataset.course==='lesson')); }
-  if(fresh){ S.jSel='lesson'; S.assist=true; S.t0=performance.now(); PT.event('title_go',{fresh:1}); startRound('today'); S.intro=null; showHint(''); msg(''); return; }
+  if(fresh){ S.jSel='lesson'; S.assist=true; S.quickLesson=true; S.t0=performance.now(); PT.event('title_go',{fresh:1,auto:leaveTitle.auto?1:0}); startRound('today'); S.intro=null; showHint(''); msg(''); return; }
   // 친 적 있는 사람: 마지막에 나간 자리로 — 치다 만 오늘 라운드(또는 배우다 만 코스)가 있으면 바로 그 홀·그 자리에서 이어 친다
   let last=null; try{ last=localStorage.getItem('opg_last_course'); }catch(e){}
   if(last && COURSES[last] && !COURSES[last].range){ if(last!==COURSE.key) setCourse(last); document.querySelectorAll('#courseRow .opt').forEach(b=>b.classList.toggle('on',b.dataset.course===last));
@@ -2365,10 +2366,12 @@ function leaveTitle(){ if(!S.attract) return; audioInit(); S.attract=false; docu
   S.hi=0; S.strokes=HOLES.map(()=>0); loadHole(); S.intro=null; S.jSel=null; guardBack(); showJourney(); PT.event('title_go',{}); }
 $('title').addEventListener('click',leaveTitle);
 S.strokes=HOLES.map(()=>0); setupToday(); showTitle(); requestAnimationFrame(loop);
+// v88(11/24 혜택탭 손님 564명 중 391명이 첫 화면에서 「시작하기」 없이 나감): 처음 온 손님은 첫 화면을 건너뛰고 바로 첫 홀 첫 샷 자리로
+(()=>{ let fresh=false; try{ fresh=!localStorage.getItem('opg_lesson_done') && localStorage.getItem('opg_rounds')===null; }catch(e){} if(fresh && !/[?&]title\b/.test(location.search)){ leaveTitle.auto=true; leaveTitle(); } })();
 // 등급 표시: 켤 때마다 3초 이상 보여 준 뒤 사라짐(그 전에는 눌러도 안 넘어감)
 if(AIT){ const r=document.getElementById('rating'); if(r) r.remove(); }
 else setTimeout(()=>{ const r=document.getElementById('rating'); if(r){ r.classList.add('off'); setTimeout(()=>r.remove(),400); } }, 3200);
-if(/[?&]sim\b/.test(location.search)) window.__pg={shoot:(x,y)=>shoot(x,y),bm:()=>({today:TODAY,srv:SRV.ok?SRV.day:null,courseDay:courseDay(),free:freeN(),rec:dayRec(),left:roundsLeft(),pass:hasPass(),next:nextKind(),label:nextLabel(),open:JOURNEY.filter(st=>stopState(st).open).map(st=>st.k)}),playNext:f=>playNext(f),fetchTime:()=>{TIME_AT=0;fetchTime();},SSUI,hitBuf:()=>HITBUF,courseOpen:k=>stopState(JOURNEY.find(x=>x.k===k)).open,saveResume:()=>saveResume(),loadResume:()=>loadResume(),hasPass:()=>hasPass(),AIT_BUILD,showAd:cb=>showAd(cb),TODAY,S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
+if(/[?&]sim\b/.test(location.search)) window.__pg={shoot:(x,y)=>shoot(x,y),bm:()=>({today:TODAY,srv:SRV.ok?SRV.day:null,courseDay:courseDay(),free:freeN(),rec:dayRec(),left:roundsLeft(),pass:hasPass(),next:nextKind(),label:nextLabel(),open:JOURNEY.filter(st=>stopState(st).open).map(st=>st.k)}),playNext:f=>playNext(f),fetchTime:()=>{TIME_AT=0;fetchTime();},SSUI,hitBuf:()=>HITBUF,courseOpen:k=>stopState(JOURNEY.find(x=>x.k===k)).open,saveResume:()=>saveResume(),loadResume:()=>loadResume(),hasPass:()=>hasPass(),AIT_BUILD,showAd:cb=>showAd(cb),TODAY,S,startRound:m=>startRound(m),finishRound:()=>finishRound(),showNews:(...a)=>showNews(...a),paper:ArinPaper,back:()=>handleBack(),askNoti:()=>askNewCourseAlarm(),getAC:()=>AC,step,setCourseRaw:k=>setCourse(k),H_,cup,loadHole,setCourse,holeOut,VOICE,say,celebrate,MAXV,DT,CUP_R,get HOLES(){return HOLES},get COURSE(){return COURSE},setAS:o=>Object.assign(AS,o),setCap:(v,cr,ci)=>{CAP_V=v; if(cr) CUP_R=cr; if(ci!=null) CAP_IN=ci;}};
 })();
 </script>
 
