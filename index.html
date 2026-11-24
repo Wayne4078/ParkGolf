@@ -1770,7 +1770,17 @@ const LV=[
  {"name":"높은 말뚝 고무공","ball":"rubber","tee":[140,864],"surf":[[20,880],[580,880]],"cup":[485,525],"props":[{"k":"rail","x":20,"top":840,"bot":880},{"k":"post","x1":314,"y1":677,"x2":326,"y2":880},{"k":"rail","x":580,"top":731,"bot":880}],"head":"고무공, 높은 말뚝 넘어 쏙!","lead":"잘 튀는 고무공을 높은 말뚝 너머로 띄워 컵에 멈춰 세웠다."},
 ];
 LV.forEach((L,i)=>{L.id=i+1;build(L)});
-return {W,H,R,G,MAXV,WY,BALL,LV,closest,newBall,launch,step,simulate};
+// 집 연습 시제품(대표 2026-11-24 07:25 「집안에서 할 수 있는 것」) — 매일 판에는 아직 안 섞음, ?home 으로만 열림. 바닥=마루, 컵=퍼팅 매트
+const HOME=[
+ {name:'계단 내려가기',ball:'normal',home:1,tee:[110,604],surf:[[20,620],[180,620],[180,680],[240,680],[240,740],[300,740],[300,800],[360,800],[360,GY],[580,GY]],cup:[400,436],sand:[[440,580,GY]],
+  props:[rail(20,560,620),rail(580,820)],head:'계단 위에서 친 공, 한 칸씩 내려와 쏙!',lead:'거실 계단 꼭대기에서 친 공이 계단을 타고 내려가 러그 앞 퍼팅 매트 컵에 들어갔다.'},
+ {name:'소파 넘기기',ball:'normal',home:1,tee:[T,GY-R],surf:[[20,GY],[580,GY]],cup:[480,520],
+  props:[rail(20,840),{k:'rock',look:'sofa',x1:250,y1:740,x2:400,y2:GY},rail(580,820)],head:'소파 훌쩍 넘겨 매트 컵에 쏙!',lead:'거실 소파를 넘긴 공이 반대편 퍼팅 매트 컵에 그대로 떨어졌다.'},
+ {name:'책 더미 사이로',ball:'normal',home:1,tee:[T,GY-R],surf:[[20,GY],[580,GY]],cup:[386,426],
+  props:[rail(20,840),{k:'wall',look:'books',x1:300,y1:770,x2:350,y2:GY},{k:'wall',look:'books',x1:462,y1:720,x2:512,y2:GY},rail(580,840)],head:'책 더미 두 개 사이 좁은 틈에 쏙!',lead:'쌓아 둔 책 더미 사이 좁은 자리를 노린 공이 꼭 그 자리에 떨어져 컵에 들어갔다.'},
+];
+HOME.forEach((L,i)=>{L.id=101+i;build(L)});
+return {W,H,R,G,MAXV,WY,BALL,LV,HOME,closest,newBall,launch,step,simulate};
 })();
 // ================= 오늘의 슈퍼샷 (v80): 하루 3판(난이도 구분 없음), 판마다 연습 3번 + 진짜 도전 1번, 도전 실패 시 광고 한 편으로 한 번 더. 매일 출석 도장, 성공하면 하루 끝에 호외 =================
 const SSUI=(()=>{
@@ -1834,7 +1844,7 @@ const SSUI=(()=>{
     sc=Math.min(cv.width/W,cv.height/(H-60)); ox=(cv.width-W*sc)/2; oy=cv.height-H*sc; }
   function dots(){ const t=$('ssTries'); t.innerHTML=''; for(let i=0;i<PRAC;i++){ const e=document.createElement('i'); if(i<o.used) e.className='off'; else e.style.background=PCOL[i]; t.appendChild(e); }
     const c=document.createElement('b'); c.className='ch'+(o.used>=tries(o)?' off':''); c.textContent=o.more?'한 번 더':'도전'; t.appendChild(c); }
-  function title(){ $('ssName').innerHTML=(RP?'지난 슈퍼샷':D.cur>=N?'3판 더 '+((D.cur-N)%EX_PACK+1)+'/'+EX_PACK:'슈퍼샷 '+(D.cur+1)+'/'+N)+' <i class="dot" style="background:'+COL[L.ball]+'" title="'+NAME[L.ball]+'"></i>'; }
+  function title(){ $('ssName').innerHTML=(RP?(RP.home?'집 연습':'지난 슈퍼샷'):D.cur>=N?'3판 더 '+((D.cur-N)%EX_PACK+1)+'/'+EX_PACK:'슈퍼샷 '+(D.cur+1)+'/'+N)+' <i class="dot" style="background:'+COL[L.ball]+'" title="'+NAME[L.ball]+'"></i>'; }
   function banner(s,sub){ const e=$('ssBanner'); e.innerHTML=s+(sub?'<small>'+sub+'</small>':''); e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
   function drum(){ for(let i=0;i<8;i++) tone(90+i*6,.12,'triangle',.14,i*.09); tone(180,.5,'sawtooth',.06,.75); }
   function hint(s){ $('ssHint').textContent=s||''; $('ssHint').hidden=!s; }
@@ -1851,7 +1861,7 @@ const SSUI=(()=>{
     try{ if(typeof audioWake==='function') audioWake(); }catch(e){}
     PT.event('ss_open',{lv:L.id,cur:D.cur,used:o.used,from}); last=performance.now(); acc=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); if(typeof guardBack==='function') guardBack(); }
   function close(){ cancelAnimationFrame(raf); raf=0; drag=null; $('ss').hidden=true; $('ssEnd').hidden=true; $('ssMid').hidden=true;
-    if(RP){ RP=null; D=day(); return album(); } if(!$('ssAlbum').hidden){ $('ssAlbum').hidden=true; return book(back||'start'); } refresh();
+    if(RP){ RP=null; D=day(); return album(); } if(!$('ssAlbum').hidden){ $('ssAlbum').hidden=true; if(!HOMEP) return book(back||'start'); } refresh();
     if(back==='end') $('end').hidden=false; else { setupToday(); $('start').hidden=false; } }
   const isOpen=()=>!$('ss').hidden||!$('ssEnd').hidden||!$('ssMid').hidden||!$('ssAlbum').hidden;
 
@@ -1868,7 +1878,7 @@ const SSUI=(()=>{
     el.addEventListener('pointercancel',()=>{ drag=null; });
     $('ssClose').onclick=close; $('ssBack').onclick=close; $('ssAlbumBtn').onclick=album; $('ssAlbumBack').onclick=close; $('ssExtra').onclick=extra; $('ssNext').onclick=next; $('ssMore').onclick=more;
     
-    $('ssEndBtn').onclick=()=>doneToday()?book('end'):open('end'); $('ssStartBtn').onclick=()=>doneToday()?book('start'):open('start');
+    $('ssEndBtn').onclick=()=>doneToday()?book('end'):open('end'); $('ssStartBtn').onclick=()=>HOMEP?(back='start',album()):doneToday()?book('start'):open('start');
     addEventListener('resize',()=>{ if(!$('ss').hidden) resize(); }); }
 
   function clubTick(d){
@@ -1879,24 +1889,34 @@ const SSUI=(()=>{
   /* 그리기 — 본편 블록 모형을 옆에서 자른 모습, 본편 계절 색을 그대로 */
   function rr(x1,y1,x2,y2,col,rad){ ctx.fillStyle=col; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(X(x1),Y(y1),(x2-x1)*sc,(y2-y1)*sc,(rad||0)*sc); else ctx.rect(X(x1),Y(y1),(x2-x1)*sc,(y2-y1)*sc); ctx.fill(); }
   function tree(x,base,h,c1,c2,tc){ rr(x-5,base-h*.45,x+5,base,tc); ctx.fillStyle=c1; ctx.beginPath(); ctx.arc(X(x),Y(base-h*.62),h*.34*sc,0,7); ctx.fill(); ctx.fillStyle=c2; ctx.beginPath(); ctx.arc(X(x-h*.1),Y(base-h*.7),h*.2*sc,0,7); ctx.fill(); }
+  /* 집 연습 시제품 그림(코드로 그림, 그림 파일 없음) */
+  function homeBg(t){ ctx.fillStyle='#efe3cc'; ctx.fillRect(0,0,cv.width,Y(GYH)); ctx.fillStyle='rgba(180,150,110,.18)'; for(let x=0;x<W;x+=40) ctx.fillRect(X(x),0,14*sc,Y(GYH));
+    rr(70,380,250,560,'#cfe3ee',6); ctx.strokeStyle='#8a6a48'; ctx.lineWidth=8*sc; ctx.strokeRect(X(70),Y(380),180*sc,180*sc); ctx.beginPath(); ctx.moveTo(X(160),Y(380)); ctx.lineTo(X(160),Y(560)); ctx.moveTo(X(70),Y(470)); ctx.lineTo(X(250),Y(470)); ctx.stroke();
+    rr(360,430,470,500,'#b98a55',3); rr(372,442,458,488,'#e9d6b0',2); rr(0,GYH-24,W,GYH,'#d8c6a6'); }
+  const GYH=880;
+  function sofa(p){ const x1=p.x1,x2=p.x2,y1=p.y1,y2=p.y2; rr(x1,y1,x2,y2,'#7a3f33',14); rr(x1+12,y1+30,x2-12,y2-30,'#9b5444',8); rr(x1,y1+40,x1+22,y2-14,'#6a352b',8); rr(x2-22,y1+40,x2,y2-14,'#6a352b',8); rr(x1+10,y2-14,x1+20,y2,'#3a2a20'); rr(x2-20,y2-14,x2-10,y2,'#3a2a20'); }
+  function books(p){ const cols=['#c0392b','#2e6da4','#e1a23a','#3a8a5c','#7b4ea3','#d35d3a']; let i=0; for(let y=p.y2;y>p.y1+1;i++){ const h=Math.min(18,y-p.y1), off=(i%3-1)*4; rr(p.x1+off,y-h,p.x2+off,y,cols[i%cols.length],2); rr(p.x1+off+4,y-h+4,p.x2+off-4,y-h+6,'rgba(255,255,255,.5)'); y-=h; } }
   function scene(){ const t=T(), s=L.surf;
     const g=ctx.createLinearGradient(0,0,0,cv.height); g.addColorStop(0,'#f3f1ea'); g.addColorStop(1,t.paper); ctx.fillStyle=g; ctx.fillRect(0,0,cv.width,cv.height);
+    if(L.home) homeBg(t); else {
     ctx.globalAlpha=.2; ctx.fillStyle=t.treeLight; ctx.beginPath(); ctx.moveTo(0,Y(760)); for(let x=0;x<=W;x+=60) ctx.quadraticCurveTo(X(x+30),Y(700+((x*7)%50)),X(x+60),Y(760)); ctx.lineTo(cv.width,Y(H)); ctx.lineTo(0,Y(H)); ctx.fill();
-    ctx.globalAlpha=.3; [[60,800,150,t.autumn,t.autumnLight],[160,800,190,t.treeDark,t.treeLight],[420,800,170,t.autumn,t.autumnLight],[530,800,140,t.treeDark,t.treeLight]].forEach(q=>tree(q[0],q[1],q[2],q[3],q[4],t.trunk)); ctx.globalAlpha=1;
+    ctx.globalAlpha=.3; [[60,800,150,t.autumn,t.autumnLight],[160,800,190,t.treeDark,t.treeLight],[420,800,170,t.autumn,t.autumnLight],[530,800,140,t.treeDark,t.treeLight]].forEach(q=>tree(q[0],q[1],q[2],q[3],q[4],t.trunk)); ctx.globalAlpha=1; }
     // 물(연못): 땅보다 먼저
     for(const w of L.water||[]){ rr(w[0],WY,w[1],960,t.water); rr(w[0],WY+22,w[1],960,t.waterDeep); ctx.strokeStyle=t.line; ctx.lineWidth=2*sc; ctx.beginPath(); ctx.moveTo(X(w[0]),Y(WY)); ctx.lineTo(X(w[1]),Y(WY)); ctx.stroke(); ctx.fillStyle='rgba(255,255,255,.5)'; for(let x=w[0]+20;x<w[1]-20;x+=46) ctx.fillRect(X(x),Y(WY+8),20*sc,3*sc); }
     // 땅 덩어리(지층)
     ctx.save(); ctx.beginPath(); ctx.moveTo(X(s[0][0]),Y(H)); for(const p of s) ctx.lineTo(X(p[0]),Y(p[1])); ctx.lineTo(X(s[s.length-1][0]),Y(H)); ctx.closePath(); ctx.clip();
-    ctx.fillStyle=t.soil[1]; ctx.fillRect(0,0,cv.width,cv.height); [[900,t.soil[2]],[930,t.soil[1]],[948,t.soil[3]],[972,t.soil[4]]].forEach(q=>{ ctx.fillStyle=q[1]; ctx.fillRect(0,Y(q[0]),cv.width,cv.height); });
+    if(L.home){ ctx.fillStyle='#9a6534'; ctx.fillRect(0,0,cv.width,cv.height); ctx.strokeStyle='rgba(60,30,10,.35)'; ctx.lineWidth=1.5*sc; for(let y=600;y<1000;y+=22){ ctx.beginPath(); ctx.moveTo(0,Y(y)); ctx.lineTo(cv.width,Y(y)); ctx.stroke(); } for(let y=600,r=0;y<1000;y+=22,r++) for(let x=(r%2)*70;x<W;x+=140){ ctx.beginPath(); ctx.moveTo(X(x),Y(y)); ctx.lineTo(X(x),Y(y+22)); ctx.stroke(); } }
+    else { ctx.fillStyle=t.soil[1]; ctx.fillRect(0,0,cv.width,cv.height); [[900,t.soil[2]],[930,t.soil[1]],[948,t.soil[3]],[972,t.soil[4]]].forEach(q=>{ ctx.fillStyle=q[1]; ctx.fillRect(0,Y(q[0]),cv.width,cv.height); }); }
     ctx.restore();
     // 잔디 윗면(물 웅덩이 바닥은 빼고)
-    ctx.lineJoin='round'; ctx.strokeStyle=t.fairway; ctx.lineWidth=18*sc;
+    ctx.lineJoin='round'; ctx.strokeStyle=L.home?'#c99a62':t.fairway; ctx.lineWidth=(L.home?10:18)*sc;
     for(let i=0;i<s.length-1;i++){ const a=s[i],c=s[i+1]; if(a[1]>=950&&c[1]>=950) continue; if(a[0]===c[0]) continue; ctx.beginPath(); ctx.moveTo(X(a[0]),Y(a[1]+9)); ctx.lineTo(X(c[0]),Y(c[1]+9)); ctx.stroke(); }
     ctx.strokeStyle=t.line; ctx.lineWidth=3*sc; ctx.beginPath(); ctx.moveTo(X(s[0][0]),Y(s[0][1])); for(const p of s) ctx.lineTo(X(p[0]),Y(p[1])); ctx.stroke(); // 땅 윗선
-    for(const z of L.sand||[]){ rr(z[0],z[2],z[1],z[2]+18,t.sand,4); ctx.strokeStyle=t.line; ctx.lineWidth=2*sc; ctx.stroke(); ctx.fillStyle='rgba(120,90,40,.25)'; for(let x=z[0]+8;x<z[1];x+=17) ctx.fillRect(X(x),Y(z[2]+6+(x%3)*3),3*sc,3*sc); }
+    for(const z of L.sand||[]){ rr(z[0],z[2],z[1],z[2]+18,L.home?'#b8483a':t.sand,4); ctx.strokeStyle=t.line; ctx.lineWidth=2*sc; ctx.stroke(); ctx.fillStyle='rgba(120,90,40,.25)'; for(let x=z[0]+8;x<z[1];x+=17) ctx.fillRect(X(x),Y(z[2]+6+(x%3)*3),3*sc,3*sc); }
     const c=L.cup, cy=L.cupY; rr(c[0]-60,cy,c[1]+60,cy+17,t.green); rr(c[0],cy,c[1],cy+48,'#1d1a15'); rr(c[0]-4,cy,c[1]+4,cy+4,'rgba(255,255,255,.5)');
     for(const p of L.props){
       if(p.k==='rail'||p.k==='fence'){ rr(p.x-6,p.top,p.x+6,p.bot,t.wall,3); rr(p.x-6,p.top,p.x+6,p.top+6,t.wallTop,3); rr(p.x-6,p.bot-6,p.x+6,p.bot,t.wallBase); if(p.k==='fence') for(let y=p.top+40;y<p.bot;y+=70) rr(p.x-14,y,p.x+14,y+10,t.wood,2); }
+      if(p.look==='sofa'){ sofa(p); continue; } if(p.look==='books'){ books(p); continue; }
       if(p.k==='rock'){ ctx.fillStyle=t.rock; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(X(p.x1),Y(p.y1),(p.x2-p.x1)*sc,(p.y2-p.y1)*sc,[24*sc,30*sc,4*sc,4*sc]); else ctx.rect(X(p.x1),Y(p.y1),(p.x2-p.x1)*sc,(p.y2-p.y1)*sc); ctx.fill();
         ctx.fillStyle='rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(X(p.x1+22),Y(p.y1+26),11*sc,18*sc,-.3,0,7); ctx.fill(); }
       if(p.k==='roof'){ rr(p.x1+14,p.y2,p.x1+24,cy,t.post); rr(p.x2-24,p.y2,p.x2-14,cy,t.post); ctx.fillStyle=t.roof; ctx.beginPath(); ctx.moveTo(X(p.x1-14),Y(p.y2)); ctx.quadraticCurveTo(X((p.x1+p.x2)/2),Y(p.y1-70),X(p.x2+14),Y(p.y2)); ctx.fill();
@@ -2002,17 +2022,18 @@ const SSUI=(()=>{
   function wonAdd(id){ const a=wonGet(); if(!a.includes(id)){ a.push(id); try{ localStorage.setItem(WON,JSON.stringify(a)); }catch(e){} } }
   function pastLevels(){ const n=LV.length, [y,m,d]=SS_FROM.split('-').map(Number), k0=Math.floor((Date.UTC(y,m-1,d)-Date.UTC(2026,0,5))/864e5), kt=dayNo(), out=[], seen=new Set();
     for(let k=kt-(doneToday()?0:1);k>=k0;k--) for(let i=N-1;i>=0;i--){ const lv=LV[(((k*N+i)%n)+n)%n]; if(!seen.has(lv.id)){ seen.add(lv.id); out.push(lv); } } return out; }
-  function album(){ $('ssEnd').hidden=true; const list=pastLevels(), won=wonGet(), pass=hasPass(), box=$('ssAlbumList'); box.innerHTML='';
-    $('ssAlbumP').innerHTML=!list.length?'아직 지난 슈퍼샷이 없어요. 오늘 판을 다 치면 여기 모여요.':pass?'지나간 슈퍼샷 '+list.length+'판 · 몇 번이든 다시 칠 수 있어요':'평생권이면 지나간 슈퍼샷 '+list.length+'판을<br>몇 번이든 다시 칠 수 있어요';
+  const HOMEP=/[?&]home\b/.test(location.search);
+  function album(){ $('ssEnd').hidden=true; const list=HOMEP?SS.HOME:pastLevels(), won=wonGet(), pass=hasPass()||HOMEP, box=$('ssAlbumList'); box.innerHTML=''; $('ssAlbum').querySelector('h2').textContent=HOMEP?'집 연습 (시제품)':'지난 슈퍼샷';
+    $('ssAlbumP').innerHTML=HOMEP?'집 안에서 하는 슈퍼샷 시제품 '+list.length+'판 · 몇 번이든 쳐 보세요':!list.length?'아직 지난 슈퍼샷이 없어요. 오늘 판을 다 치면 여기 모여요.':pass?'지나간 슈퍼샷 '+list.length+'판 · 몇 번이든 다시 칠 수 있어요':'평생권이면 지나간 슈퍼샷 '+list.length+'판을<br>몇 번이든 다시 칠 수 있어요';
     list.forEach(lv=>{ const bt=document.createElement('button'); bt.type='button'; bt.innerHTML=(pass?'':'🔒 ')+(won.includes(lv.id)?'★ ':'')+lv.name+'<small>'+NAME[lv.ball]+'</small>';
       bt.onclick=()=>{ if(pass) return replay(lv); $('ssAlbum').hidden=true; openPay('ss_album'); }; box.appendChild(bt); });
     $('ssAlbum').hidden=false; PT.event('ss_album',{n:list.length,pass:pass?1:0}); if(typeof guardBack==='function') guardBack(); }
-  function replay(lv){ if(window.STOPPED||!hasPass()) return; $('ssAlbum').hidden=true; RP=lv; D={date:TODAY,cur:0,ex:0,s:[{used:0}]}; cv=$('ssCv'); ctx=cv.getContext('2d');
+  function replay(lv){ if(window.STOPPED||!(hasPass()||HOMEP)) return; $('ssAlbum').hidden=true; RP=lv; D={date:TODAY,cur:0,ex:0,s:[{used:0}]}; cv=$('ssCv'); ctx=cv.getContext('2d');
     ['end','start'].forEach(id=>$(id).hidden=true); $('ss').hidden=false; resize(); stage(); try{ if(typeof audioWake==='function') audioWake(); }catch(e){}
     PT.event('ss_replay',{lv:lv.id}); last=performance.now(); acc=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); if(typeof guardBack==='function') guardBack(); }
   function back_(){ if(!$('ssEnd').hidden||!$('ss').hidden||!$('ssMid').hidden||!$('ssAlbum').hidden){ close(); return true; } return false; }
   function peek(id){ L=LV[id-1]; o={used:0}; title(); fresh(); dots(); hint(''); frame(); }
-  return {bind,refresh,unlock,open,close,isOpen,back:back_,available,todayLevel,todayLevels,lvAt,peek,album,pastLevels,replay:id=>replay(LV.find(l=>l.id===id))};
+  return {bind,refresh,unlock,open,close,isOpen,back:back_,available,todayLevel,todayLevels,lvAt,peek,album,pastLevels,replay:id=>replay(LV.concat(SS.HOME).find(l=>l.id===id))};
 })();
 SSUI.bind(); SSUI.refresh();
 
