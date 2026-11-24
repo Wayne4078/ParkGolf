@@ -418,7 +418,7 @@ html.ait #rating{display:none} /* 토스 안: 등급은 토스 브릿지 화면�
     <h2 id="ssEndT" style="margin:0">오늘의 슈퍼샷</h2>
     <p class="sub" id="ssEndP" style="margin:0"></p>
     <div id="ssCal"></div>
-    <button class="btn" id="ssExtra" type="button" hidden>📺 광고 보고 한 판 더</button>
+    <button class="btn" id="ssExtra" type="button" hidden>📺 광고 보고 3판 더</button>
     <button class="btn ghost" id="ssBack" type="button">돌아가기</button>
   </div>
 </div>
@@ -1771,8 +1771,8 @@ const SSUI=(()=>{
   function dayNo(){ const [y,m,d]=TODAY.split('-').map(Number); return Math.floor((Date.UTC(y,m-1,d)-Date.UTC(2026,0,5))/864e5); }
   function lvAt(i){ const k=dayNo(), n=LV.length, j= i<N ? k*N+i : k*N+21+(i-N); return LV[((j%n)+n)%n]; } // 한 판 더(i≥N)는 반 바퀴 떨어진 판 — 내일·모레 판과 안 겹치게
   function todayLevels(){ return [0,1,2].map(lvAt); }
-  // v85 한 판 더(대표 2026-11-23 14:08): 오늘 3판을 다 치면 광고 한 편에 한 판 더(무료 하루 EX_MAX번, 평생권은 광고 없이 몇 판이든)
-  const EX_MAX=3; const total=d=>N+(d.ex|0);
+  // v88 3판 더(대표 2026-11-24 06:54 「광고 30초 봤는데 한 번으로 끝」): 오늘 3판을 다 치면 광고 한 편에 EX_PACK판 더, 횟수 제한 없음(평생권은 광고 없이)
+  const EX_PACK=3; const total=d=>N+(d.ex|0);
   const todayLevel=()=>{ const d=day(); return lvAt(Math.min(total(d)-1,d.cur)); };
   function day(){ try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o&&o.date===TODAY&&(o.ex===undefined||(Number.isInteger(o.ex)&&o.ex>=0&&o.ex<1000))&&Array.isArray(o.s)&&o.s.length===total(o)&&o.s.every(x=>x&&typeof x==='object'&&Number.isInteger(x.used)&&x.used>=0&&x.used<=PRAC+2)&&Number.isInteger(o.cur)&&o.cur>=0&&o.cur<=total(o)) return o; }catch(e){} return {date:TODAY,cur:0,s:[{used:0},{used:0},{used:0}]}; }
   let D=null; const st=()=>D.s[Math.min(total(D)-1,D.cur)];
@@ -1780,7 +1780,7 @@ const SSUI=(()=>{
   const tries=s=>PRAC+1+(s.more?1:0);
   function unlock(){}
   const doneToday=()=>{ const d=day(); return d.cur>=total(d); };
-  const exLeft=()=>hasPass()?99:Math.max(0,EX_MAX-(day().ex|0));
+  const exLeft=()=>99;
   const available=()=>window.LANG!=='th' && !doneToday();
   /* 출석: 한 번이라도 치면 'try'(파란 도장), 넣으면 'win'(금 도장) */
   const LOG='opg_ss_log';
@@ -1805,11 +1805,12 @@ const SSUI=(()=>{
   let L=null,b=null,o=null,cv,ctx,sc=1,ox=0,oy=0,drag=null,trail=[],TS=0,raf=0,last=0,acc=0,back=null,
     club={mode:'aim',th:0,dir:1,t:0};
   const X=x=>ox+x*sc, Y=y=>oy+y*sc;
+  // v88(대표 2026-11-24 06:55 「골프장 색에 맞추느라 잘 안 보임」): 뒤 풍경만 코스 색, 치는 데 닿는 것(땅·벽·바위·모래·물·컵)은 슈퍼샷 고정 진한 색 + 검은 테두리
   function T(){ const t=(typeof THEME!=='undefined'&&THEME)||{}; return {
-    fairway:t.fairway||'#a3b273', green:t.green||'#c2cf8f', soil:t.soil||['#5d6a36','#7a5b3c','#9b7b57','#b9a283','#8b8578'],
-    wall:t.wall||'#c8975f', wallTop:t.wallTop||'#e8c792', wallBase:t.wallBase||'#8e6439', treeDark:t.treeDark||'#5f7a3a', treeLight:t.treeLight||'#7c9650',
-    autumn:t.autumn||'#c98a3a', autumnLight:t.autumnLight||'#e0ad5a', trunk:t.trunk||'#4a3626', roof:t.roof||'#2f3338', roofEdge:t.roofEdge||'#4b5157', post:t.post||'#6b4a2e',
-    wood:t.wood||'#a87b4f', stone:t.stoneWall||'#a9a49a', stoneDark:t.stoneWallDark||'#7d786f', rock:t.stone||'#8c8a83', water:t.water||'#86aebd', waterDeep:t.waterDeep||'#6b98aa', sand:t.sand||'#e2cf98', paper:t.paper||'#efe8d6' }; }
+    fairway:'#4f8f2f', green:'#6fae3f', soil:['#3f5a24','#6b4a2c','#83603d','#9c7b55','#6f6a60'],
+    wall:'#b8692a', wallTop:'#eaa04f', wallBase:'#6e3f17', treeDark:t.treeDark||'#5f7a3a', treeLight:t.treeLight||'#7c9650',
+    autumn:t.autumn||'#c98a3a', autumnLight:t.autumnLight||'#e0ad5a', trunk:t.trunk||'#4a3626', roof:'#2a2e33', roofEdge:'#454c55', post:'#5a3a20',
+    wood:'#8a5a30', stone:'#a39b8d', stoneDark:'#5e584f', rock:'#706c66', water:'#2f86c9', waterDeep:'#1f6aa8', sand:'#f2cf6a', paper:t.paper||'#efe8d6', line:'rgba(24,20,15,.9)' }; }
 
   /* 소리: 본편 소리 그래프(AC·SFX)를 그대로 씀 */
   function tone(f,d,type,vol,when){ try{ if(!AC||!SFX) return; const t=AC.currentTime+(when||0),os=AC.createOscillator(),g=AC.createGain(); os.type=type||'sine'; os.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(vol||.2,t); g.gain.exponentialRampToValueAtTime(.001,t+d); os.connect(g).connect(SFX); os.start(t); os.stop(t+d); }catch(e){} }
@@ -1821,7 +1822,7 @@ const SSUI=(()=>{
     sc=Math.min(cv.width/W,cv.height/(H-60)); ox=(cv.width-W*sc)/2; oy=cv.height-H*sc; }
   function dots(){ const t=$('ssTries'); t.innerHTML=''; for(let i=0;i<PRAC;i++){ const e=document.createElement('i'); if(i<o.used) e.className='off'; else e.style.background=PCOL[i]; t.appendChild(e); }
     const c=document.createElement('b'); c.className='ch'+(o.used>=tries(o)?' off':''); c.textContent=o.more?'한 번 더':'도전'; t.appendChild(c); }
-  function title(){ $('ssName').innerHTML=(D.cur>=N?'한 판 더 '+(D.cur-N+1):'슈퍼샷 '+(D.cur+1)+'/'+N)+' <i class="dot" style="background:'+COL[L.ball]+'" title="'+NAME[L.ball]+'"></i>'; }
+  function title(){ $('ssName').innerHTML=(D.cur>=N?'3판 더 '+((D.cur-N)%EX_PACK+1)+'/'+EX_PACK:'슈퍼샷 '+(D.cur+1)+'/'+N)+' <i class="dot" style="background:'+COL[L.ball]+'" title="'+NAME[L.ball]+'"></i>'; }
   function banner(s,sub){ const e=$('ssBanner'); e.innerHTML=s+(sub?'<small>'+sub+'</small>':''); e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
   function drum(){ for(let i=0;i<8;i++) tone(90+i*6,.12,'triangle',.14,i*.09); tone(180,.5,'sawtooth',.06,.75); }
   function hint(s){ $('ssHint').textContent=s||''; $('ssHint').hidden=!s; }
@@ -1832,7 +1833,7 @@ const SSUI=(()=>{
     // 도전을 다 쓴 판(결과 카드 전에 나갔다 온 경우): 결과 카드를 다시 보여 줘 다음 판으로 갈 수 있게 (Codex 검수 4)
     if(o.used>=tries(o)){ hint(''); b.state='wait'; mid(!!o.won); return; }
     if(o.used>=PRAC){ hint(''); adPreload(); setTimeout(()=>{ banner(o.more?'한 번 더 도전!':'이제 진짜 도전!','단 한 번 · 연습한 길을 보세요'); drum(); },300); }
-    else hint(o.used?'연습 '+(PRAC-o.used)+'번 남았어요':(D.cur===0?'먼저 연습 세 번! ':D.cur>=N?'한 판 더 · 연습 세 번! ':(D.cur+1)+'번째 판 · 연습 세 번! ')+TIP[L.ball]); }
+    else hint(o.used?'연습 '+(PRAC-o.used)+'번 남았어요':(D.cur===0?'먼저 연습 세 번! ':D.cur>=N?'3판 더 · 연습 세 번! ':(D.cur+1)+'번째 판 · 연습 세 번! ')+TIP[L.ball]); }
   function open(from){ if(!available() || window.STOPPED) return; back=from; D=day(); cv=$('ssCv'); ctx=cv.getContext('2d');
     ['end','start'].forEach(id=>$(id).hidden=true); $('ss').hidden=false; $('ssEnd').hidden=true; resize(); stage();
     try{ if(typeof audioWake==='function') audioWake(); }catch(e){}
@@ -1867,10 +1868,10 @@ const SSUI=(()=>{
   function tree(x,base,h,c1,c2,tc){ rr(x-5,base-h*.45,x+5,base,tc); ctx.fillStyle=c1; ctx.beginPath(); ctx.arc(X(x),Y(base-h*.62),h*.34*sc,0,7); ctx.fill(); ctx.fillStyle=c2; ctx.beginPath(); ctx.arc(X(x-h*.1),Y(base-h*.7),h*.2*sc,0,7); ctx.fill(); }
   function scene(){ const t=T(), s=L.surf;
     const g=ctx.createLinearGradient(0,0,0,cv.height); g.addColorStop(0,'#f3f1ea'); g.addColorStop(1,t.paper); ctx.fillStyle=g; ctx.fillRect(0,0,cv.width,cv.height);
-    ctx.globalAlpha=.35; ctx.fillStyle=t.treeLight; ctx.beginPath(); ctx.moveTo(0,Y(760)); for(let x=0;x<=W;x+=60) ctx.quadraticCurveTo(X(x+30),Y(700+((x*7)%50)),X(x+60),Y(760)); ctx.lineTo(cv.width,Y(H)); ctx.lineTo(0,Y(H)); ctx.fill();
-    ctx.globalAlpha=.55; [[60,800,150,t.autumn,t.autumnLight],[160,800,190,t.treeDark,t.treeLight],[420,800,170,t.autumn,t.autumnLight],[530,800,140,t.treeDark,t.treeLight]].forEach(q=>tree(q[0],q[1],q[2],q[3],q[4],t.trunk)); ctx.globalAlpha=1;
+    ctx.globalAlpha=.2; ctx.fillStyle=t.treeLight; ctx.beginPath(); ctx.moveTo(0,Y(760)); for(let x=0;x<=W;x+=60) ctx.quadraticCurveTo(X(x+30),Y(700+((x*7)%50)),X(x+60),Y(760)); ctx.lineTo(cv.width,Y(H)); ctx.lineTo(0,Y(H)); ctx.fill();
+    ctx.globalAlpha=.3; [[60,800,150,t.autumn,t.autumnLight],[160,800,190,t.treeDark,t.treeLight],[420,800,170,t.autumn,t.autumnLight],[530,800,140,t.treeDark,t.treeLight]].forEach(q=>tree(q[0],q[1],q[2],q[3],q[4],t.trunk)); ctx.globalAlpha=1;
     // 물(연못): 땅보다 먼저
-    for(const w of L.water||[]){ rr(w[0],WY,w[1],960,t.water); rr(w[0],WY+22,w[1],960,t.waterDeep); ctx.fillStyle='rgba(255,255,255,.5)'; for(let x=w[0]+20;x<w[1]-20;x+=46) ctx.fillRect(X(x),Y(WY+8),20*sc,3*sc); }
+    for(const w of L.water||[]){ rr(w[0],WY,w[1],960,t.water); rr(w[0],WY+22,w[1],960,t.waterDeep); ctx.strokeStyle=t.line; ctx.lineWidth=2*sc; ctx.beginPath(); ctx.moveTo(X(w[0]),Y(WY)); ctx.lineTo(X(w[1]),Y(WY)); ctx.stroke(); ctx.fillStyle='rgba(255,255,255,.5)'; for(let x=w[0]+20;x<w[1]-20;x+=46) ctx.fillRect(X(x),Y(WY+8),20*sc,3*sc); }
     // 땅 덩어리(지층)
     ctx.save(); ctx.beginPath(); ctx.moveTo(X(s[0][0]),Y(H)); for(const p of s) ctx.lineTo(X(p[0]),Y(p[1])); ctx.lineTo(X(s[s.length-1][0]),Y(H)); ctx.closePath(); ctx.clip();
     ctx.fillStyle=t.soil[1]; ctx.fillRect(0,0,cv.width,cv.height); [[900,t.soil[2]],[930,t.soil[1]],[948,t.soil[3]],[972,t.soil[4]]].forEach(q=>{ ctx.fillStyle=q[1]; ctx.fillRect(0,Y(q[0]),cv.width,cv.height); });
@@ -1878,7 +1879,8 @@ const SSUI=(()=>{
     // 잔디 윗면(물 웅덩이 바닥은 빼고)
     ctx.lineJoin='round'; ctx.strokeStyle=t.fairway; ctx.lineWidth=18*sc;
     for(let i=0;i<s.length-1;i++){ const a=s[i],c=s[i+1]; if(a[1]>=950&&c[1]>=950) continue; if(a[0]===c[0]) continue; ctx.beginPath(); ctx.moveTo(X(a[0]),Y(a[1]+9)); ctx.lineTo(X(c[0]),Y(c[1]+9)); ctx.stroke(); }
-    for(const z of L.sand||[]){ rr(z[0],z[2],z[1],z[2]+18,t.sand,4); ctx.fillStyle='rgba(120,90,40,.25)'; for(let x=z[0]+8;x<z[1];x+=17) ctx.fillRect(X(x),Y(z[2]+6+(x%3)*3),3*sc,3*sc); }
+    ctx.strokeStyle=t.line; ctx.lineWidth=3*sc; ctx.beginPath(); ctx.moveTo(X(s[0][0]),Y(s[0][1])); for(const p of s) ctx.lineTo(X(p[0]),Y(p[1])); ctx.stroke(); // 땅 윗선
+    for(const z of L.sand||[]){ rr(z[0],z[2],z[1],z[2]+18,t.sand,4); ctx.strokeStyle=t.line; ctx.lineWidth=2*sc; ctx.stroke(); ctx.fillStyle='rgba(120,90,40,.25)'; for(let x=z[0]+8;x<z[1];x+=17) ctx.fillRect(X(x),Y(z[2]+6+(x%3)*3),3*sc,3*sc); }
     const c=L.cup, cy=L.cupY; rr(c[0]-60,cy,c[1]+60,cy+17,t.green); rr(c[0],cy,c[1],cy+48,'#1d1a15'); rr(c[0]-4,cy,c[1]+4,cy+4,'rgba(255,255,255,.5)');
     for(const p of L.props){
       if(p.k==='rail'||p.k==='fence'){ rr(p.x-6,p.top,p.x+6,p.bot,t.wall,3); rr(p.x-6,p.top,p.x+6,p.top+6,t.wallTop,3); rr(p.x-6,p.bot-6,p.x+6,p.bot,t.wallBase); if(p.k==='fence') for(let y=p.top+40;y<p.bot;y+=70) rr(p.x-14,y,p.x+14,y+10,t.wood,2); }
@@ -1888,6 +1890,8 @@ const SSUI=(()=>{
         rr(p.x1,p.y1,p.x2,p.y2,t.roofEdge,4); }
       if(p.k==='wall'){ rr(p.x1,p.y1,p.x2,p.y2,t.stone,6); ctx.strokeStyle=t.stoneDark; ctx.lineWidth=2*sc; for(let y=p.y1+34,r=0;y<p.y2;y+=34,r++){ ctx.beginPath(); ctx.moveTo(X(p.x1),Y(y)); ctx.lineTo(X(p.x2),Y(y)); ctx.stroke(); const mx=p.x1+(r%2?(p.x2-p.x1)*.35:(p.x2-p.x1)*.65); ctx.beginPath(); ctx.moveTo(X(mx),Y(y-34)); ctx.lineTo(X(mx),Y(y)); ctx.stroke(); } }
       if(p.k==='post'){ rr(p.x1,p.y1,p.x2,p.y2,t.wall,3); rr(p.x1,p.y1,p.x2,p.y1+6,t.wallTop,3); } }
+    ctx.strokeStyle=t.line; ctx.lineWidth=2.5*sc; for(const p of L.props){ ctx.beginPath(); // 벽·바위·지붕 테두리
+      if(p.k==='rail'||p.k==='fence') ctx.rect(X(p.x-6),Y(p.top),12*sc,(p.bot-p.top)*sc); else if(p.k==='rock'&&ctx.roundRect) ctx.roundRect(X(p.x1),Y(p.y1),(p.x2-p.x1)*sc,(p.y2-p.y1)*sc,[24*sc,30*sc,4*sc,4*sc]); else ctx.rect(X(p.x1),Y(p.y1),(p.x2-p.x1)*sc,(p.y2-p.y1)*sc); ctx.stroke(); }
     // 깃발
     const fx=(c[0]+c[1])/2, ft=Math.min(cy-90, L.cupRect?L.cupRect[1]-80:cy-90); ctx.strokeStyle='#fff'; ctx.lineWidth=3.5*sc; ctx.beginPath(); ctx.moveTo(X(fx),Y(cy)); ctx.lineTo(X(fx),Y(ft)); ctx.stroke();
     ctx.fillStyle='#e23b2e'; ctx.beginPath(); ctx.moveTo(X(fx),Y(ft)); ctx.lineTo(X(fx+40),Y(ft+13)); ctx.lineTo(X(fx),Y(ft+28)); ctx.fill();
@@ -1908,7 +1912,7 @@ const SSUI=(()=>{
     if(drag&&b.state==='aim'){ const a=aimOf(drag); if(a.pow>=.05){ ctx.lineWidth=1.5*sc; for(const p of preview(a)){ ctx.fillStyle='rgba(255,255,255,.95)'; ctx.strokeStyle='rgba(29,26,21,.45)'; ctx.beginPath(); ctx.arc(X(p[0]),Y(p[1]),5*sc,0,7); ctx.fill(); ctx.stroke(); }
       const bw=220,bx=W/2-bw/2,by=130; rr(bx,by,bx+bw,by+18,'rgba(29,26,21,.55)',9); rr(bx+3,by+3,bx+3+(bw-6)*a.pow,by+15,a.pow>.9?'#e23b2e':'#ffcf3a',7); } }
     drawClub(); const x=b.x,y=b.y; ctx.fillStyle='rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(X(x+3),Y(y+5),R*sc,R*.75*sc,0,0,7); ctx.fill();
-    ctx.fillStyle=COL[L.ball]; ctx.beginPath(); ctx.arc(X(x),Y(y),R*sc,0,7); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=1.5*sc; ctx.stroke();
+    ctx.fillStyle=COL[L.ball]; ctx.beginPath(); ctx.arc(X(x),Y(y),R*sc,0,7); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.75)'; ctx.lineWidth=2.5*sc; ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,.65)'; ctx.beginPath(); ctx.arc(X(x-5),Y(y-5),4*sc,0,7); ctx.fill(); }
   function loop(now){ const d=Math.min(.05,(now-last)/1000); last=now; clubTick(d);
     if(b&&b.state==='fly'){ acc+=d; while(acc>=1/480&&b.state==='fly'){ acc-=1/480; const bo=SS.step(b,L,1/480); if(bo>200) thock(Math.min(.35,bo/3000)); if(++TS%16===0) trail.push([b.x,b.y]); }
@@ -1927,7 +1931,7 @@ const SSUI=(()=>{
   /* 판 사이 카드: 성공이면 다음 판, 실패면 광고 한 편으로 한 번 더(판마다 한 번, 이용권이면 광고 없이) */
   function mid(won){ const last=D.cur>=total(D)-1;
     const canMore=!won&&!o.more; if(canMore) adPreload();
-    $('ssMidT').textContent=won?(D.cur>=N?'한 판 더 성공!':(D.cur+1)+'번째 판 성공!'):'아깝다! 도전 실패';
+    $('ssMidT').textContent=won?(D.cur>=N?'3판 더 '+((D.cur-N)%EX_PACK+1)+'번째 성공!':(D.cur+1)+'번째 판 성공!'):'아깝다! 도전 실패';
     $('ssMidP').textContent=won?(last?'결과를 볼까요?':'다음 판으로 가 볼까요?'):(canMore?'아쉬우시죠? 한 번 더 시도해 보시겠어요?':'아쉽지만 여기까지예요.');
     $('ssMore').hidden=!canMore; moreBtn(true);
     $('ssNext').textContent=canMore?(last?'괜찮아요, 결과 보기':'괜찮아요, 다음 판으로'):(last?'오늘 결과 보기':'다음 판으로'); $('ssNext').className='btn'+(canMore?' ghost':''); $('ssMid').hidden=false; }
@@ -1953,13 +1957,13 @@ const SSUI=(()=>{
     adWait=ok=>{ if(waited) return; clearTimeout(tm); ok?adShow(go,fallback):fallback(); }; if(adSt!=='loading'){ adSt='idle'; adPreload(); } }
   function next(){ $('ssMid').hidden=true; D.cur++; put(); refresh(); if(D.cur>=total(D)) return finish(); stage(); }
   function finish(){ cancelAnimationFrame(raf); raf=0; const j=D.cur-1;
-    if(j>=N){ PT.event('ss_extra_end',{lv:lvAt(j).id,won:D.s[j].won?1:0,n:j-N+1}); if(!D.s[j].won) return endCard(false,true); L=lvAt(j); return hoe(j); } // 한 판 더: 그 판만 봄
+    if(j>=N){ const a=Math.max(N,j-EX_PACK+1); let kk=-1; for(let i=a;i<=j;i++) if(D.s[i].won) kk=i; PT.event('ss_extra_end',{won:D.s.slice(a,j+1).filter(x=>x.won).length,n:j-N+1}); if(kk<0) return endCard(false,true); L=lvAt(kk); return hoe(kk); } // 3판 더: 이번 묶음만 봄
     let k=-1; D.s.forEach((x,i)=>{ if(x.won) k=i; }); PT.event('ss_day',{won:D.s.filter(x=>x.won).length});
     if(k<0) return endCard(false); L=lvAt(k); hoe(k); }
   function extraBtn(){ const b=$('ssExtra'), left=exLeft(), can=left>0 && (hasPass()||!AIT_BUILD||!!(AIT_CFG.ad&&aitOk(AIT&&AIT.loadFullScreenAd))); b.hidden=!can || window.LANG==='th';
-    if(can){ b.textContent=hasPass()?'⛳ 한 판 더':'📺 광고 보고 한 판 더 ('+left+'번 남음)'; if(!hasPass()) bonusAdPreload(); } }
+    if(can){ b.textContent=hasPass()?'⛳ '+EX_PACK+'판 더':'📺 광고 보고 '+EX_PACK+'판 더'; if(!hasPass()) bonusAdPreload(); } }
   function extra(){ if(window.STOPPED || $('ssExtra').disabled || exLeft()<=0) return; const from=back||'start';
-    (hasPass()?(cb=>cb()):showAd)(()=>{ const d=day(); d.ex=(d.ex|0)+1; d.s.push({used:0}); try{ localStorage.setItem(KEY,JSON.stringify(d)); }catch(e){} PT.event('ss_extra',{n:d.ex,pass:hasPass()?1:0});
+    (hasPass()?(cb=>cb()):showAd)(()=>{ const d=day(); for(let i=0;i<EX_PACK;i++){ d.ex=(d.ex|0)+1; d.s.push({used:0}); } try{ localStorage.setItem(KEY,JSON.stringify(d)); }catch(e){} PT.event('ss_extra',{n:d.ex,pass:hasPass()?1:0});
       $('ssEnd').hidden=true; open(from); }); }
   function photo(){ const c=document.createElement('canvas'); c.width=640; c.height=360; const g=c.getContext('2d'), s2=Math.min(c.width/W,c.height/560);
     g.fillStyle='#e9e0c8'; g.fillRect(0,0,c.width,c.height); g.save(); g.translate((c.width-W*s2)/2,c.height-960*s2); g.scale(s2,s2);
@@ -1975,12 +1979,12 @@ const SSUI=(()=>{
       photo:photo(), stamp:w===N?'전판 성공':'한 방', onClose:()=>endCard(true)});
     PT.event('ss_news',{lv:L.id,won:w}); }
   function endCard(won,ex){ cancelAnimationFrame(raf); raf=0; const w=D.s.filter(x=>x.won).length;
-    $('ssEndT').textContent=won?'오늘 '+D.s.length+'판 중 '+w+'판 성공!':ex?'한 판 더는 아깝게 놓쳤어요':'오늘의 슈퍼샷은 여기까지';
+    $('ssEndT').textContent=won?'오늘 '+D.s.length+'판 중 '+w+'판 성공!':ex?'3판 더는 아깝게 놓쳤어요':'오늘의 슈퍼샷은 여기까지';
     $('ssEndP').textContent=won?'금 도장을 받았어요. 호외는 「내 신문 보관함」에 있어요.':ex?'내일 새 슈퍼샷 '+N+'판이 열려요.':'아깝게 놓쳤지만 출석 도장은 받았어요. 내일 새 슈퍼샷이 열려요.';
     $('ssCal').innerHTML=calHTML(); $('ssEnd').hidden=false; extraBtn(); refresh(); }
   function back_(){ if(!$('ssEnd').hidden||!$('ss').hidden||!$('ssMid').hidden){ close(); return true; } return false; }
   function peek(id){ L=LV[id-1]; o={used:0}; title(); fresh(); dots(); hint(''); frame(); }
-  return {bind,refresh,unlock,open,close,isOpen,back:back_,available,todayLevel,todayLevels,peek};
+  return {bind,refresh,unlock,open,close,isOpen,back:back_,available,todayLevel,todayLevels,lvAt,peek};
 })();
 SSUI.bind(); SSUI.refresh();
 
@@ -2291,7 +2295,7 @@ let CFG_AT=0; function fetchCfg(){ if(window.STOPPED || Date.now()-CFG_AT<300000
     const note=(th&&c.notice_th)||c.notice; if(note && note!==fetchCfg.lastNote){ fetchCfg.lastNote=note; setTimeout(()=>msg(String(note).slice(0,80)),1500); }
   }).catch(()=>{}); }catch(e){} }
 fetchCfg(); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fetchCfg(); }); setInterval(fetchCfg,600000);
-PT.init({game:'parkgolf', build:'v87', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs'});
+PT.init({game:'parkgolf', build:'v88', lang:window.LANG, endpoint:'https://api.arinplay.app/house2048', key:'sb_publishable_XSDekoMOwFTaiNcrLSvYKg_fsj-XnQs'});
 // 모든 기록에 첫 유입 경로·소재와 앞 기록과의 간격(gap_ms)을 붙인다
 (function(){ const ev=PT.event; let last=performance.now();
   PT.event=function(k,d){ const now=performance.now(); const o=Object.assign({src:ENTRY.first.src, ad:ENTRY.first.ad||undefined, gap_ms:Math.round(now-last)}, d||{}); last=now; return ev.call(PT,k,o); }; })();
